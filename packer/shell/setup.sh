@@ -40,6 +40,11 @@ sudo apt-get --assume-yes --quiet install git htop silversearcher-ag \
 # /usr/share/dict/words
 sudo apt-get --assume-yes --quiet install wamerican
 
+# zsh
+sudo apt-get --assume-yes --quiet install zsh
+curl -L http://install.ohmyz.sh | sh
+sed -i 's/ZSH_THEME=.*$/ZSH_THEME="bira"/' ~/.zshrc
+
 sudo apt-get clean
 
 # Generate SSH keypair
