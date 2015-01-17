@@ -2,6 +2,11 @@
 
 set -e
 
+sudo tee /etc/apt/sources.list.d/nginx-stable-trusty.list >/dev/null <<EOF
+deb http://ppa.launchpad.net/nginx/stable/ubuntu trusty main
+EOF
+
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys C300EE8C
 sudo apt-get --assume-yes --quiet update
 sudo apt-get --assume-yes --quiet install nginx
 
