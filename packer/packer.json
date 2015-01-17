@@ -1,0 +1,37 @@
+{
+  "variables": {
+    "aws_access_key": "{{env `AWS_ACCESS_KEY_ID`}}",
+    "aws_secret_key": "{{env `AWS_SECURE_ACCESS_KEY`}}",
+    "do_api_token": "{{env `DO_TOKEN`}}"
+  },
+  "builders": [{
+    "type": "amazon-ebs",
+    "access_key": "{{user `aws_access_key`}}",
+    "ami_name": "onlinejudge {{timestamp}}",
+    "instance_type": "m3.medium",
+    "region": "us-west-2",
+    "secret_key": "{{user `aws_secret_key`}}",
+    "source_ami": "ami-978dd9a7",
+    "ssh_username": "ubuntu"
+  }, {
+    "type": "digitalocean",
+    "api_token": "{{user `do_api_token`}}",
+    "image": "ubuntu-14-04-x64",
+    "region": "sfo1",
+    "size": "512mb",
+    "snapshot_name": "onlinejudge {{timestamp}}"
+  }],
+  "provisioners": [
+    {"type": "shell", "script": "shell/harden.sh", "pause_before": "30s"},
+    {"type": "shell", "script": "shell/setup.sh"},
+    {"type": "shell", "script": "shell/reboot.sh"},
+    {"type": "shell", "script": "shell/lxc.sh", "pause_before": "60s"},
+    {"type": "file", "source": "../sandbox", "destination": "/tmp"},
+    {"type": "shell", "script": "shell/build_and_deploy_sandbox.sh"},
+    {"type": "shell", "script": "shell/nginx.sh"},
+    {"type": "file", "source": "../frontend/", "destination": "/usr/share/nginx/html"},
+    {"type": "file", "source": "../runner/runner.linux", "destination": "/root/runner.linux"},
+    {"type": "file", "source": "../runner/runner_upstart.conf", "destination": "/etc/init/runner.conf"},
+    {"type": "shell", "script": "shell/runner.sh"}
+  ]
+}

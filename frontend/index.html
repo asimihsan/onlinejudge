@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Run Some Code</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link href="bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="bower_components/bootstrap/dist/css/bootstrap-theme.min.css" rel="stylesheet">
+        <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+          <script src="bower_components/html5shiv/dist/html5shiv.min.js"></script>
+          <script src="bower_components/respond/dest/respond.min.js"></script>
+        <![endif]-->
+        <link rel="stylesheet" href="bower_components/codemirror/lib/codemirror.css">
+        <link rel="stylesheet" href="bower_components/ladda/dist/ladda.min.css">
+        <link rel="stylesheet" href="bower_components/chosen_v1.3.0/chosen.min.css">
+        <link rel="stylesheet" href="bower_components/normalize-css/normalize.css">
+        <link rel="stylesheet" href="css/main.css">
+        <script src="bower_components/modernizr/modernizr.js"></script>
+    </head>
+    <body>
+        <!--[if lt IE 7]>
+            <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+        <![endif]-->
+
+    <div class="container">
+      <div class="header">
+        <nav>
+          <ul class="nav nav-pills pull-right">
+            <li role="presentation" class="active"><a href="#">Home</a></li>
+            <li role="presentation"><a href="#">About</a></li>
+            <li role="presentation"><a href="#">Contact</a></li>
+          </ul>
+        </nav>
+        <h3 class="text-muted">Run Some Code</h3>
+      </div>
+
+      <div class="row">
+        <div class="col-md-8">
+            <select class="language-select">
+                <optgroup label="Java">
+                    <option value="java">Java 1.7u71</option>
+                </optgroup>
+                <optgroup label="Python">
+                    <option selected="selected" value="python">Python 2.7.6</option>
+                </optgroup>
+                <optgroup label="Ruby">
+                    <option value="ruby">Ruby 1.9.3</option>
+                </optgroup>
+            </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-8">
+            <textarea id="editor" name="editor"></textarea>
+        </div>
+        <div class="col-md-4">
+            <button type="submit" class="ladda-button submit-button" data-color="blue" data-style="contract" data-size="s" name="submit" id="submit">
+                <span class="ladda-label">Submit</span>
+                <span class="ladda-spinner"></span>
+            </button><br />
+            <button type="submit" class="ladda-button clear-output-button" data-color="green" data-style="contract" data-size="s">
+                <span class="ladda-label">Clear output</span>
+            </button><br />
+            <button type="submit" class="ladda-button clear-code-button" data-color="red" data-style="contract" data-size="s">
+                <span class="ladda-label">Clear code</span>
+            </button><br />
+            <pre class="output" id="output"></pre>
+        </div>
+      </div>
+
+      <footer class="footer">
+        <p>&copy; Asim Ihsan 2014</p>
+      </footer>
+
+    </div> <!-- /container -->
+
+    <script src="bower_components/jquery/dist/jquery.min.js"></script>
+    <script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="js/ie10-viewport-bug-workaround.js"></script>
+    <script src="bower_components/codemirror/lib/codemirror.js"></script>
+    <script src="bower_components/codemirror/mode/clike/clike.js"></script>
+    <script src="bower_components/codemirror/mode/python/python.js"></script>
+    <script src="bower_components/codemirror/mode/ruby/ruby.js"></script>
+    <script src="bower_components/ladda/dist/spin.min.js"></script>
+    <script src="bower_components/ladda/dist/ladda.min.js"></script>
+    <script src="bower_components/chosen_v1.3.0/chosen.jquery.min.js"></script>
+    <script src="js/plugins.js"></script>
+    <script src="js/main.js"></script>
+    </body>
+</html>

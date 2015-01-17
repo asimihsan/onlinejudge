@@ -22,3 +22,9 @@ _testmain.go
 *.exe
 *.test
 *.prof
+
+sandbox/scratch
+runner/runner.linux
+runner/runner
+frontend/bower_components
+frontend/node_modules
