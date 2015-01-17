@@ -387,9 +387,9 @@ void close_fds(void) {
 }
 
 void install_rlimits(void) {
-    limit_resource(RLIMIT_CPU, 10);                // 10 seconds CPU
-    limit_resource(RLIMIT_AS, 400*1024*1024);      // 400MB address space
-    limit_resource(RLIMIT_DATA, 400*1024*1024);    // 400MB data space
+    limit_resource(RLIMIT_CPU, 5);                 // 5 seconds CPU
+    limit_resource(RLIMIT_AS, 256*1024*1024);      // 256MB address space
+    limit_resource(RLIMIT_DATA, 256*1024*1024);    // 256MB data space
     limit_resource(RLIMIT_FSIZE, 10*1024*1024);    // Maximum filesize
     limit_resource(RLIMIT_LOCKS, 0);               // Maximum file locks held
     limit_resource(RLIMIT_MEMLOCK, 0);             // Maximum locked-in-memory address spac
