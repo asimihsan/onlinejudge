@@ -46,6 +46,18 @@ Run untrusted code in a sandbox that prevents it from harming the host machine, 
     -   Will not run outside LXC container and do on every run clone/start/stop/destroy LXC container (measure latency)
         -   Around 5 seconds, too high
 
+## Snippets
+
+Refresh runner code:
+
+```
+watchmedo shell-command -c \
+    'clear && date && GOOS=linux GOARCH=amd64 go build -o runner.linux && \
+    ssh -i ~/.ssh/digitalocean root@104.236.136.8 "service runner stop" && \
+    scp -i ~/.ssh/digitalocean runner.linux root@104.236.136.8:~/runner.linux && \
+    ssh -i ~/.ssh/digitalocean root@104.236.136.8 "service runner start"' \
+    -w -p '*.go' .
+```
 
 ## Requirements
 
