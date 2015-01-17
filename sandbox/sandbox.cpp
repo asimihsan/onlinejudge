@@ -380,7 +380,6 @@ void limit_resource(int const resource, rlim_t const l) {
 }
 
 void close_fds(void) {
-    close(fileno(stdin));
     for (int fd = fileno(stderr); fd != 1024; ++fd)
         close(fd);
     dup2(fileno(stdout), fileno(stderr));
@@ -388,8 +387,8 @@ void close_fds(void) {
 
 void install_rlimits(void) {
     limit_resource(RLIMIT_CPU, 5);                 // 5 seconds CPU
-    limit_resource(RLIMIT_AS, 256*1024*1024);      // 256MB address space
-    limit_resource(RLIMIT_DATA, 256*1024*1024);    // 256MB data space
+    limit_resource(RLIMIT_AS, 700*1024*1024);      // 700MB address space
+    limit_resource(RLIMIT_DATA, 700*1024*1024);    // 700MB data space
     limit_resource(RLIMIT_FSIZE, 10*1024*1024);    // Maximum filesize
     limit_resource(RLIMIT_LOCKS, 0);               // Maximum file locks held
     limit_resource(RLIMIT_MEMLOCK, 0);             // Maximum locked-in-memory address spac
