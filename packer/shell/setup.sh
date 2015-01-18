@@ -42,7 +42,7 @@ sudo apt-get --assume-yes --quiet install wamerican
 
 # zsh
 sudo apt-get --assume-yes --quiet install zsh
-curl -L http://install.ohmyz.sh | sh
+curl -L http://install.ohmyz.sh | zsh
 sed -i 's/ZSH_THEME=.*$/ZSH_THEME="bira"/' ~/.zshrc
 
 sudo apt-get clean
