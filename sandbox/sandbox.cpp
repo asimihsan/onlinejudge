@@ -37,8 +37,8 @@ static int install_syscall_filter(void) {
        ALLOW_SYSCALL(lstat),
        ALLOW_SYSCALL(poll),
        ALLOW_SYSCALL(lseek),
-       ALLOW_SYSCALL(mmap),
-       ALLOW_SYSCALL(mprotect),
+       ALLOW_SYSCALL(mmap), // general
+       ALLOW_SYSCALL(mprotect), // general
        ALLOW_SYSCALL(munmap),
        ALLOW_SYSCALL(brk),
        ALLOW_SYSCALL(rt_sigaction),
@@ -53,24 +53,24 @@ static int install_syscall_filter(void) {
        ALLOW_SYSCALL(pipe),
        ALLOW_SYSCALL(select),
        ALLOW_SYSCALL(sched_yield),
-       ALLOW_SYSCALL(mremap),
+       ALLOW_SYSCALL(mremap), // java
        ALLOW_SYSCALL(msync),
        ALLOW_SYSCALL(mincore),
-       ALLOW_SYSCALL(madvise),
+       ALLOW_SYSCALL(madvise), // java
        ALLOW_SYSCALL(shmget),
        ALLOW_SYSCALL(shmat),
        ALLOW_SYSCALL(shmctl),
        ALLOW_SYSCALL(dup),
-       ALLOW_SYSCALL(dup2),
+       ALLOW_SYSCALL(dup2), // java
        ALLOW_SYSCALL(pause),
        ALLOW_SYSCALL(nanosleep),
        ALLOW_SYSCALL(getitimer),
        ALLOW_SYSCALL(alarm),
        ALLOW_SYSCALL(setitimer),
-       ALLOW_SYSCALL(getpid),
+       ALLOW_SYSCALL(getpid), // java
        //ALLOW_SYSCALL(sendfile),
-       //ALLOW_SYSCALL(socket),
-       //ALLOW_SYSCALL(connect),
+       ALLOW_SYSCALL(socket), // java
+       ALLOW_SYSCALL(connect), // java
        //ALLOW_SYSCALL(accept),
        //ALLOW_SYSCALL(sendto),
        //ALLOW_SYSCALL(recvfrom),
@@ -105,17 +105,17 @@ static int install_syscall_filter(void) {
        //ALLOW_SYSCALL(fsync),
        //ALLOW_SYSCALL(fdatasync),
        //ALLOW_SYSCALL(truncate),
-       //ALLOW_SYSCALL(ftruncate),
+       ALLOW_SYSCALL(ftruncate), // java
        ALLOW_SYSCALL(getdents), // general
-       //ALLOW_SYSCALL(getcwd),
+       ALLOW_SYSCALL(getcwd), // java
        //ALLOW_SYSCALL(chdir),
        //ALLOW_SYSCALL(fchdir),
        //ALLOW_SYSCALL(rename),
-       //ALLOW_SYSCALL(mkdir),
+       ALLOW_SYSCALL(mkdir), // java
        //ALLOW_SYSCALL(rmdir),
        //ALLOW_SYSCALL(creat),
        //ALLOW_SYSCALL(link),
-       //ALLOW_SYSCALL(unlink),
+       ALLOW_SYSCALL(unlink), // java, javac infinite hang
        //ALLOW_SYSCALL(symlink),
        ALLOW_SYSCALL(readlink), // general
        //ALLOW_SYSCALL(chmod),
@@ -188,7 +188,7 @@ static int install_syscall_filter(void) {
        //ALLOW_SYSCALL(prctl),
        ALLOW_SYSCALL(arch_prctl), // python
        //ALLOW_SYSCALL(adjtimex),
-       //ALLOW_SYSCALL(setrlimit),
+       ALLOW_SYSCALL(setrlimit), // java
        //ALLOW_SYSCALL(chroot),
        //ALLOW_SYSCALL(sync),
        //ALLOW_SYSCALL(acct),
@@ -214,7 +214,7 @@ static int install_syscall_filter(void) {
        //ALLOW_SYSCALL(afs_syscall),
        //ALLOW_SYSCALL(tuxcall),
        //ALLOW_SYSCALL(security),
-       //ALLOW_SYSCALL(gettid),
+       ALLOW_SYSCALL(gettid), // java
        //ALLOW_SYSCALL(readahead),
        //ALLOW_SYSCALL(setxattr),
        //ALLOW_SYSCALL(lsetxattr),
@@ -256,8 +256,8 @@ static int install_syscall_filter(void) {
        //ALLOW_SYSCALL(timer_getoverrun),
        //ALLOW_SYSCALL(timer_delete),
        //ALLOW_SYSCALL(clock_settime),
-       //ALLOW_SYSCALL(clock_gettime),
-       //ALLOW_SYSCALL(clock_getres),
+       ALLOW_SYSCALL(clock_gettime), // java
+       ALLOW_SYSCALL(clock_getres), // java
        ALLOW_SYSCALL(clock_nanosleep), // general
        ALLOW_SYSCALL(exit_group), // python
        //ALLOW_SYSCALL(epoll_wait),
@@ -302,7 +302,7 @@ static int install_syscall_filter(void) {
        //ALLOW_SYSCALL(ppoll),
        //ALLOW_SYSCALL(unshare),
        ALLOW_SYSCALL(set_robust_list), // python
-       ALLOW_SYSCALL(get_robust_list),
+       ALLOW_SYSCALL(get_robust_list), // python (maybe), java (maybe)
        //ALLOW_SYSCALL(splice),
        //ALLOW_SYSCALL(tee),
        //ALLOW_SYSCALL(sync_file_range),
@@ -387,8 +387,6 @@ void close_fds(void) {
 
 void install_rlimits(void) {
     limit_resource(RLIMIT_CPU, 5);                 // 5 seconds CPU
-    limit_resource(RLIMIT_AS, 700*1024*1024);      // 700MB address space
-    limit_resource(RLIMIT_DATA, 700*1024*1024);    // 700MB data space
     limit_resource(RLIMIT_FSIZE, 10*1024*1024);    // Maximum filesize
     limit_resource(RLIMIT_LOCKS, 0);               // Maximum file locks held
     limit_resource(RLIMIT_MEMLOCK, 0);             // Maximum locked-in-memory address spac
