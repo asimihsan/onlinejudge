@@ -203,7 +203,7 @@ func runCommand(language string, filepath string) *exec.Cmd {
             logger.Panicf("failed to chmod /tmp/foo/Solution.java")
         }
         return exec.Command("lxc-attach", "-n", "u1", "--",
-            "su", "-", "ubuntu", "-c", "/home/ubuntu/sandbox/sandbox /usr/bin/javac /tmp/foo/Solution.java && /home/ubuntu/sandbox/sandbox /usr/bin/java -classpath /tmp/foo Solution")
+            "/bin/bash", "-c", "rm -f /tmp/foo/*.class && /home/ubuntu/sandbox/sandbox /usr/bin/javac -J-Xmx700m /tmp/foo/Solution.java && /home/ubuntu/sandbox/sandbox /usr/bin/java -Xmx700m -classpath /tmp/foo Solution")
     }
     return nil
 }
@@ -229,6 +229,7 @@ func ensureLxcContainerIsRunning() {
         return
     }
     logger.Println("Container not running, so restart it.")
+    os.Mkdir("/tmp/foo", 0755)
     proc2 := exec.Command("lxc-start-ephemeral", "-d", "-o", "ubase",
         "-n", "u1", "-b", "/tmp/foo")
     err2 := proc2.Start() 
