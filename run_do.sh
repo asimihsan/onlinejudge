@@ -20,13 +20,13 @@
 IMAGE=$(curl -X GET -H 'Content-Type: application/json' \
     -H "Authorization: Bearer ${DO_TOKEN}" \
     "https://api.digitalocean.com/v2/images?page=1&per_page=50" | \
-    jq '.images[] | select(.name | contains("onlinejudge"))')
+    jq '[.images[] | select(.name | contains("onlinejudge")) | {id, name, created_at}] | sort_by(.created_at) | .[-1:][0]')
 echo running: "${IMAGE}"
 IMAGE_ID=$(echo "${IMAGE}" | jq '.id')
 echo $IMAGE_ID
 curl -X POST -H 'Content-Type: application/json' \
     -H "Authorization: Bearer ${DO_TOKEN}" -d \
-    "{\"name\":\"run1.runsomecode.com\",\"region\":\"sfo1\",\"size\":\"1g\",\"ssh_keys\":[\"610664\"],\"image\":\"${IMAGE_ID}\"}" \
+    "{\"name\":\"run1.runsomecode.com\",\"region\":\"sfo1\",\"size\":\"1gb\",\"ssh_keys\":[\"610664\"],\"image\":\"${IMAGE_ID}\"}" \
     "https://api.digitalocean.com/v2/droplets" | jq '.'
 
 # List all droplets, get names and ip addresses
