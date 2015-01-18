@@ -4,11 +4,18 @@ Run untrusted code in a sandbox that prevents it from harming the host machine, 
 
 ## TODO
 
--   When binding /tmp/foo then writing to foo.py, need to chmod a+rx foo.py!
-    -   Fix runner.go
--   setuid for runner in upstart conf not working, won't run, why?
+-   Fix javac and java to work; memory limits getting hit
+    -   memory limits hit during javac but seccomp in sandbox somehow suppressed
+        this
+-   allow stdin as input and expected stdout as output.
+    -   runner passes stdin
+    -   runner still returns stdout, but additionally returns some boolean saying
+        whether stdout is correct or not
+    -   but don't show a diff, or indicate what the correct stdout it! hide it.
+-   create a fizz buzz example, hard code it for now
+    -   given a single number input print out the correct fizz buzz output for
+        1 to n inclusive. -   setuid for runner in upstart conf not working, won't run, why?
 -   Defer gzip'ing of responses to nginx, let runner focus on running.
--   Add lots of other languages.
 -   Add seccomp whitelist to LXC provisioned by packer
     -   Use Docker perl script to generate (https://github.com/docker/docker/blob/master/contrib/mkseccomp.pl)
     -   Even if it's a 100% whitelist fine for now (bottom of https://github.com/lxc/lxc)
@@ -17,13 +24,16 @@ Run untrusted code in a sandbox that prevents it from harming the host machine, 
     -   Each Digital Ocean load balancer to one Digital Ocean droplet for now
     -   Provision droplet image using packer
     -   Run using sandbox. Run as nobody user.
--   Use curl to test it works.
 -   Test trying to break out of sandbox
--   Rebuild Digital Ocean image
-    -   Had to fix nginx conf, frontend main.js URL, reduce LXC mem to 256MB
 
 ## TODO done
 
+-   Add lots of other languages.
+-   Use curl to test it works.
+-   Rebuild Digital Ocean image
+    -   Had to fix nginx conf, frontend main.js URL, reduce LXC mem to 256MB
+-   When binding /tmp/foo then writing to foo.py, need to chmod a+rx foo.py!
+    -   Fix runner.go
 -   Sandbox
     -   Fix seccomp to support Ruby. Add all possible system calls, then remove until it fails.
     -   However you do it, don't allow network calls (prevent SYS_socketcall, or don't provision network in LXC)
