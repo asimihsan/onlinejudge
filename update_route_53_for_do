@@ -1,0 +1,81 @@
+#!/usr/bin/env python
+
+import os
+import pprint
+import time
+
+import boto.route53
+from boto.route53.record import ResourceRecordSets
+import requests
+
+ZONE_ID = 'Z2768WMJRRHKWQ'
+REGION = 'us-west-2'
+AWS_ACCESS_KEY_ID = os.environ['ONLINEJUDGE_ROUTE_53_ACCESS_KEY_ID']
+AWS_SECURE_ACCESS_KEY = os.environ['ONLINEJUDGE_ROUTE_53_SECURE_ACCESS_KEY']
+DO_TOKEN = os.environ['DO_TOKEN']
+TTL = 60
+A_NAMES = ['www.runsomecode.com.', 'runsomecode.com.']
+DO_NAME_FILTER = 'runsomecode.com'
+
+get_change_id = lambda response: response['ChangeInfo']['Id'].split('/')[-1]
+get_change_status = lambda response: response['ChangeInfo']['Status']
+
+
+def get_ip_addresses():
+    headers = {'Authorization': 'Bearer ' + DO_TOKEN}
+    req = requests.get("https://api.digitalocean.com/v2/droplets?page=1&per_page=50",
+                       headers=headers)
+    droplets = req.json()['droplets']
+    result = []
+    for droplet in droplets:
+        if DO_NAME_FILTER in droplet['name']:
+            result.append(droplet['networks']['v4'][0]['ip_address'])
+    print("get_ip_addresses returning:\n%s" % pprint.pformat(result))
+    return result
+
+
+def update_dns(conn, ip_addresses):
+    rrsets = conn.get_all_rrsets(ZONE_ID)
+    changes = ResourceRecordSets(conn, ZONE_ID, '')
+    for rrset in rrsets:
+        if rrset.type != 'A' or rrset.name not in A_NAMES:
+            continue
+
+        print "deleting %s %s %s" % (rrset.name, rrset.type, rrset.resource_records)
+        change1 = changes.add_change('DELETE', rrset.name, rrset.type, ttl=rrset.ttl)
+        for old_value in rrset.resource_records:
+            change1.add_value(old_value)
+
+        print "adding %s %s %s" % (rrset.name, rrset.type, ip_addresses)
+        change2 = changes.add_change('CREATE', rrset.name, rrset.type, ttl=TTL)
+        for new_value in ip_addresses:
+            change2.add_value(new_value)
+
+    return changes.commit()
+
+
+def poll_for_commit_status(conn, commit):
+    change = conn.get_change(get_change_id(commit['ChangeResourceRecordSetsResponse']))
+    while get_change_status(change['GetChangeResponse']) == 'PENDING':
+        time.sleep(2)
+        change = conn.get_change(get_change_id(change['GetChangeResponse']))
+        print("%s" % change)
+    if get_change_status(change['GetChangeResponse']) == 'INSYNC':
+        print "change completed successfully"
+    else:
+        print "unknown status for change"
+
+
+def main():
+    ip_addresses = get_ip_addresses()
+    conn = boto.route53.connect_to_region(
+        REGION,
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECURE_ACCESS_KEY)
+    update_dns(conn, ip_addresses)
+    #commit = update_dns(conn, ip_addresses)
+    #poll_for_commit_status(conn, commit)
+
+
+if __name__ == "__main__":
+    main()

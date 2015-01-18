@@ -1,0 +1,4 @@
+boto==2.35.1
+requests==2.5.1
+ipdb==0.8
+
