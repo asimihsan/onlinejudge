@@ -17,7 +17,7 @@ lxc.network.link = lxcbr0
 # Resource limits
 # https://www.kernel.org/doc/Documentation/cgroups/
 # https://docs.oracle.com/cd/E37670_01/E37355/html/ol_cgroups.html
-lxc.cgroup.memory.limit_in_bytes = 768M
+lxc.cgroup.memory.limit_in_bytes = 400M
 lxc.cgroup.cpu.shares = 100
 lxc.cgroup.cpuset.cpus = 0
 
