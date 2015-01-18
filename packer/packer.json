@@ -18,7 +18,7 @@
     "api_token": "{{user `do_api_token`}}",
     "image": "ubuntu-14-04-x64",
     "region": "sfo1",
-    "size": "512mb",
+    "size": "1gb",
     "snapshot_name": "onlinejudge {{timestamp}}"
   }],
   "provisioners": [
