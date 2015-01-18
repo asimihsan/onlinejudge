@@ -5,7 +5,7 @@ require 'pp'
 def run_python(name, code, should_pass)
     puts "running #{name}, should_pass #{should_pass}"
     File.write('/tmp/foo.py', code)
-    system('timeout -k 1s 1s ./sandbox /usr/bin/env python /tmp/foo.py')
+    system('timeout -k 1s 1s ./sandbox /usr/bin/env python /tmp/foo.py >/dev/null')
     if should_pass and $? != 0
         puts("should have passed, but got")
         pp $?
@@ -20,7 +20,7 @@ end
 def run_java(name, code, should_pass)
     puts "running #{name}, should_pass #{should_pass}"
     File.write('/tmp/Foo.java', code)
-    system('timeout -k 10s 10s ./sandbox /usr/bin/env bash -c "javac /tmp/Foo.java && java /tmp/Foo"')
+    system('rm -f /tmp/*.class && timeout -k 10s 10s ./sandbox /usr/bin/env bash -c "javac /tmp/Foo.java && java -classpath /tmp Foo >/dev/null"')
     if should_pass and $? != 0
         puts("should have passed, but got")
         pp $?
@@ -35,7 +35,7 @@ end
 def run_ruby(name, code, should_pass)
     puts "running #{name}, should_pass #{should_pass}"
     File.write('/tmp/foo.rb', code)
-    system('timeout -k 10s 10s ./sandbox /usr/bin/env ruby /tmp/foo.rb')
+    system('timeout -k 10s 10s ./sandbox /usr/bin/env ruby /tmp/foo.rb >/dev/null')
     if should_pass and $? != 0
         puts("should have passed, but got")
         pp $?
