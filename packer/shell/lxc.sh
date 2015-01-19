@@ -59,7 +59,7 @@ lxc-attach -n ubase -- bash -c 'apt-get --quiet --assume-yes install \
     build-essential python python-dev ruby ruby-dev default-jdk \
     pkg-config libglib2.0 libglib2.0-dev linux-headers-$(uname -r) \
     openssh-server ufw coreutils seccomp libseccomp-dev libseccomp2 \
-    wamerican'
+    wamerican libcap-dev strace'
 lxc-attach -n ubase -- apt-get clean
 lxc-attach -n ubase -- bash -c 'id -u ubuntu &>/dev/null && userdel ubuntu'
 lxc-attach -n ubase -- bash -c '[ -d /home/ubuntu ] && rm -rf /home/ubuntu'
