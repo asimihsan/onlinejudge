@@ -6,7 +6,7 @@ CFLAGS+=-std=c++11 -Wall -Wextra -O2 -fPIE \
     -fstack-protector-all \
     $(shell pkg-config --cflags gio-2.0)
 LDLIBS+=$(shell pkg-config --libs libseccomp) \
-    $(shell pkg-config --libs gio-2.0)
+    $(shell pkg-config --libs gio-2.0) -lcap
 LDFLAGS+=-pie -Wl,--as-needed,-z,relro,-z,now
 SOURCES=sandbox.cpp
 
@@ -14,6 +14,8 @@ all: sandbox
 
 sandbox: syscall-names.h
 	$(CC) $(CFLAGS) $(SOURCES) $(LDLIBS) $(LDFLAGS) -o sandbox
+	chown nobody:nogroup sandbox
+	chmod +s sandbox
 
 syscall-names.h: /usr/include/x86_64-linux-gnu/asm/unistd_64.h
 	echo "static const char *syscall_names[] = {" > $@ ;\
@@ -23,6 +25,8 @@ syscall-names.h: /usr/include/x86_64-linux-gnu/asm/unistd_64.h
 
 install: sandbox
 	install -Dm755 $< $(DESTDIR)$(PREFIX)/bin/$<
+	chown nobody:nogroup $(DESTDIR)$(PREFIX)/bin/$<
+	chmod +s $(DESTDIR)$(PREFIX)/bin/$<
 
 clean:
 	rm -f sandbox syscall-names.h
