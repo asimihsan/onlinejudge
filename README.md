@@ -15,7 +15,6 @@ Run untrusted code in a sandbox that prevents it from harming the host machine, 
 -   create a fizz buzz example, hard code it for now
     -   given a single number input print out the correct fizz buzz output for
         1 to n inclusive. -   setuid for runner in upstart conf not working, won't run, why?
--   Defer gzip'ing of responses to nginx, let runner focus on running.
 -   Add seccomp whitelist to LXC provisioned by packer
     -   Use Docker perl script to generate (https://github.com/docker/docker/blob/master/contrib/mkseccomp.pl)
     -   Even if it's a 100% whitelist fine for now (bottom of https://github.com/lxc/lxc)
@@ -62,6 +61,7 @@ Run untrusted code in a sandbox that prevents it from harming the host machine, 
     -   Put HTTP server in LXC container.
     -   Will not run outside LXC container and do on every run clone/start/stop/destroy LXC container (measure latency)
         -   Around 5 seconds, too high
+-   Defer gzip'ing of responses to nginx, let runner focus on running.
 
 ## Snippets
 
