@@ -5,6 +5,7 @@
 #include <seccomp.h>
 #include <signal.h>
 #include <stdexcept>
+#include <sys/capability.h>
 #include <sys/prctl.h>
 #include <sys/resource.h>
 #include <unistd.h>
@@ -398,11 +399,17 @@ int main(int const argc, char* const* const argv) {
         if (argc < 2)
             e("params: program args");
 
+        // The Linux Programming Interface, ch 38.3: close all unnecessary
+        // file descriptors before an exec()
         close_fds();
+
         install_rlimits();
         if (install_syscall_filter())
             e("install_syscall_filter()");
 
+        // The Linux Programming Interface, ch 38.3. Avoid executing a shell
+        // (or other interpreter) with privileges (hence we don't do
+        // execlp or execvp, and you must provide full path to binaries).
         int rc = execv(argv[1], &(argv[1]));
         if (rc == -1)
             e(std::strerror(errno));
