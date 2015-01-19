@@ -4,9 +4,9 @@ Run untrusted code in a sandbox that prevents it from harming the host machine, 
 
 ## TODO
 
--   Fix javac and java to work; memory limits getting hit
-    -   memory limits hit during javac but seccomp in sandbox somehow suppressed
-        this
+-   chosen combo box not working on mobile
+    -   ah. chosen isn't supported on mobile. try not using optgroup.
+-   Don't think run/run-output files are getting deleting from /tmp, even though there's a defer to delete them.
 -   allow stdin as input and expected stdout as output.
     -   runner passes stdin
     -   runner still returns stdout, but additionally returns some boolean saying
@@ -28,6 +28,13 @@ Run untrusted code in a sandbox that prevents it from harming the host machine, 
 
 ## TODO done
 
+-   prevent a "rm -rf /" from a program by dropping to a new user
+    -   Did a "chown nobody:nogroup sandbox; chown +s sandbox"
+    -   This means that whoever runs sandbox will get the equivalent of nobody's access.
+    -   Can try e.g. "os.unlink("/var/foo")" after touching it by root
+-   Fix javac and java to work; memory limits getting hit
+    -   memory limits hit during javac but seccomp in sandbox somehow suppressed
+        this
 -   Add lots of other languages.
 -   Use curl to test it works.
 -   Rebuild Digital Ocean image
