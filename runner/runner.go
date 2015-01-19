@@ -185,7 +185,7 @@ func runCommand(language string, filepath string) *exec.Cmd {
             logger.Panicf("failed to chmod /tmp/foo/foo.py")
         }
         return exec.Command("lxc-attach", "-n", "u1", "--",
-            "su", "-", "ubuntu", "-c", "/home/ubuntu/sandbox/sandbox /usr/bin/python /tmp/foo/foo.py")
+            "/usr/local/bin/sandbox /usr/bin/python /tmp/foo/foo.py")
     case "ruby":
         if err := exec.Command("cp", "-f", filepath, "/tmp/foo/foo.rb").Run(); err != nil {
             logger.Panicf("failed to copy code to /tmp/foo/foo.py")
@@ -194,7 +194,7 @@ func runCommand(language string, filepath string) *exec.Cmd {
             logger.Panicf("failed to chmod /tmp/foo/foo.rb")
         }
         return exec.Command("lxc-attach", "-n", "u1", "--",
-            "/home/ubuntu/sandbox/sandbox", "/usr/bin/ruby", "/tmp/foo/foo.rb")
+            "/usr/local/bin/sandbox", "/usr/bin/ruby", "/tmp/foo/foo.rb")
     case "java":
         if err := exec.Command("cp", "-f", filepath, "/tmp/foo/Solution.java").Run(); err != nil {
             logger.Panicf("failed to copy code to /tmp/foo/Solution.java")
@@ -203,7 +203,7 @@ func runCommand(language string, filepath string) *exec.Cmd {
             logger.Panicf("failed to chmod /tmp/foo/Solution.java")
         }
         return exec.Command("lxc-attach", "-n", "u1", "--",
-            "/bin/bash", "-c", "rm -f /tmp/foo/*.class && /home/ubuntu/sandbox/sandbox /usr/bin/javac -J-Xmx350m /tmp/foo/Solution.java && /home/ubuntu/sandbox/sandbox /usr/bin/java -Xmx350m -classpath /tmp/foo Solution")
+            "/bin/bash", "-c", "rm -f /tmp/foo/*.class && /usr/local/bin/sandbox /usr/bin/javac -J-Xmx350m /tmp/foo/Solution.java && /usr/local/bin/sandbox /usr/bin/java -Xmx350m -classpath /tmp/foo Solution")
     }
     return nil
 }
