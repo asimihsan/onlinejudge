@@ -1,6 +1,21 @@
 (function() {
+    function getPersistedTextKey() {
+        return window.location.href + '::' + 'persistedText';
+    }
+
+    function getPersistedLanguageKey() {
+        return window.location.href + '::' + 'persistedLanguage';
+    }
+
+    function onChange(editor) {
+        localStorage[getPersistedTextKey()] = editor.getValue();
+    }
+
     function createEditor(editorElement) {
         window.editor = CodeMirror.fromTextArea(editorElement, {});
+        window.editor.setValue(localStorage[getPersistedTextKey()] || window.editor.getValue());
+        window.editor.on("change", onChange);
+
     }
     function setupEditorSpaces() {
         window.editor.setOption("extraKeys", {
@@ -16,7 +31,9 @@
         window.editor.setOption("lineWrapping", true);
         window.editor.setOption("tabSize", 4);
         window.editor.setOption("indentUnit", 4);
-        window.editor.setValue(text);
+        if (text) {
+            window.editor.setValue(text);
+        }
         setupEditorSpaces();
     }
     function setupPython(editorElement, text) {
@@ -25,7 +42,9 @@
         window.editor.setOption("lineWrapping", true);
         window.editor.setOption("tabSize", 4);
         window.editor.setOption("indentUnit", 4);
-        window.editor.setValue(text);
+        if (text) {
+            window.editor.setValue(text);
+        }
         setupEditorSpaces();
     }
     function setupRuby(editorElement, text) {
@@ -34,34 +53,46 @@
         window.editor.setOption("lineWrapping", true);
         window.editor.setOption("tabSize", 2);
         window.editor.setOption("indentUnit", 2);
-        window.editor.setValue(text);
+        if (text) {
+            window.editor.setValue(text);
+        }
         setupEditorSpaces();
+    }
+
+    function onLanguageSelected(editorElement, language, text) {
+        switch(language) {
+            case 'java':
+                setupJava(editorElement, text);
+                language = 'java';
+                break;
+            case 'python':
+                setupPython(editorElement, text);
+                language = 'python';
+                break;
+            case 'ruby':
+                setupRuby(editorElement, text);
+                language = 'ruby';
+                break;
+        }
+        localStorage[getPersistedLanguageKey()] = language;
     }
 
     $(function() {
         var editorElement = document.getElementById("editor");
         createEditor(editorElement);
-        var language = 'python';
-        setupPython(editorElement, '');
+
         $(".language-select").chosen({
             width: '30%'
         }).change(function(_, target) {
             var text = window.editor.getValue();
-            switch(target.selected) {
-                case "java":
-                    setupJava(editorElement, text);
-                    language = 'java';
-                    break;
-                case "python":
-                    setupPython(editorElement, text);
-                    language = 'python';
-                    break;
-                case "ruby":
-                    setupRuby(editorElement, text);
-                    language = 'ruby';
-                    break;
-            }
+            language = target.selected;
+            onLanguageSelected(editorElement, language, text);
         });
+
+        var language = localStorage[getPersistedLanguageKey()] || 'python';
+        $(".language-select").val(language);
+        $(".language-select").trigger("chosen:updated");
+
         $(".clear-output-button").click(function() {
             $("#output").text("");
         });
