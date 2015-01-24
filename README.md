@@ -4,6 +4,10 @@ Run untrusted code in a sandbox that prevents it from harming the host machine, 
 
 ## TODO
 
+-   Use HTML5 localstorage to store last program in case browser dies
+-   Allow stdin and expected stdout in call. Return actual stdout and correct or not. Easier for clients to use. 
+-   Persist code/stdin/actual stdout etc to DynamoDB, browsing to it retrieves it
+-   Use Solarized theme for CodeMirror (play.elevatorsaga.com)
 -   chosen combo box not working on mobile
     -   ah. chosen isn't supported on mobile. try not using optgroup.
 -   Don't think run/run-output files are getting deleting from /tmp, even though there's a defer to delete them.
@@ -12,9 +16,15 @@ Run untrusted code in a sandbox that prevents it from harming the host machine, 
     -   runner still returns stdout, but additionally returns some boolean saying
         whether stdout is correct or not
     -   but don't show a diff, or indicate what the correct stdout it! hide it.
+-   setuid for runner in upstart conf not working, won't run, why?
 -   create a fizz buzz example, hard code it for now
     -   given a single number input print out the correct fizz buzz output for
-        1 to n inclusive. -   setuid for runner in upstart conf not working, won't run, why?
+        1 to n inclusive.
+    -   better idea is to come up with a single self-container file that defines the problem in some format
+        -   so the runner can accept this as a file then prepare it. pump in stdin, create temporary files (cache?)
+        -   investment of time, so it's easy to add problems later.
+        -   single text file...or JAR-like ZIP file with a certain format?
+    -   then add a dropdown / list for problems to attempt.
 -   Add seccomp whitelist to LXC provisioned by packer
     -   Use Docker perl script to generate (https://github.com/docker/docker/blob/master/contrib/mkseccomp.pl)
     -   Even if it's a 100% whitelist fine for now (bottom of https://github.com/lxc/lxc)
@@ -27,6 +37,8 @@ Run untrusted code in a sandbox that prevents it from harming the host machine, 
 
 ## TODO done
 
+-   Add a proper Java mode for CodeMirror from here: http://codemirror.net/1/contrib/java/
+    -   Use clike, but specify mode as "text/x-java".
 -   prevent a "rm -rf /" from a program by dropping to a new user
     -   Did a "chown nobody:nogroup sandbox; chown +s sandbox"
     -   This means that whoever runs sandbox will get the equivalent of nobody's access.
