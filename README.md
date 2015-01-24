@@ -6,7 +6,6 @@ Run untrusted code in a sandbox that prevents it from harming the host machine, 
 
 -   Allow stdin and expected stdout in call. Return actual stdout and correct or not. Easier for clients to use. 
 -   Persist code/stdin/actual stdout etc to DynamoDB, browsing to it retrieves it
--   Use Solarized theme for CodeMirror (play.elevatorsaga.com)
 -   chosen combo box not working on mobile
     -   ah. chosen isn't supported on mobile. try not using optgroup.
 -   Don't think run/run-output files are getting deleting from /tmp, even though there's a defer to delete them.
@@ -36,6 +35,7 @@ Run untrusted code in a sandbox that prevents it from harming the host machine, 
 
 ## TODO done
 
+-   Use Solarized theme for CodeMirror (play.elevatorsaga.com)
 -   Use HTML5 localstorage to store last program in case browser dies
 -   Add a proper Java mode for CodeMirror from here: http://codemirror.net/1/contrib/java/
     -   Use clike, but specify mode as "text/x-java".
