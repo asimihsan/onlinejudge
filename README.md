@@ -4,7 +4,6 @@ Run untrusted code in a sandbox that prevents it from harming the host machine, 
 
 ## TODO
 
--   Use HTML5 localstorage to store last program in case browser dies
 -   Allow stdin and expected stdout in call. Return actual stdout and correct or not. Easier for clients to use. 
 -   Persist code/stdin/actual stdout etc to DynamoDB, browsing to it retrieves it
 -   Use Solarized theme for CodeMirror (play.elevatorsaga.com)
@@ -37,6 +36,7 @@ Run untrusted code in a sandbox that prevents it from harming the host machine, 
 
 ## TODO done
 
+-   Use HTML5 localstorage to store last program in case browser dies
 -   Add a proper Java mode for CodeMirror from here: http://codemirror.net/1/contrib/java/
     -   Use clike, but specify mode as "text/x-java".
 -   prevent a "rm -rf /" from a program by dropping to a new user
