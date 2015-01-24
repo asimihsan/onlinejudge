@@ -11,7 +11,7 @@
         });
     }
     function setupJava(editorElement, text) {
-        window.editor.setOption("mode", "clike");
+        window.editor.setOption("mode", "text/x-java");
         window.editor.setOption("lineNumbers", true);
         window.editor.setOption("lineWrapping", true);
         window.editor.setOption("tabSize", 4);
