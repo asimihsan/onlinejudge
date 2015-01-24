@@ -11,11 +11,18 @@
         localStorage[getPersistedTextKey()] = editor.getValue();
     }
 
+    function setCommonEditorOptions() {
+        window.editor.setOption("lineNumbers", true);
+        window.editor.setOption("lineWrapping", true);
+        window.editor.setOption("theme", "solarized");
+        setupEditorSpaces();
+    }
+
     function createEditor(editorElement) {
         window.editor = CodeMirror.fromTextArea(editorElement, {});
         window.editor.setValue(localStorage[getPersistedTextKey()] || window.editor.getValue());
         window.editor.on("change", onChange);
-
+        setCommonEditorOptions();
     }
     function setupEditorSpaces() {
         window.editor.setOption("extraKeys", {
@@ -26,52 +33,43 @@
         });
     }
     function setupJava(editorElement, text) {
-        window.editor.setOption("mode", "text/x-java");
-        window.editor.setOption("lineNumbers", true);
-        window.editor.setOption("lineWrapping", true);
         window.editor.setOption("tabSize", 4);
         window.editor.setOption("indentUnit", 4);
+        setCommonEditorOptions();
+        window.editor.setOption("mode", "text/x-java");
         if (text) {
             window.editor.setValue(text);
         }
-        setupEditorSpaces();
     }
     function setupPython(editorElement, text) {
-        window.editor.setOption("mode", "python");
-        window.editor.setOption("lineNumbers", true);
-        window.editor.setOption("lineWrapping", true);
         window.editor.setOption("tabSize", 4);
         window.editor.setOption("indentUnit", 4);
+        setCommonEditorOptions();
+        window.editor.setOption("mode", "python");
         if (text) {
             window.editor.setValue(text);
         }
-        setupEditorSpaces();
     }
     function setupRuby(editorElement, text) {
-        window.editor.setOption("mode", "ruby");
-        window.editor.setOption("lineNumbers", true);
-        window.editor.setOption("lineWrapping", true);
         window.editor.setOption("tabSize", 2);
         window.editor.setOption("indentUnit", 2);
+        setCommonEditorOptions();
+        window.editor.setOption("mode", "ruby");
         if (text) {
             window.editor.setValue(text);
         }
-        setupEditorSpaces();
     }
 
     function onLanguageSelected(editorElement, language, text) {
         switch(language) {
             case 'java':
                 setupJava(editorElement, text);
-                language = 'java';
                 break;
             case 'python':
                 setupPython(editorElement, text);
-                language = 'python';
                 break;
             case 'ruby':
                 setupRuby(editorElement, text);
-                language = 'ruby';
                 break;
         }
         localStorage[getPersistedLanguageKey()] = language;
@@ -89,9 +87,12 @@
             onLanguageSelected(editorElement, language, text);
         });
 
+        // triggering chosen:updated doesn't trigger the callback function,
+        // so we call it ourselves.
         var language = localStorage[getPersistedLanguageKey()] || 'python';
         $(".language-select").val(language);
         $(".language-select").trigger("chosen:updated");
+        onLanguageSelected(editorElement, language, window.editor.getValue());
 
         $(".clear-output-button").click(function() {
             $("#output").text("");
