@@ -326,7 +326,7 @@ func ensureLxcContainerIsRunning() {
     logger.Println("ensureLxcContainerIsRunning() entry.")
 
     logger.Println("Stopping container...")
-    proc := exec.Command("lxc-stop", "--timeout", "5", "--name", "u1")
+    proc := exec.Command("lxc-stop", "--timeout", "1", "--name", "u1")
     proc.Start()
     proc.Wait()
     logger.Println("Stopped container.")
