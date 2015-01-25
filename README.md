@@ -4,10 +4,14 @@ Run untrusted code in a sandbox that prevents it from harming the host machine, 
 
 ## TODO
 
--   Allow stdin and expected stdout in call. Return actual stdout and correct or not. Easier for clients to use. 
+-   Add reCAPTCHA to site to prevent bots/APIs from using it.
+    -   When you start using it use API keys to authorize yourself.
+    -   By design Google reCAPTCHA will fail the second time for the same authorized response. Hence you need to do something else to authenticate the client once confirmed as human, e.g. give them an HMAC with a server secret. Or set cookie / use localstorage?
+-   Add tabs, "Code" and "Tests".
+    -   Tests get appended to code then run as one unit.
+    -   It's optional, so use a checkbox and grey out text box etc.
+-   Add decent description to frontend about how the site works
 -   Persist code/stdin/actual stdout etc to DynamoDB, browsing to it retrieves it
--   chosen combo box not working on mobile
-    -   ah. chosen isn't supported on mobile. try not using optgroup.
 -   Don't think run/run-output files are getting deleting from /tmp, even though there's a defer to delete them.
 -   allow stdin as input and expected stdout as output.
     -   runner passes stdin
@@ -35,6 +39,8 @@ Run untrusted code in a sandbox that prevents it from harming the host machine, 
 
 ## TODO done
 
+-   chosen combo box not working on mobile
+    -   ah. chosen isn't supported on mobile. try not using optgroup.
 -   Use Solarized theme for CodeMirror (play.elevatorsaga.com)
 -   Use HTML5 localstorage to store last program in case browser dies
 -   Add a proper Java mode for CodeMirror from here: http://codemirror.net/1/contrib/java/
@@ -74,6 +80,8 @@ Run untrusted code in a sandbox that prevents it from harming the host machine, 
     -   Will not run outside LXC container and do on every run clone/start/stop/destroy LXC container (measure latency)
         -   Around 5 seconds, too high
 -   Defer gzip'ing of responses to nginx, let runner focus on running.
+-   Allow stdin and expected stdout in call. Return actual stdout and correct or not. Easier for clients to use. 
+    -   No, needs to be like Codewars where you run test code that exercises the submitted code. That way submitted code samples look concise and more relevant without boilerplate.
 
 ## Snippets
 
@@ -86,6 +94,14 @@ watchmedo shell-command -c \
     scp -i ~/.ssh/digitalocean runner.linux root@104.236.136.8:~/runner.linux && \
     ssh -i ~/.ssh/digitalocean root@104.236.136.8 "service runner start"' \
     -w -p '*.go' .
+```
+
+Refresh frontend
+
+```
+watchmedo shell-command \
+    -c 'rsync -avz -e "ssh -i /Users/ai/.ssh/digitalocean" frontend/ root@104.236.136.8:/usr/share/nginx/html' \
+    -w frontend
 ```
 
 ## Requirements
