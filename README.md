@@ -36,6 +36,9 @@ Run untrusted code in a sandbox that prevents it from harming the host machine, 
 
 ## TODO done
 
+-   Bug fix - the 'output' in JSON is a massive byte array full of nulls.
+    -   It compresses well but is wasting time.
+    -   Can see this in Chrome or Firefox inspector.
 -   Bug fix
     -   Firefox CORS doesn't work on runsomecode.com, just www.runsomecode.com?
     -   Fixed by changing POST to hit "/run/", not "http://www.runsomecode.com/run"
