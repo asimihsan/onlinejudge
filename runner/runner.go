@@ -175,7 +175,19 @@ func runHandler(language string, w http.ResponseWriter, r *http.Request) {
     cmd := runCommand(language, codeFile.Name())
     runCode(cmd, codeFile, outputFile, logger, w, response)
 
-    response["success"] = true
+    if _, ok := response["success"]; !ok {
+        response["success"] = true
+    }
+    if val, _ := response["success"]; val != true {
+        // Something went wrong while running the code. There's a bug in Java
+        // where doing an infinite print means we can't run Java any more. By
+        // this I mean you run '/usr/local/bin/sandbox /usr/bin/javac' or java
+        // and it just quits with return code 0. This is odd, and strace isn't
+        // revealing. So for now let's always cycle the LXC container on any
+        // sort of failure.
+        logger.Println("code failure, so cycle the LXC container.")
+        ensureLxcContainerIsRunning()
+    }
 
     <-handlerSemaphore    
 }
@@ -245,7 +257,6 @@ func runCode(cmd *exec.Cmd, codeFile *os.File, outputFile *os.File,
             logger.Println(msg)
             response["success"] = false
             outputBuffer.WriteString(msg)
-            io.WriteString(w, msg)
         case err := <- done:
             if err != nil {
                 msg := fmt.Sprintf("<process finished with error: %s. output is below>\n", err)
@@ -284,7 +295,7 @@ func runCommand(language string, filepath string) *exec.Cmd {
         if err := os.Chmod("/tmp/foo/foo.py", 0755); err != nil {
             logger.Panicf("failed to chmod /tmp/foo/foo.py")
         }
-        return exec.Command("lxc-attach", "-n", "u1", "--",
+        return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
             "/usr/local/bin/sandbox", "/usr/bin/python", "/tmp/foo/foo.py")
     case "ruby":
         if err := exec.Command("cp", "-f", filepath, "/tmp/foo/foo.rb").Run(); err != nil {
@@ -293,7 +304,7 @@ func runCommand(language string, filepath string) *exec.Cmd {
         if err := os.Chmod("/tmp/foo/foo.rb", 0755); err != nil {
             logger.Panicf("failed to chmod /tmp/foo/foo.rb")
         }
-        return exec.Command("lxc-attach", "-n", "u1", "--",
+        return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
             "/usr/local/bin/sandbox", "/usr/bin/ruby", "/tmp/foo/foo.rb")
     case "java":
         if err := exec.Command("cp", "-f", filepath, "/tmp/foo/Solution.java").Run(); err != nil {
@@ -305,8 +316,8 @@ func runCommand(language string, filepath string) *exec.Cmd {
         if err := exec.Command("rm", "-f", "/tmp/foo/*.class").Run(); err != nil {
             logger.Panicf("failed to clean up old class files in /tmp/foo")
         }
-        return exec.Command("lxc-attach", "-n", "u1", "--",
-            "/bin/bash", "-c", "/usr/local/bin/sandbox /usr/bin/javac -J-Xmx350m /tmp/foo/Solution.java && /usr/local/bin/sandbox /usr/bin/java -Xmx350m -classpath /tmp/foo Solution")
+        return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
+            "/bin/sh", "-c", "/usr/local/bin/sandbox /usr/bin/javac -J-Xmx350m /tmp/foo/Solution.java && /usr/local/bin/sandbox /usr/bin/java -Xmx350m -classpath /tmp/foo Solution")
     }
     return nil
 }
