@@ -143,6 +143,7 @@ func runHandler(language string, w http.ResponseWriter, r *http.Request) {
     }
 
     // Verify Google reCAPTCHA
+    /*
     result, err := verifyRecaptcha(logger, t.Recaptcha)
     if err != nil {
         response["recaptchaSuccess"] = false
@@ -157,6 +158,7 @@ func runHandler(language string, w http.ResponseWriter, r *http.Request) {
     } else {
         response["recaptchaSuccess"] = true
     }
+    */
 
     // Put data into the channel which acts like a semaphore. Once it reaches
     // it's capacity it will block here; hence only "maxOutstandingRequests"
