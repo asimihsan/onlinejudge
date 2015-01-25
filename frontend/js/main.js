@@ -122,7 +122,7 @@ function grecaptchaOnLoad() {
             }
             $.ajax({
                 type: "POST",
-                url: "http://www.runsomecode.com/run/" + language,
+                url: "/run/" + language,
                 data: JSON.stringify(data),
                 contentType: "application/json; charset=utf-8",
                 success: function(response) {
