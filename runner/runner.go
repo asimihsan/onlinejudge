@@ -8,7 +8,9 @@ curl -X POST -H "Content-Type: text/plain" --compressed \
 // lxc-start-ephemeral -d -o ubase -n u1 -b /tmp/foo
 
 import (
+    "bytes"
     "compress/gzip"
+    "encoding/json"
     "fmt"
     "io"
     "io/ioutil"
@@ -26,6 +28,7 @@ var (
     letters = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
     maxOutstandingRequests = 1
     handlerSemaphore = make(chan int, maxOutstandingRequests)
+    grecaptchaSecret = "6LcB8gATAAAAAByLaeJzveuN4_lP_yDdiszVoL60"
 )
 
 func getLogger(prefix string) *log.Logger {
@@ -65,23 +68,113 @@ func makeGzipHandler(fn http.HandlerFunc) http.HandlerFunc {
     }
 }
 
+type run_handler_struct struct {
+    Code string
+    Recaptcha string
+}
+
+type verify_recaptcha_struct struct {
+    Success bool
+}
+
+func verifyRecaptcha(logger *log.Logger, recaptcha string) (result bool, err error) {
+    logger.Println("verifyRecaptcha entry()")
+    defer logger.Printf("verifyRecaptcha exit(). result: %s, err: %s\n", result, err)
+    result = false
+    uri := fmt.Sprintf("https://www.google.com/recaptcha/api/siteverify?secret=%s&response=%s",
+        grecaptchaSecret, recaptcha)
+    client := &http.Client{}
+    request, err := http.NewRequest("GET", uri, nil)
+    if err != nil {
+        logger.Println("Failed to create HTTP GET to Google reCAPTCHA")
+        return
+    }
+    resp, err := client.Do(request)
+    if err != nil {
+        logger.Println("Failed during HTTP GET to Google reCAPTCHA")
+        return
+    }
+    if resp.StatusCode != 200 {
+        logger.Printf("HTTP GET to Google reCAPTCHA not 200: %s\n", resp)
+    }
+    decoder := json.NewDecoder(resp.Body)
+    var t verify_recaptcha_struct
+    err = decoder.Decode(&t)
+    if err != nil {
+        logger.Panicf("Could not decode Google reCAPTCHA resposne")
+    }
+    
+    result = t.Success
+
+    return
+}
+
+func writeJSONResponse(logger *log.Logger, response map[string]interface{}, w http.ResponseWriter) {
+    logger.Println("writeJSONResponse() entry")
+    defer logger.Println("writeJSONResponse() exit")
+    responseEncoded, _ := json.Marshal(response)
+    io.WriteString(w, string(responseEncoded))
+}
+
 func runHandler(language string, w http.ResponseWriter, r *http.Request) {
     logger = getLogger(getLogPill())
     logger.Println("runHandler() entry.")
+    defer logger.Println("runHandler() exit.")
+
+    w.Header().Set("Access-Control-Allow-Origin", "*")
+    w.Header().Set("Access-Control-Allow-Methods", "POST OPTIONS")
+    w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+    w.Header().Set("Content-Type", "application/json")
+
+    if r.Method == "OPTIONS" {
+        return
+    }
+
+    response := map[string]interface{}{}
+    defer writeJSONResponse(logger, response, w)
+
+    decoder := json.NewDecoder(r.Body)
+    var t run_handler_struct
+    err := decoder.Decode(&t)
+    if err != nil {
+        response["success"] = false
+        response["output"] = "<could not decode JSON POST request>"
+        logger.Panicf("Could not decode JSON POST request")
+    }
+
+    // Verify Google reCAPTCHA
+    result, err := verifyRecaptcha(logger, t.Recaptcha)
+    if err != nil {
+        response["recaptchaSuccess"] = false
+        response["recaptcha"] = "<failed to verify Google reCAPTCHA>"
+        io.WriteString(w, "<failed to verify Google reCAPTCHA>\n")
+        //return
+    } else if result == false {
+        response["recaptchaSuccess"] = false
+        response["recaptcha"] = "<verified Google reCAPTCHA as false, not human. reload page and try again>"
+        //io.WriteString(w, "<verified Google reCAPTCHA as false, not human. reload page and try again.>\n")
+        //return
+    } else {
+        response["recaptchaSuccess"] = true
+    }
 
     // Put data into the channel which acts like a semaphore. Once it reaches
     // it's capacity it will block here; hence only "maxOutstandingRequests"
     // permitted.
     handlerSemaphore <- 1
-    codeFile := prepareCodeFile(logger, w, r)
-    defer os.Remove(codeFile.Name())
-    outputFile := prepareOutputFile(logger, w, r)
-    defer os.Remove(outputFile.Name())
-    cmd := runCommand(language, codeFile.Name())
-    runCode(cmd, codeFile, outputFile, logger, w, r)
-    <-handlerSemaphore
 
-    logger.Println("runHandler() exit.")
+    codeFile := prepareCodeFile(logger, t.Code)
+    defer os.Remove(codeFile.Name())
+
+    outputFile := prepareOutputFile(logger)
+    defer os.Remove(outputFile.Name())
+
+    cmd := runCommand(language, codeFile.Name())
+    runCode(cmd, codeFile, outputFile, logger, w, response)
+
+    response["success"] = true
+
+    <-handlerSemaphore    
 }
 
 func runPythonHandler (w http.ResponseWriter, r *http.Request) {
@@ -96,7 +189,7 @@ func runJavaHandler (w http.ResponseWriter, r *http.Request) {
     runHandler("java", w, r)
 }
 
-func prepareCodeFile(logger *log.Logger, w http.ResponseWriter, r *http.Request) *os.File {
+func prepareCodeFile(logger *log.Logger, code string) *os.File {
     logger.Println("prepareCodeFile() entry.")
     codeFile, err := ioutil.TempFile("", "run")
     if err != nil {
@@ -104,14 +197,14 @@ func prepareCodeFile(logger *log.Logger, w http.ResponseWriter, r *http.Request)
     }
     logger.Println("temporary codeFile: ", codeFile.Name())
     logger.Println("prepareCodeFile() writing code to file...")
-    io.Copy(codeFile, r.Body)
+    io.WriteString(codeFile, code)
     codeFile.Close()
     logger.Println("prepareCodeFile() finished writing code to file.")
     logger.Println("prepareCodeFile() exit.")
     return codeFile
 }
 
-func prepareOutputFile(logger *log.Logger, w http.ResponseWriter, r *http.Request) *os.File {
+func prepareOutputFile(logger *log.Logger) *os.File {
     logger.Println("prepareOutputFile() entry.")
     outputFile, err := ioutil.TempFile("", "run-output")
     if err != nil {
@@ -123,8 +216,9 @@ func prepareOutputFile(logger *log.Logger, w http.ResponseWriter, r *http.Reques
 }
 
 func runCode(cmd *exec.Cmd, codeFile *os.File, outputFile *os.File,
-             logger *log.Logger, w http.ResponseWriter, r *http.Request) {
+             logger *log.Logger, w http.ResponseWriter, response map[string]interface{}) {
     logger.Println("runCode() entry.")
+    defer logger.Println("runCode() exit.")
     cmd.Stdout = outputFile
     cmd.Stderr = outputFile
     logger.Println("runCode() running file...")
@@ -133,15 +227,11 @@ func runCode(cmd *exec.Cmd, codeFile *os.File, outputFile *os.File,
         logger.Panicf("failed to run command", err)
     }
 
-    w.Header().Set("Access-Control-Allow-Origin", "*")
-    w.Header().Set("Access-Control-Allow-Methods", "POST")
-    w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-    w.Header().Set("Content-Type", "text/plain")
-
     done := make(chan error, 1)
     go func() {
         done <- cmd.Wait()
     }()
+    var outputBuffer bytes.Buffer
     select {
         case <- time.After(5 * time.Second):
             if err := cmd.Process.Kill(); err != nil {
@@ -150,12 +240,15 @@ func runCode(cmd *exec.Cmd, codeFile *os.File, outputFile *os.File,
             }
             msg := "<process ran for too long. output is below>\n"
             logger.Println(msg)
+            response["success"] = false
+            outputBuffer.WriteString(msg)
             io.WriteString(w, msg)
         case err := <- done:
             if err != nil {
                 msg := fmt.Sprintf("<process finished with error: %s. output is below>\n", err)
                 logger.Println(msg)
-                io.WriteString(w, msg)
+                response["success"] = false
+                outputBuffer.WriteString(msg)
             }
     }
 
@@ -164,14 +257,20 @@ func runCode(cmd *exec.Cmd, codeFile *os.File, outputFile *os.File,
     logger.Println("runCode() returning output...")
     _, _ = outputFile.Seek(0, 0)
     // more than this causes gzip encoder to crash with null pointer exception
-    written, err := io.CopyN(w, outputFile, 1 * 1024 * 1024)
-    if written == 1 * 1024 * 1024 {
-        io.WriteString(w, "\n<too much output, truncated>\n")
+    // TODO probably memory inefficient
+    output := make([]byte, 1 * 1024 * 1024)
+    written, err := io.ReadAtLeast(outputFile, output, 1 * 1024 * 1024)
+    if err != nil && err != io.ErrUnexpectedEOF {
+        logger.Println(err)
+        response["success"] = false
+        outputBuffer.WriteString(err.Error())
     }
-
+    outputBuffer.Write(output)
+    if written == 1 * 1024 * 1024 {
+        outputBuffer.WriteString("\n<too much output, truncated>\n")
+    }
+    response["output"] = outputBuffer.String()
     logger.Println("runCode() finished returning output.")
-
-    logger.Println("runCode() exit.")
 }
 
 func runCommand(language string, filepath string) *exec.Cmd {
@@ -185,7 +284,7 @@ func runCommand(language string, filepath string) *exec.Cmd {
             logger.Panicf("failed to chmod /tmp/foo/foo.py")
         }
         return exec.Command("lxc-attach", "-n", "u1", "--",
-            "/usr/local/bin/sandbox /usr/bin/python /tmp/foo/foo.py")
+            "/usr/local/bin/sandbox", "/usr/bin/python", "/tmp/foo/foo.py")
     case "ruby":
         if err := exec.Command("cp", "-f", filepath, "/tmp/foo/foo.rb").Run(); err != nil {
             logger.Panicf("failed to copy code to /tmp/foo/foo.py")

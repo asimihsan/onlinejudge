@@ -1,3 +1,9 @@
+function grecaptchaOnLoad() {
+    window.recaptcha = grecaptcha.render('recaptcha', {
+        'sitekey': '6LcB8gATAAAAAN4SkOZ0o30BvUFq--YsNiPsIuWp',
+    });
+}
+
 (function() {
     function getPersistedTextKey() {
         return window.location.href + '::' + 'persistedText';
@@ -75,6 +81,8 @@
         localStorage[getPersistedLanguageKey()] = language;
     }
 
+    $(window).load(grecaptchaOnLoad);
+
     $(function() {
         var editorElement = document.getElementById("editor");
         createEditor(editorElement);
@@ -105,18 +113,24 @@
             var l = Ladda.create(document.querySelector('.submit-button'));
             l.start();
             l.isLoading();
-        
+
+            data = {
+                'code': window.editor.getValue(),
+                'recaptcha': grecaptcha.getResponse(window.recaptcha),
+            }
             $.ajax({
                 type: "POST",
                 url: "http://www.runsomecode.com/run/" + language,
-                data: window.editor.getValue(),
-                contentType: "text/plain; charset=utf-8",
+                data: JSON.stringify(data),
+                contentType: "application/json; charset=utf-8",
                 success: function(response) {
-                    $("#output").text(response);
+                    console.log(response);
+                    $("#output").text(response.output);
                     l.stop();
                 },
                 failure: function(response) {
-                    $("#output").text(response);
+                    console.log(response);
+                    $("#output").text(response.output);
                     l.stop();
                 }
             });

@@ -25,6 +25,7 @@
         <link rel="stylesheet" href="bower_components/normalize-css/normalize.css">
         <link rel="stylesheet" href="css/main.css">
         <script src="bower_components/modernizr/modernizr.js"></script>
+        <script src="https://www.google.com/recaptcha/api.js?render=explicit"></script>
     </head>
     <body>
         <!--[if lt IE 7]>
@@ -33,13 +34,6 @@
 
     <div class="container">
       <div class="header">
-        <nav>
-          <ul class="nav nav-pills pull-right">
-            <li role="presentation" class="active"><a href="#">Home</a></li>
-            <li role="presentation"><a href="#">About</a></li>
-            <li role="presentation"><a href="#">Contact</a></li>
-          </ul>
-        </nav>
         <h3 class="text-muted">Run Some Code</h3>
       </div>
 
@@ -58,6 +52,7 @@
             <textarea id="editor" name="editor"></textarea>
         </div>
         <div class="col-md-4">
+            <div id="recaptcha"></div>
             <button type="submit" class="ladda-button submit-button" data-color="blue" data-style="contract" data-size="s" name="submit" id="submit">
                 <span class="ladda-label">Submit</span>
                 <span class="ladda-spinner"></span>
