@@ -29,6 +29,7 @@ var (
     maxOutstandingRequests = 1
     handlerSemaphore = make(chan int, maxOutstandingRequests)
     grecaptchaSecret = "6LcB8gATAAAAAByLaeJzveuN4_lP_yDdiszVoL60"
+    outputLimit = 10 * 1024
 )
 
 func getLogger(prefix string) *log.Logger {
@@ -258,17 +259,15 @@ func runCode(cmd *exec.Cmd, codeFile *os.File, outputFile *os.File,
 
     logger.Println("runCode() returning output...")
     _, _ = outputFile.Seek(0, 0)
-    // more than this causes gzip encoder to crash with null pointer exception
-    // TODO probably memory inefficient
-    output := make([]byte, 1 * 1024 * 1024)
-    written, err := io.ReadAtLeast(outputFile, output, 1 * 1024 * 1024)
-    if err != nil && err != io.ErrUnexpectedEOF {
+    outputLimitReader := io.LimitReader(outputFile, int64(outputLimit))
+    output, err := ioutil.ReadAll(outputLimitReader)
+    if err != nil {
         logger.Println(err)
         response["success"] = false
         outputBuffer.WriteString(err.Error())
     }
     outputBuffer.Write(output)
-    if written == 1 * 1024 * 1024 {
+    if len(output) == outputLimit {
         outputBuffer.WriteString("\n<too much output, truncated>\n")
     }
     response["output"] = outputBuffer.String()
