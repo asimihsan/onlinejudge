@@ -4,9 +4,6 @@ Run untrusted code in a sandbox that prevents it from harming the host machine, 
 
 ## TODO
 
--   Add reCAPTCHA to site to prevent bots/APIs from using it.
-    -   When you start using it use API keys to authorize yourself.
-    -   By design Google reCAPTCHA will fail the second time for the same authorized response. Hence you need to do something else to authenticate the client once confirmed as human, e.g. give them an HMAC with a server secret. Or set cookie / use localstorage?
 -   Add tabs, "Code" and "Tests".
     -   Tests get appended to code then run as one unit.
     -   It's optional, so use a checkbox and grey out text box etc.
@@ -39,6 +36,9 @@ Run untrusted code in a sandbox that prevents it from harming the host machine, 
 
 ## TODO done
 
+-   Bug fix
+    -   Firefox CORS doesn't work on runsomecode.com, just www.runsomecode.com?
+    -   Fixed by changing POST to hit "/run/", not "http://www.runsomecode.com/run"
 -   chosen combo box not working on mobile
     -   ah. chosen isn't supported on mobile. try not using optgroup.
 -   Use Solarized theme for CodeMirror (play.elevatorsaga.com)
@@ -75,6 +75,9 @@ Run untrusted code in a sandbox that prevents it from harming the host machine, 
 
 ## TODO rejected
 
+-   Add reCAPTCHA to site to prevent bots/APIs from using it.
+    -   When you start using it use API keys to authorize yourself.
+    -   By design Google reCAPTCHA will fail the second time for the same authorized response. Hence you need to do something else to authenticate the client once confirmed as human, e.g. give them an HMAC with a server secret. Or set cookie / use localstorage? Make it last e.g. 24 hours.
 -   HTTP server that builds/runs python/ruby/java, return stdout/stderr
     -   Put HTTP server in LXC container.
     -   Will not run outside LXC container and do on every run clone/start/stop/destroy LXC container (measure latency)
