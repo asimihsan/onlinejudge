@@ -4,6 +4,8 @@ Run untrusted code in a sandbox that prevents it from harming the host machine, 
 
 ## TODO
 
+-   Sometimes Java randomly stops working, doesn't return anything
+    -   Set up automated smoke tests triggered by a URL endpoint, via HAproxy, and if a webserver fails take it out then restart runner etc.
 -   Add tabs, "Code" and "Tests".
     -   Tests get appended to code then run as one unit.
     -   It's optional, so use a checkbox and grey out text box etc.
