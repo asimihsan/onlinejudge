@@ -302,8 +302,11 @@ func runCommand(language string, filepath string) *exec.Cmd {
         if err := os.Chmod("/tmp/foo/Solution.java", 0755); err != nil {
             logger.Panicf("failed to chmod /tmp/foo/Solution.java")
         }
+        if err := exec.Command("rm", "-f", "/tmp/foo/*.class").Run(); err != nil {
+            logger.Panicf("failed to clean up old class files in /tmp/foo")
+        }
         return exec.Command("lxc-attach", "-n", "u1", "--",
-            "/bin/bash", "-c", "rm -f /tmp/foo/*.class && /usr/local/bin/sandbox /usr/bin/javac -J-Xmx350m /tmp/foo/Solution.java && /usr/local/bin/sandbox /usr/bin/java -Xmx350m -classpath /tmp/foo Solution")
+            "/bin/bash", "-c", "/usr/local/bin/sandbox /usr/bin/javac -J-Xmx350m /tmp/foo/Solution.java && /usr/local/bin/sandbox /usr/bin/java -Xmx350m -classpath /tmp/foo Solution")
     }
     return nil
 }
