@@ -47,6 +47,9 @@ public class Solution {
 
 ## TODO done
 
+-   Still using privileged containers, since you were root.
+    -   `sudo useradd -d /home/ubuntu -m ubuntu -p password`
+    -   `su - ubuntu -c ...` (put config, create container)
 -   Bug fix - the 'output' in JSON is a massive byte array full of nulls.
     -   It compresses well but is wasting time.
     -   Can see this in Chrome or Firefox inspector.
