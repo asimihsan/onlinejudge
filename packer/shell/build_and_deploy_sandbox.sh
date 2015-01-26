@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 set -e
+set -x
 
-LXC_CONTAINER_NAME=ubase
-SCP='sshpass -p password scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -q'
+SCP='sshpass -p password scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
 
 copy_code() {
     n=0
@@ -14,12 +14,17 @@ copy_code() {
     done
 }
 
-lxc-start -n "${LXC_CONTAINER_NAME}" -d
-lxc-wait -n "${LXC_CONTAINER_NAME}" -s RUNNING
+mkdir -p ~/.ssh
+rm -f ~/.ssh/known_hosts
+touch ~/.ssh/known_hosts
+chmod 644 ~/.ssh/known_hosts
+ssh-keyscan -H localhost >> ~/.ssh/known_hosts
+
+ssh ubuntu@localhost "lxc-start -n ubase -d"
+ssh ubuntu@localhost "lxc-wait -n ubase -s RUNNING"
 sleep 10
-lxc-attach -n "${LXC_CONTAINER_NAME}" -- ifconfig
-IP_ADDRESS=$(lxc-info -i -n "${LXC_CONTAINER_NAME}" | awk '{print $2}')
+ssh ubuntu@localhost "lxc-attach -n ubase -- ifconfig"
+IP_ADDRESS=$(ssh ubuntu@localhost "lxc-info -i -n ubase" | awk '{print $2}')
 copy_code
-lxc-attach -n "${LXC_CONTAINER_NAME}" -- \
-    bash -c 'cd /home/ubuntu/sandbox && make clean && make && make install'
-lxc-attach -n "${LXC_CONTAINER_NAME}" -- poweroff
+ssh ubuntu@localhost "lxc-attach -n ubase -- bash -c 'cd /home/ubuntu/sandbox && make clean && make && make install'"
+ssh ubuntu@localhost "lxc-attach -n ubase -- poweroff"

@@ -295,7 +295,7 @@ func runCommand(language string, filepath string) *exec.Cmd {
         if err := os.Chmod("/tmp/foo/foo.py", 0755); err != nil {
             logger.Panicf("failed to chmod /tmp/foo/foo.py")
         }
-        return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
+        return exec.Command("ssh", "ubuntu@localhost", "lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
             "/usr/local/bin/sandbox", "/usr/bin/python", "/tmp/foo/foo.py")
     case "ruby":
         if err := exec.Command("cp", "-f", filepath, "/tmp/foo/foo.rb").Run(); err != nil {
@@ -304,7 +304,7 @@ func runCommand(language string, filepath string) *exec.Cmd {
         if err := os.Chmod("/tmp/foo/foo.rb", 0755); err != nil {
             logger.Panicf("failed to chmod /tmp/foo/foo.rb")
         }
-        return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
+        return exec.Command("ssh", "ubuntu@localhost", "lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
             "/usr/local/bin/sandbox", "/usr/bin/ruby", "/tmp/foo/foo.rb")
     case "java":
         if err := exec.Command("cp", "-f", filepath, "/tmp/foo/Solution.java").Run(); err != nil {
@@ -316,7 +316,7 @@ func runCommand(language string, filepath string) *exec.Cmd {
         if err := exec.Command("rm", "-f", "/tmp/foo/*.class").Run(); err != nil {
             logger.Panicf("failed to clean up old class files in /tmp/foo")
         }
-        return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
+        return exec.Command("ssh", "ubuntu@localhost", "lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
             "/bin/sh", "-c", "/usr/local/bin/sandbox /usr/bin/javac -J-Xmx350m /tmp/foo/Solution.java && /usr/local/bin/sandbox /usr/bin/java -Xmx350m -classpath /tmp/foo Solution")
     }
     return nil
@@ -326,12 +326,12 @@ func ensureLxcContainerIsRunning() {
     logger.Println("ensureLxcContainerIsRunning() entry.")
 
     logger.Println("Stopping container...")
-    proc := exec.Command("lxc-stop", "--timeout", "1", "--name", "u1")
+    proc := exec.Command("ssh", "ubuntu@localhost", "lxc-stop", "--timeout", "1", "--name", "u1")
     proc.Start()
     proc.Wait()
     logger.Println("Stopped container.")
 
-    proc = exec.Command("lxc-info", "-n", "u1")
+    proc = exec.Command("ssh", "ubuntu@localhost", "lxc-info", "-n", "u1")
     err := proc.Start()
     if err != nil {
         logger.Panicf("Failed to start lxc-info", err)
@@ -344,7 +344,7 @@ func ensureLxcContainerIsRunning() {
     }
     logger.Println("Container not running, so restart it.")
     os.Mkdir("/tmp/foo", 0755)
-    proc2 := exec.Command("lxc-start-ephemeral", "-d", "-o", "ubase",
+    proc2 := exec.Command("ssh", "ubuntu@localhost", "lxc-start-ephemeral", "-d", "-o", "ubase",
         "-n", "u1", "-b", "/tmp/foo")
     err2 := proc2.Start() 
     if err2 != nil {
