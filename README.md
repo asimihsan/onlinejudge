@@ -4,6 +4,8 @@ Run untrusted code in a sandbox that prevents it from harming the host machine, 
 
 ## TODO
 
+-   Fix restart of service, can't restart because can't kill runner since it runs it via ssh?
+-   Make some automated tests.
 -   Fix suid on sandbox. It seems to be root again, able to e.g. delete all files.
 -   I think on boot the image can't ssh into ubuntu@localhost. Fix image.
 -   After running the following infinite print in Java can't run Java programs any more
