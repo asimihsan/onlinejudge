@@ -391,7 +391,9 @@ void install_rlimits(void) {
     limit_resource(RLIMIT_FSIZE, 10*1024*1024);    // Maximum filesize
     limit_resource(RLIMIT_LOCKS, 0);               // Maximum file locks held
     limit_resource(RLIMIT_MEMLOCK, 0);             // Maximum locked-in-memory address spac
-    limit_resource(RLIMIT_NPROC, 0);               // Maximum number of processes.
+
+    // Java requires minimum of 25. Python no restriction. Ruby maybe restriction.
+    limit_resource(RLIMIT_NPROC, 25);               // Maximum number of processes.
 }
 
 int main(int const argc, char* const* const argv) {
