@@ -192,15 +192,23 @@ func runHandler(language string, w http.ResponseWriter, r *http.Request) {
     <-handlerSemaphore    
 }
 
-func runPythonHandler (w http.ResponseWriter, r *http.Request) {
+func runCHandler(w http.ResponseWriter, r *http.Request) {
+    runHandler("c", w, r)
+}
+
+func runCPPHandler(w http.ResponseWriter, r *http.Request) {
+    runHandler("cpp", w, r)
+}
+
+func runPythonHandler(w http.ResponseWriter, r *http.Request) {
     runHandler("python", w, r)
 }
 
-func runRubyHandler (w http.ResponseWriter, r *http.Request) {
+func runRubyHandler(w http.ResponseWriter, r *http.Request) {
     runHandler("ruby", w, r)
 }
 
-func runJavaHandler (w http.ResponseWriter, r *http.Request) {
+func runJavaHandler(w http.ResponseWriter, r *http.Request) {
     runHandler("java", w, r)
 }
 
@@ -287,6 +295,30 @@ func runCode(cmd *exec.Cmd, codeFile *os.File, outputFile *os.File,
 
 func runCommand(language string, filepath string) *exec.Cmd {
     switch language {
+    case "c":
+        if err := exec.Command("cp", "-f", filepath, "/tmp/foo/program.c").Run(); err != nil {
+            logger.Panicf("failed to copy code to /tmp/foo/program.c")
+        }
+        if err := os.Chmod("/tmp/foo/program.c", 0777); err != nil {
+            logger.Panicf("failed to chmod /tmp/foo/program.c")
+        }
+        if err := exec.Command("rm", "-f", "/tmp/foo/*.out").Run(); err != nil {
+            logger.Panicf("failed to clean up old out files in /tmp/foo")
+        }
+        return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
+            "/bin/bash", "-c", "/usr/local/bin/sandbox /usr/bin/gcc -Wall -std=c99 /tmp/foo/program.c -o /tmp/foo/a.out && /usr/local/bin/sandbox /tmp/foo/a.out")
+    case "cpp":
+        if err := exec.Command("cp", "-f", filepath, "/tmp/foo/program.cpp").Run(); err != nil {
+            logger.Panicf("failed to copy code to /tmp/foo/program.cpp")
+        }
+        if err := os.Chmod("/tmp/foo/program.cpp", 0777); err != nil {
+            logger.Panicf("failed to chmod /tmp/foo/program.cpp")
+        }
+        if err := exec.Command("rm", "-f", "/tmp/foo/*.out").Run(); err != nil {
+            logger.Panicf("failed to clean up old out files in /tmp/foo")
+        }
+        return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
+            "/bin/bash", "-c", "/usr/local/bin/sandbox /usr/bin/g++ -Wall -std=c++11 /tmp/foo/program.cpp -o /tmp/foo/a.out && /usr/local/bin/sandbox /tmp/foo/a.out")
     case "python":
         if err := exec.Command("cp", "-f", filepath, "/tmp/foo/foo.py").Run(); err != nil {
             logger.Panicf("failed to copy code to /tmp/foo/foo.py")
@@ -360,6 +392,8 @@ func main() {
     logger.Println("main() entry.")
     ensureLxcContainerIsRunning()
     rand.Seed(time.Now().UTC().UnixNano())
+    http.HandleFunc("/run/c", makeGzipHandler(runCHandler))
+    http.HandleFunc("/run/cpp", makeGzipHandler(runCPPHandler))
     http.HandleFunc("/run/python", makeGzipHandler(runPythonHandler))
     http.HandleFunc("/run/ruby", makeGzipHandler(runRubyHandler))
     http.HandleFunc("/run/java", makeGzipHandler(runJavaHandler))

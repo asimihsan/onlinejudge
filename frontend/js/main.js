@@ -40,6 +40,24 @@ function grecaptchaOnLoad() {
             }
         });
     }
+    function setupC(editorElement, text) {
+        window.editor.setOption("tabSize", 4);
+        window.editor.setOption("indentUnit", 4);
+        setCommonEditorOptions();
+        window.editor.setOption("mode", "text/x-csrc");
+        if (text) {
+            window.editor.setValue(text);
+        }
+    }
+    function setupCPP(editorElement, text) {
+        window.editor.setOption("tabSize", 4);
+        window.editor.setOption("indentUnit", 4);
+        setCommonEditorOptions();
+        window.editor.setOption("mode", "text/x-c++src");
+        if (text) {
+            window.editor.setValue(text);
+        }
+    }
     function setupJava(editorElement, text) {
         window.editor.setOption("tabSize", 4);
         window.editor.setOption("indentUnit", 4);
@@ -70,6 +88,12 @@ function grecaptchaOnLoad() {
 
     function onLanguageSelected(editorElement, language, text) {
         switch(language) {
+            case 'c':
+                setupC(editorElement, text);
+                break;
+            case 'cpp':
+                setupCPP(editorElement, text);
+                break;
             case 'java':
                 setupJava(editorElement, text);
                 break;

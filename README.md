@@ -114,7 +114,8 @@ Refresh runner code:
 ```
 watchmedo shell-command -c \
     'clear && date && GOOS=linux GOARCH=amd64 go build -o runner.linux && \
-    ssh -i ~/.ssh/digitalocean root@104.236.136.8 "service runner stop" && \
+    ssh -i ~/.ssh/digitalocean root@104.236.136.8 "service runner stop" ; \
+    ssh -i ~/.ssh/digitalocean root@104.236.136.8 "pkill runner.linux" ; \
     scp -i ~/.ssh/digitalocean runner.linux root@104.236.136.8:/usr/local/bin/runner.linux && \
     ssh -i ~/.ssh/digitalocean root@104.236.136.8 "service runner start"' \
     -w -p '*.go' .
@@ -126,6 +127,16 @@ Refresh frontend
 watchmedo shell-command \
     -c 'rsync -avz -e "ssh -i /Users/ai/.ssh/digitalocean" frontend/ root@104.236.136.8:/usr/share/nginx/html' \
     -w frontend
+```
+
+Refresh sandbox
+
+```
+watchmedo shell-command -c \
+    'clear && date && \
+    scp -r -i ~/.ssh/digitalocean . root@104.236.136.8:~/sandbox && \
+    ssh -i ~/.ssh/digitalocean root@104.236.136.8 "sshpass -p password scp -r ~/sandbox ubuntu@10.0.3.84:/home/ubuntu/"' \
+    -w -p '*.cpp' .
 ```
 
 ## Requirements

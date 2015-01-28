@@ -87,7 +87,7 @@ static int install_syscall_filter(void) {
        //ALLOW_SYSCALL(getsockopt),
        ALLOW_SYSCALL(clone), // java
        //ALLOW_SYSCALL(fork),
-       //ALLOW_SYSCALL(vfork),
+       ALLOW_SYSCALL(vfork), // c
        ALLOW_SYSCALL(execve), // general
        ALLOW_SYSCALL(exit), // general
        ALLOW_SYSCALL(wait4), // java
@@ -115,16 +115,16 @@ static int install_syscall_filter(void) {
        ALLOW_SYSCALL(mkdir), // java
        //ALLOW_SYSCALL(rmdir),
        //ALLOW_SYSCALL(creat),
-       //ALLOW_SYSCALL(link),
+       ALLOW_SYSCALL(link), // c
        ALLOW_SYSCALL(unlink), // java, javac infinite hang
-       //ALLOW_SYSCALL(symlink),
+       ALLOW_SYSCALL(symlink), // c
        ALLOW_SYSCALL(readlink), // general
-       //ALLOW_SYSCALL(chmod),
+       ALLOW_SYSCALL(chmod), // c
        //ALLOW_SYSCALL(fchmod),
        //ALLOW_SYSCALL(chown),
        //ALLOW_SYSCALL(fchown),
-       //ALLOW_SYSCALL(lchown),
-       //ALLOW_SYSCALL(umask),
+       ALLOW_SYSCALL(lchown), // c
+       ALLOW_SYSCALL(umask), // c
        ALLOW_SYSCALL(gettimeofday), // java
        ALLOW_SYSCALL(getrlimit), // python
        ALLOW_SYSCALL(getrusage), // ruby
