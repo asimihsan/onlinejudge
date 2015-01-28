@@ -23,3 +23,10 @@ EOF
 sudo chmod a+x /usr/local/bin/runner_via_ssh
 
 sudo init-checkconf /etc/init/runner.conf
+
+# hack, try to fix SSH working on boot
+mkdir -p ~/.ssh
+rm -f ~/.ssh/known_hosts
+touch ~/.ssh/known_hosts
+chmod 644 ~/.ssh/known_hosts
+ssh-keyscan -H localhost >> ~/.ssh/known_hosts
