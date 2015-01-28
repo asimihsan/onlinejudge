@@ -29,3 +29,6 @@ net.ipv4.conf.default.log_martians = 1
 kernel.exec-shield = 1
 kernel.randomize_va_space = 1
 EOF
+
+sudo sed -i 's|[#]*PasswordAuthentication yes|PasswordAuthentication no|g' /etc/ssh/sshd_config
+sudo service ssh restart
