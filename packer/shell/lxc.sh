@@ -136,7 +136,16 @@ ssh ubuntu@localhost "lxc-attach -n ubase -- bash -c 'apt-get --quiet --assume-y
     build-essential python python-dev ruby ruby-dev default-jdk \
     pkg-config libglib2.0 libglib2.0-dev linux-headers-$(uname -r) \
     openssh-server ufw coreutils seccomp libseccomp-dev libseccomp2 \
-    wamerican libcap-dev strace'"
+    wamerican libcap-dev strace software-properties-common \
+    python-software-properties'"
+ssh ubuntu@localhost "lxc-attach -n ubase -- add-apt-repository -y ppa:webupd8team/java"
+ssh ubuntu@localhost "lxc-attach -n ubase -- apt-get --quiet --assume-yes update"
+ssh ubuntu@localhost "lxc-attach -n ubase -- bash -c 'echo debconf shared/accepted-oracle-license-v1-1 select true | sudo debconf-set-selections'"
+ssh ubuntu@localhost "lxc-attach -n ubase -- bash -c 'echo debconf shared/accepted-oracle-license-v1-1 seen true | sudo debconf-set-selections'"
+ssh ubuntu@localhost "lxc-attach -n ubase -- bash -c 'apt-get --quiet --assume-yes install \
+    oracle-java8-installer'"
+ssh ubuntu@localhost "lxc-attach -n ubase -- update-java-alternatives -s java-7-oracle"
+ssh ubuntu@localhost "lxc-attach -n ubase -- apt-get --quiet --assume-yes install oracle-java7-set-default"
 ssh ubuntu@localhost "lxc-attach -n ubase -- apt-get clean"
 ssh ubuntu@localhost "lxc-attach -n ubase -- bash -c 'id -u ubuntu &>/dev/null && userdel ubuntu'"
 ssh ubuntu@localhost "lxc-attach -n ubase -- bash -c '[ -d /home/ubuntu ] && rm -rf /home/ubuntu'"
