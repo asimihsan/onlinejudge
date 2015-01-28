@@ -89,11 +89,9 @@ function grecaptchaOnLoad() {
         var editorElement = document.getElementById("editor");
         createEditor(editorElement);
 
-        $(".language-select").chosen({
-            width: '30%'
-        }).change(function(_, target) {
+        $(".language-select").change(function(_, target) {
             var text = window.editor.getValue();
-            language = target.selected;
+            language = $(".language-select").val();
             onLanguageSelected(editorElement, language, text);
         });
 
@@ -101,7 +99,6 @@ function grecaptchaOnLoad() {
         // so we call it ourselves.
         var language = localStorage[getPersistedLanguageKey()] || 'python';
         $(".language-select").val(language);
-        $(".language-select").trigger("chosen:updated");
         onLanguageSelected(editorElement, language, window.editor.getValue());
 
         $(".clear-output-button").click(function() {
