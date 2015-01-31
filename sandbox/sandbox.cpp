@@ -110,7 +110,7 @@ static int install_syscall_filter(void) {
        ALLOW_SYSCALL(getdents), // general
        ALLOW_SYSCALL(getcwd), // java
        //ALLOW_SYSCALL(chdir),
-       //ALLOW_SYSCALL(fchdir),
+       ALLOW_SYSCALL(fchdir), // java
        //ALLOW_SYSCALL(rename),
        ALLOW_SYSCALL(mkdir), // java
        //ALLOW_SYSCALL(rmdir),
