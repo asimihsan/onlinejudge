@@ -2,12 +2,14 @@
 #include <cstring>
 #include <exception>
 #include <iostream>
+#include <paths.h>
 #include <seccomp.h>
 #include <signal.h>
 #include <stdexcept>
 #include <sys/capability.h>
 #include <sys/prctl.h>
 #include <sys/resource.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <unistd.h>
 #include <utility>
@@ -380,9 +382,41 @@ void limit_resource(int const resource, rlim_t const l) {
     limit_resource(resource, l, l);
 }
 
+int open_devnull(int fd) {
+    // Reference: Secure Programming Cookbook for C and C++ (2003) section 1.5
+    FILE *f = 0;
+    if (fd == fileno(stdin))
+        f = freopen(_PATH_DEVNULL, "rb", stdin);
+    else if (fd == fileno(stdout))
+        f = freopen(_PATH_DEVNULL, "rb", stdout);
+    else if (fd == fileno(stderr))
+        f = freopen(_PATH_DEVNULL, "rb", stderr);
+    return (f && fileno(f) == fd);
+
+}
+
 void close_fds(void) {
-    for (int fd = fileno(stderr); fd != 1024; ++fd)
+    // Make sure all open fd's other than standard ones are closed
+    // Reference: Secure Programming Cookbook for C and C++ (2003) section 1.5
+    int fd, fds;
+    if ((fd = getdtablesize()) == -1)
+        fds = 1024;
+    for (fd = fileno(stderr) + 1; fd < fds; fd++)
         close(fd);
+
+    // Verify standard fd's are open, if not attempt to open them using /dev/null,
+    // and if unsuccessful bail out.
+    // Reference: Secure Programming Cookbook for C and C++ (2003) section 1.5
+    struct stat st;
+    for (fd = fileno(stdin); fd <= fileno(stderr); fd++)
+        // Read as "if we fstat the fd and we get an error, and the error
+        // isn't EBADF (bad file descriptor), then try to open the fd with
+        // /dev/null, and if that fails halt the program".
+        if (fstat(fd, &st) == -1 && (errno != EBADF || !open_devnull(fd)))
+            e("close_fds() failed.");
+    
+    // Close stderr and make stderr = stdout
+    close(fileno(stderr));
     dup2(fileno(stdout), fileno(stderr));
 }
 
