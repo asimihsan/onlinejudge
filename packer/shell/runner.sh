@@ -18,7 +18,7 @@ mkdir -p /tmp/foo
 chown -R ubuntu:ubuntu /tmp/foo
 chmod 777 /tmp/foo
 pkill runner.linux
-ssh ubuntu@localhost /usr/local/bin/runner.linux
+exec ssh ubuntu@localhost /usr/local/bin/runner.linux
 EOF
 sudo chmod a+x /usr/local/bin/runner_via_ssh
 
