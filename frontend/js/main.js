@@ -67,6 +67,15 @@ function grecaptchaOnLoad() {
             window.editor.setValue(text);
         }
     }
+    function setupJavaScript(editorElement, text) {
+        window.editor.setOption("tabSize", 2);
+        window.editor.setOption("indentUnit", 2);
+        setCommonEditorOptions();
+        window.editor.setOption("mode", "javascript");
+        if (text) {
+            window.editor.setValue(text);
+        }
+    }
     function setupPython(editorElement, text) {
         window.editor.setOption("tabSize", 4);
         window.editor.setOption("indentUnit", 4);
@@ -96,6 +105,9 @@ function grecaptchaOnLoad() {
                 break;
             case 'java':
                 setupJava(editorElement, text);
+                break;
+            case 'javascript':
+                setupJavaScript(editorElement, text);
                 break;
             case 'python':
                 setupPython(editorElement, text);

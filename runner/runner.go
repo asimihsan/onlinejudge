@@ -212,6 +212,10 @@ func runJavaHandler(w http.ResponseWriter, r *http.Request) {
     runHandler("java", w, r)
 }
 
+func runJavaScriptHandler(w http.ResponseWriter, r *http.Request) {
+    runHandler("javascript", w, r)
+}
+
 func prepareCodeFile(logger *log.Logger, code string) *os.File {
     logger.Println("prepareCodeFile() entry.")
     codeFile, err := ioutil.TempFile("", "run")
@@ -349,6 +353,15 @@ func runCommand(language string, filepath string) *exec.Cmd {
         }
         return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
             "/bin/bash", "-c", "/usr/local/bin/sandbox /usr/bin/javac -J-Xmx350m /tmp/foo/Solution.java && /usr/local/bin/sandbox /usr/bin/java -Xmx350m -classpath /tmp/foo Solution")
+    case "javascript":
+        if err := exec.Command("cp", "-f", filepath, "/tmp/foo/foo.js").Run(); err != nil {
+            logger.Panicf("failed to copy code to /tmp/foo/foo.js")
+        }
+        if err := os.Chmod("/tmp/foo/foo.js", 0777); err != nil {
+            logger.Panicf("failed to chmod /tmp/foo/foo.js")
+        }
+        return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
+            "/bin/bash", "-c", "/usr/local/bin/sandbox /usr/bin/nodejs /tmp/foo/foo.js")
     }
     return nil
 }
@@ -396,6 +409,7 @@ func main() {
     http.HandleFunc("/run/cpp", makeGzipHandler(runCPPHandler))
     http.HandleFunc("/run/python", makeGzipHandler(runPythonHandler))
     http.HandleFunc("/run/ruby", makeGzipHandler(runRubyHandler))
+    http.HandleFunc("/run/javascript", makeGzipHandler(runJavaScriptHandler))
     http.HandleFunc("/run/java", makeGzipHandler(runJavaHandler))
     err := http.ListenAndServe("localhost:8080", nil)
     if err != nil {

@@ -188,7 +188,7 @@ static int install_syscall_filter(void) {
        //ALLOW_SYSCALL(modify_ldt),
        //ALLOW_SYSCALL(pivot_root),
        //ALLOW_SYSCALL(_sysctl),
-       //ALLOW_SYSCALL(prctl),
+       ALLOW_SYSCALL(prctl), // javascript
        ALLOW_SYSCALL(arch_prctl), // python
        //ALLOW_SYSCALL(adjtimex),
        ALLOW_SYSCALL(setrlimit), // java
@@ -259,12 +259,12 @@ static int install_syscall_filter(void) {
        //ALLOW_SYSCALL(timer_getoverrun),
        //ALLOW_SYSCALL(timer_delete),
        //ALLOW_SYSCALL(clock_settime),
-       ALLOW_SYSCALL(clock_gettime), // java
+       ALLOW_SYSCALL(clock_gettime), // general
        ALLOW_SYSCALL(clock_getres), // java
        ALLOW_SYSCALL(clock_nanosleep), // general
        ALLOW_SYSCALL(exit_group), // python
-       //ALLOW_SYSCALL(epoll_wait),
-       //ALLOW_SYSCALL(epoll_ctl),
+       ALLOW_SYSCALL(epoll_wait), // javascript
+       ALLOW_SYSCALL(epoll_ctl), // javascript
        //ALLOW_SYSCALL(tgkill),
        //ALLOW_SYSCALL(utimes),
        //ALLOW_SYSCALL(vserver),
@@ -304,7 +304,7 @@ static int install_syscall_filter(void) {
        //ALLOW_SYSCALL(pselect6),
        //ALLOW_SYSCALL(ppoll),
        //ALLOW_SYSCALL(unshare),
-       ALLOW_SYSCALL(set_robust_list), // python
+       ALLOW_SYSCALL(set_robust_list), // python, javascript
        ALLOW_SYSCALL(get_robust_list), // python (maybe), java (maybe)
        //ALLOW_SYSCALL(splice),
        //ALLOW_SYSCALL(tee),
@@ -321,10 +321,10 @@ static int install_syscall_filter(void) {
        //ALLOW_SYSCALL(timerfd_gettime),
        //ALLOW_SYSCALL(accept4),
        //ALLOW_SYSCALL(signalfd4),
-       //ALLOW_SYSCALL(eventfd2),
-       //ALLOW_SYSCALL(epoll_create1),
+       ALLOW_SYSCALL(eventfd2), // javascript
+       ALLOW_SYSCALL(epoll_create1), // javascript
        //ALLOW_SYSCALL(dup3),
-       //ALLOW_SYSCALL(pipe2),
+       ALLOW_SYSCALL(pipe2), // javascript
        //ALLOW_SYSCALL(inotify_init1),
        //ALLOW_SYSCALL(preadv),
        //ALLOW_SYSCALL(pwritev),

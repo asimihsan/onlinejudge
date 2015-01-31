@@ -17,16 +17,15 @@ rm -rf /tmp/foo
 mkdir -p /tmp/foo
 chown -R ubuntu:ubuntu /tmp/foo
 chmod 777 /tmp/foo
-pkill runner.linux
-exec ssh ubuntu@localhost /usr/local/bin/runner.linux
-EOF
-sudo chmod a+x /usr/local/bin/runner_via_ssh
 
-sudo init-checkconf /etc/init/runner.conf
-
-# hack, try to fix SSH working on boot
 mkdir -p ~/.ssh
 rm -f ~/.ssh/known_hosts
 touch ~/.ssh/known_hosts
 chmod 644 ~/.ssh/known_hosts
 ssh-keyscan -H localhost >> ~/.ssh/known_hosts
+
+exec ssh ubuntu@localhost /usr/local/bin/runner.linux
+EOF
+sudo chmod a+x /usr/local/bin/runner_via_ssh
+
+sudo init-checkconf /etc/init/runner.conf
