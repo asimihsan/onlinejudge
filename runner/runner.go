@@ -310,7 +310,7 @@ func runCommand(language string, filepath string) *exec.Cmd {
             logger.Panicf("failed to clean up old out files in /tmp/foo")
         }
         return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
-            "/bin/bash", "-c", "/usr/local/bin/sandbox /usr/bin/gcc -Wall -std=c99 /tmp/foo/program.c -o /tmp/foo/a.out && /usr/local/bin/sandbox /tmp/foo/a.out")
+            "su", "-", "ubuntu", "-c", "/usr/local/bin/sandbox /usr/bin/gcc -Wall -std=c99 /tmp/foo/program.c -o /tmp/foo/a.out && /usr/local/bin/sandbox /tmp/foo/a.out")
     case "cpp":
         if err := exec.Command("cp", "-f", filepath, "/tmp/foo/program.cpp").Run(); err != nil {
             logger.Panicf("failed to copy code to /tmp/foo/program.cpp")
@@ -322,7 +322,7 @@ func runCommand(language string, filepath string) *exec.Cmd {
             logger.Panicf("failed to clean up old out files in /tmp/foo")
         }
         return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
-            "/bin/bash", "-c", "/usr/local/bin/sandbox /usr/bin/g++ -Wall -std=c++11 /tmp/foo/program.cpp -o /tmp/foo/a.out && /usr/local/bin/sandbox /tmp/foo/a.out")
+            "su", "-", "ubuntu", "-c", "/usr/local/bin/sandbox /usr/bin/g++ -Wall -std=c++11 /tmp/foo/program.cpp -o /tmp/foo/a.out && /usr/local/bin/sandbox /tmp/foo/a.out")
     case "python":
         if err := exec.Command("cp", "-f", filepath, "/tmp/foo/foo.py").Run(); err != nil {
             logger.Panicf("failed to copy code to /tmp/foo/foo.py")
@@ -331,7 +331,7 @@ func runCommand(language string, filepath string) *exec.Cmd {
             logger.Panicf("failed to chmod /tmp/foo/foo.py")
         }
         return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
-            "/usr/local/bin/sandbox", "/usr/bin/python", "/tmp/foo/foo.py")
+            "su", "-", "ubuntu", "-c", "/usr/local/bin/sandbox /usr/bin/python /tmp/foo/foo.py")
     case "ruby":
         if err := exec.Command("cp", "-f", filepath, "/tmp/foo/foo.rb").Run(); err != nil {
             logger.Panicf("failed to copy code to /tmp/foo/foo.py")
@@ -340,7 +340,7 @@ func runCommand(language string, filepath string) *exec.Cmd {
             logger.Panicf("failed to chmod /tmp/foo/foo.rb")
         }
         return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
-            "/usr/local/bin/sandbox", "/usr/bin/ruby", "/tmp/foo/foo.rb")
+            "su", "-", "ubuntu", "-c", "/usr/local/bin/sandbox /usr/bin/ruby /tmp/foo/foo.rb")
     case "java":
         if err := exec.Command("cp", "-f", filepath, "/tmp/foo/Solution.java").Run(); err != nil {
             logger.Panicf("failed to copy code to /tmp/foo/Solution.java")
@@ -352,7 +352,7 @@ func runCommand(language string, filepath string) *exec.Cmd {
             logger.Panicf("failed to clean up old class files in /tmp/foo")
         }
         return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
-            "/bin/bash", "-c", "/usr/local/bin/sandbox /usr/bin/javac -J-Xmx350m /tmp/foo/Solution.java && /usr/local/bin/sandbox /usr/bin/java -Xmx350m -classpath /tmp/foo Solution")
+            "su", "-", "ubuntu", "-c", "/usr/local/bin/sandbox /usr/bin/javac -J-Xmx350m /tmp/foo/Solution.java && /usr/local/bin/sandbox /usr/bin/java -Xmx350m -classpath /tmp/foo Solution")
     case "javascript":
         if err := exec.Command("cp", "-f", filepath, "/tmp/foo/foo.js").Run(); err != nil {
             logger.Panicf("failed to copy code to /tmp/foo/foo.js")
@@ -361,7 +361,7 @@ func runCommand(language string, filepath string) *exec.Cmd {
             logger.Panicf("failed to chmod /tmp/foo/foo.js")
         }
         return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
-            "/bin/bash", "-c", "/usr/local/bin/sandbox /usr/bin/nodejs /tmp/foo/foo.js")
+            "su", "-", "ubuntu", "-c", "/usr/local/bin/sandbox /usr/bin/nodejs /tmp/foo/foo.js")
     }
     return nil
 }
