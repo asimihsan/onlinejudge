@@ -28,3 +28,7 @@ runner/runner.linux
 runner/runner
 frontend/bower_components
 frontend/node_modules
+
+doc/*.png
+doc/*.pdf
+doc/*.tex

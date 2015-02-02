@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+pandoc \
+    --read markdown+footnotes \
+    architecture.md -o architecture.tex
+pandoc \
+    --include-in-header margins.sty \
+    --variable fontfamily=charter \
+    architecture.tex -o architecture.pdf
