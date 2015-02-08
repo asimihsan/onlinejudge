@@ -11,9 +11,7 @@ import (
 	desc "github.com/smugmug/godynamo/endpoints/describe_table"
 	"github.com/smugmug/godynamo/endpoints/list_tables"
 	"github.com/smugmug/godynamo/types/attributedefinition"
-	"github.com/smugmug/godynamo/types/aws_strings"
 	"github.com/smugmug/godynamo/types/keydefinition"
-	"github.com/smugmug/godynamo/types/localsecondaryindex"
 )
 
 func CreateTables() (err error) {
@@ -125,28 +123,13 @@ func createProblemSummaryTable(table_name string) (err error) {
 
 	create1 := create_table.NewCreateTable()
 	create1.TableName = table_name
-	create1.ProvisionedThroughput.ReadCapacityUnits = 10
+	create1.ProvisionedThroughput.ReadCapacityUnits = 5
 	create1.ProvisionedThroughput.WriteCapacityUnits = 1
 
 	create1.AttributeDefinitions = append(create1.AttributeDefinitions,
 		attributedefinition.AttributeDefinition{AttributeName: "id", AttributeType: ep.S})
-	create1.AttributeDefinitions = append(create1.AttributeDefinitions,
-		attributedefinition.AttributeDefinition{AttributeName: "title", AttributeType: ep.S})
-	create1.AttributeDefinitions = append(create1.AttributeDefinitions,
-		attributedefinition.AttributeDefinition{AttributeName: "last_updated_date", AttributeType: ep.S})
 	create1.KeySchema = append(create1.KeySchema,
 		keydefinition.KeyDefinition{AttributeName: "id", KeyType: ep.HASH})
-	create1.KeySchema = append(create1.KeySchema,
-		keydefinition.KeyDefinition{AttributeName: "title", KeyType: ep.RANGE})
-
-	lsi := localsecondaryindex.NewLocalSecondaryIndex()
-	lsi.IndexName = "last_updated_date"
-	lsi.Projection.ProjectionType = aws_strings.KEYS_ONLY
-	lsi.KeySchema = append(lsi.KeySchema,
-		keydefinition.KeyDefinition{AttributeName: "id", KeyType: ep.HASH})
-	lsi.KeySchema = append(lsi.KeySchema,
-		keydefinition.KeyDefinition{AttributeName: "last_updated_date", KeyType: ep.RANGE})
-	create1.LocalSecondaryIndexes = append(create1.LocalSecondaryIndexes, *lsi)
 
 	// Prepare JSON request
 	_, create_json_err := json.Marshal(create1)
@@ -193,7 +176,7 @@ func createProblemDetailsTable(table_name string) (err error) {
 
 	create1 := create_table.NewCreateTable()
 	create1.TableName = table_name
-	create1.ProvisionedThroughput.ReadCapacityUnits = 10
+	create1.ProvisionedThroughput.ReadCapacityUnits = 5
 	create1.ProvisionedThroughput.WriteCapacityUnits = 1
 
 	create1.AttributeDefinitions = append(create1.AttributeDefinitions,
@@ -246,7 +229,7 @@ func createUnitTestTable(table_name string) (err error) {
 
 	create1 := create_table.NewCreateTable()
 	create1.TableName = table_name
-	create1.ProvisionedThroughput.ReadCapacityUnits = 10
+	create1.ProvisionedThroughput.ReadCapacityUnits = 5
 	create1.ProvisionedThroughput.WriteCapacityUnits = 1
 
 	create1.AttributeDefinitions = append(create1.AttributeDefinitions,

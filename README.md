@@ -14,7 +14,7 @@ A service that allows people to:
 
 ### problem
 
--   problem_title
+-   problem_summary
     -   attributes:
         -   id (URL-friendly short name) (string)
         -   version (number)
@@ -28,10 +28,10 @@ A service that allows people to:
     -   global secondary indexes: <none>
 -   problem_details
     -   attributes:
-        -   id (URL-friendly short name) (string)
+        -   id (<problem id>#<language>) (string)
         -   version (number)
         -   description (compress using GZIP) (binary)
-        -   initial_code (compress using GZIP) (JSON dict for all languages) (binary)
+        -   initial_code (compress using GZIP) (single initial code file) (binary)
     -   hash key: id
     -   range key: <none>
     -   local secondary indexes: <none>
@@ -40,7 +40,12 @@ A service that allows people to:
     -   attributes:
         -   id (<problem id>#<language>) (string)
         -   version (number)
-        -   tests (compress using GZIP) (list of tests) (binary)
+        -   unit_test (compress using GZIP) (single test file) (binary)
+
+Notes
+
+-   Problem descriptions may be language specific. Hence problem_details and unit_test are keyed using language.
+
 
 ## TODO
 

@@ -16,7 +16,7 @@ Id = "fizz_buzz"
 
 # Increment version every time you want to re-upload a problem. You should
 # probably update last_updated_date if you increment the version.
-Version = 1
+Version = 2
 
 Title = "Fizz Buzz"
 SupportedLanguages = [
@@ -28,8 +28,16 @@ LastUpdatedDate =  2014-02-07T00:00:00Z
 
 # ------------------------------------------------------------------------------
 # This is Markdown. To preview it use something like http://dillinger.io/.
+#
+# If you want one description for all languages specify a [Description._all]
+# section. If there are language-specific descriptions, e.g.
+# [Description.java] they will be used in preference to _all if it exists.
 # ------------------------------------------------------------------------------
-Description = '''
+[Description]
+
+[Description._all]
+
+markdown = '''
 ## Fizz Buzz
 
 ### Description

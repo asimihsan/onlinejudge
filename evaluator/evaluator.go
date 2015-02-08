@@ -5,24 +5,25 @@ import (
 )
 
 func main() {
-	var (
-		err      error
-		problems = make([]Problem, 0)
-	)
-
 	log.Printf("main() entry.")
 	defer log.Printf("main() exit.")
 
 	Initialize()
-	//CreateTables()
 	//DeleteTables()
+	CreateTables()
+	LoadProblems()
 
-	if problems, err = ParseProblems(); err != nil {
-		log.Printf("problem parsing problems: %s", err)
-		return
+	/*
+		problems, err := GetProblemSummaries()
+		if err != nil {
+			log.Panic(err)
+		}
+		log.Printf("%s", problems)
+	*/
+
+	problem, err := GetProblemSummary("fizz_buzz")
+	if err != nil {
+		log.Panic(err)
 	}
-	if err = PutProblems(problems); err != nil {
-		log.Printf("error whilst putting problems: %s", err)
-		return
-	}
+	log.Printf("%s", problem)
 }
