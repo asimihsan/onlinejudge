@@ -2,9 +2,48 @@
 
 Run untrusted code in a sandbox that prevents it from harming the host machine, other processes, and unauthorised use of the network.
 
+## Evaluator schema
+
+A service that allows people to:
+
+-   get problems (statement, initial starting code)
+-   attempt a problem (accept a proposed solution, then executes it with the unit tests and returns result)
+    -   do not expose unit tests to end-user.
+-   create problems
+-   update problems
+
+### problem
+
+-   problem_title
+    -   attributes:
+        -   id (URL-friendly short name) (string)
+        -   version (number)
+        -   title (string)
+        -   supported_languages (JSON list for what languages are supported)
+        -   creation_date (ISO 8601 datetime) (string)
+        -   last_updated_date (ISO 8601 datetime) (string)
+    -   hash key: id
+    -   range key: title
+    -   local secondary indexes: <none>
+    -   global secondary indexes: <none>
+-   problem_details
+    -   attributes:
+        -   id (URL-friendly short name) (string)
+        -   version (number)
+        -   description (compress using GZIP) (binary)
+        -   initial_code (compress using GZIP) (JSON dict for all languages) (binary)
+    -   hash key: id
+    -   range key: <none>
+    -   local secondary indexes: <none>
+    -   global secondary indexes: <none>
+-   unit_test
+    -   attributes:
+        -   id (<problem id>#<language>) (string)
+        -   version (number)
+        -   tests (compress using GZIP) (list of tests) (binary)
+
 ## TODO
 
--   Fix restart of service, can't restart because can't kill runner since it runs it via ssh?
 -   Make some automated tests.
 -   Fix suid on sandbox. It seems to be root again, able to e.g. delete all files.
 -   I think on boot the image can't ssh into ubuntu@localhost. Fix image.
@@ -51,6 +90,9 @@ public class Solution {
 
 ## TODO done
 
+-   Do graceful restarts of server.
+    -   Test by running e.g. sleep then restart service, check you get a response.
+-   Fix restart of service, can't restart because can't kill runner since it runs it via ssh?
 -   Still using privileged containers, since you were root.
     -   `sudo useradd -d /home/ubuntu -m ubuntu -p password`
     -   `su - ubuntu -c ...` (put config, create container)
