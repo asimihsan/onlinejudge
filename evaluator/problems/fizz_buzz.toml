@@ -16,7 +16,7 @@ Id = "fizz_buzz"
 
 # Increment version every time you want to re-upload a problem. You should
 # probably update last_updated_date if you increment the version.
-Version = 2
+Version = 4
 
 Title = "Fizz Buzz"
 SupportedLanguages = [
@@ -46,10 +46,10 @@ Write a function that accepts one positive integer (i.e. starting at 1) and,
 for all positive integers (i.e. starting at 1) ending at that integer
 (inclusive), print out:
 
--   'fizz' if that number is divisible by 3
--   'buzz' if that number is divisible by 5
--   'fizz buzz' if that number is divisible by both 3 and 5
--   'ping' if that number is not divisible by either 3 or 5
+-   'fizz' if that number is divisible by 2
+-   'buzz' if that number is divisible by 3
+-   'fizz buzz' if that number is divisible by both 2 and 3
+-   'ping' if that number is not divisible by either 2 or 3
 
 ### Examples
 
@@ -57,11 +57,11 @@ Given 7 you should print out:
 
 ```
 ping
-ping
 fizz
-ping
 buzz
 fizz
+ping
+fizz buzz
 ping
 ```
 '''
@@ -129,11 +129,11 @@ import foo
 
 class TestFizzBuzz(unittest.TestCase):
     test1_output = """ping
-ping
 fizz
-ping
 buzz
 fizz
+ping
+fizz buzz
 ping"""
 
     def setUp(self):
@@ -148,7 +148,7 @@ ping"""
         sys.stdout = self.saved_stdout
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)
 '''
 
 [UnitTest.java]
@@ -162,7 +162,7 @@ public class SolutionTest {
     private final ByteArrayOutputStream outContent =
         new ByteArrayOutputStream();
     private final String test1_output =
-        "ping\nping\nfizz\nping\nbuzz\nfizz\nping";
+        "ping\nfizz\nbuzz\nfizz\nping\nfizz buzz\nping";
 
     @Before
     public void setUpStreams() {
@@ -197,11 +197,11 @@ public class SolutionTest {
 code = '''
 def fizz_buzz(n):
     for i in xrange(1, n + 1):
-        if i % 15 == 0:
+        if i % 6 == 0:
             print('fizz buzz')
-        elif i % 5 == 0:
-            print('buzz')
         elif i % 3 == 0:
+            print('buzz')
+        elif i % 2 == 0:
             print('fizz')
         else:
             print('ping')
@@ -212,11 +212,11 @@ code = '''
 public class Solution {
     public static void fizz_buzz(int n) {
         for (int i = 1; i <= n; i++) {
-            if (i % 15 == 0) {
+            if (i % 6 == 0) {
                 System.out.println("fizz buzz");
-            } else if (i % 5 == 0) {
-                System.out.println("buzz");
             } else if (i % 3 == 0) {
+                System.out.println("buzz");
+            } else if (i % 2 == 0) {
                 System.out.println("fizz");
             } else {
                 System.out.println("ping");
