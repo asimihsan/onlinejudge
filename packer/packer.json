@@ -30,8 +30,13 @@
     {"type": "shell", "script": "shell/build_and_deploy_sandbox.sh"},
     {"type": "shell", "script": "shell/nginx.sh"},
     {"type": "file", "source": "../frontend/", "destination": "/usr/share/nginx/html"},
+
     {"type": "file", "source": "../runner/runner.linux", "destination": "/usr/local/bin/runner.linux"},
     {"type": "file", "source": "../runner/runner_upstart.conf", "destination": "/etc/init/runner.conf"},
-    {"type": "shell", "script": "shell/runner.sh"}
+    {"type": "shell", "script": "shell/runner.sh"},
+
+    {"type": "file", "source": "../evaluator/evaluator.linux", "destination": "/usr/local/bin/evaluator.linux"},
+    {"type": "file", "source": "../evaluator/evaluator_upstart.conf", "destination": "/etc/init/evaluator.conf"},
+    {"type": "shell", "script": "shell/evaluator.sh"}
   ]
 }

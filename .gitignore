@@ -29,6 +29,7 @@ runner/runner
 frontend/bower_components
 frontend/node_modules
 evaluator/evaluator
+evaluator/evaluator.linux
 
 doc/*.png
 doc/*.pdf

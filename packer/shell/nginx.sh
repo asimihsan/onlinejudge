@@ -68,6 +68,9 @@ server {
     location ^~ /run {
         proxy_pass http://localhost:8080;
     }
+    location ^~ /evaluator {
+        proxy_pass http://localhost:8081;
+    }
     location / {
         try_files $uri $uri/ =404;
     }

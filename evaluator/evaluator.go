@@ -1,108 +1,81 @@
 package main
 
+/*
+// JSON from browser does OPTIONS before GET/POST
+curl -X OPTIONS -H "Content-Type: application/json" --compressed \
+    http://localhost:8081/evaluator/get_problem_summaries
+
+curl -X GET -H "Content-Type: application/json" --compressed \
+    http://localhost:8081/evaluator/get_problem_summaries
+
+curl -X GET -H "Content-Type: application/json" --compressed \
+    http://localhost:8081/evaluator/get_problem_summary/fizz_buzz
+
+// Will return 404
+curl -X GET -H "Content-Type: application/json" --compressed \
+    http://localhost:8081/evaluator/get_problem_summary/fizz_buzz2
+
+curl -X GET -H "Content-Type: application/json" --compressed \
+    http://localhost:8081/evaluator/get_problem_details/fizz_buzz/python
+
+curl -X OPTIONS -H "Content-Type: application/json" --compressed \
+    --data-binary @foo.py http://localhost:8081/evaluator/evaluate/fizz_buzz/python
+
+curl -X POST -H "Content-Type: application/json" --compressed \
+    --data-binary @/tmp/foo.json http://localhost:8081/evaluator/evaluate/fizz_buzz/python
+*/
+
 import (
-	"bytes"
-	"encoding/json"
-	"io/ioutil"
+	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
+	"os"
+	"time"
+
+	"github.com/gorilla/mux"
+	"github.com/stretchr/graceful"
 )
 
-type runner_response_struct struct {
-	Success bool   `json:"success,omitempty"`
-	Output  string `json:"output,omitempty"`
+var (
+	logger  = getLogger("logger")
+	letters = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
+)
+
+func getLogger(prefix string) *log.Logger {
+	paddedPrefix := fmt.Sprintf("%-8s: ", prefix)
+	return log.New(os.Stdout, paddedPrefix,
+		log.Ldate|log.Ltime|log.Lmicroseconds)
 }
 
-func example() {
-	log.Println("example() entry")
-	defer log.Printf("example() exit.")
-
-	// Get code from user
-	code, _ := ioutil.ReadFile("/tmp/foo.py")
-
-	// Get unit test from DynamoDB
-	problem, err := GetProblemUnitTest("fizz_buzz", "python")
-	if err != nil {
-		log.Panic(err)
+func getLogPill() string {
+	b := make([]rune, 8)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
 	}
-
-	// Prepare data
-	data := make(map[string]string)
-	data["code"] = string(code)
-	data["unit_test"] = problem.UnitTest["python"].Code
-
-	uri := "http://www.runsomecode.com/run/python"
-	j, jerr := json.Marshal(data)
-	if jerr != nil {
-		log.Panic(jerr)
-	}
-	request, err := http.NewRequest("POST", uri, bytes.NewBuffer(j))
-	if err != nil {
-		log.Println("Failed to create HTTP POST")
-		return
-	}
-	request.Header.Set("Content-Type", "application/json; charse=utf-8")
-
-	client := &http.Client{}
-	resp, err := client.Do(request)
-	if err != nil {
-		log.Println("Failed during HTTP POST")
-		return
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		log.Printf("HTTP GET to Google reCAPTCHA not 200: %s\n", resp)
-	}
-
-	decoder := json.NewDecoder(resp.Body)
-	var t runner_response_struct
-	err = decoder.Decode(&t)
-	if err != nil {
-		log.Panicf("Could not decode Google reCAPTCHA resposne")
-	}
-
-	log.Printf("%s", t)
+	return string(b)
 }
 
 func main() {
-	log.Printf("main() entry.")
-	defer log.Printf("main() exit.")
+	logger.Println("main() entry.")
 
 	Initialize()
 	//DeleteTables()
-	//CreateTables()
-	//LoadProblems()
+	CreateTables()
+	LoadProblems(logger)
 
-	example()
+	rand.Seed(time.Now().UTC().UnixNano())
+	r := mux.NewRouter()
 
-	/*
-		problems, err := GetProblemSummaries()
-		if err != nil {
-			log.Panic(err)
-		}
-		log.Printf("%s", problems)
-	*/
+	r.HandleFunc("/evaluator/get_problem_summaries",
+		MakeGzipHandler(getProblemSummaries)).Methods("GET", "OPTIONS")
+	r.HandleFunc("/evaluator/get_problem_summary/{problem_id:[a-z0-9_]+}",
+		MakeGzipHandler(getProblemSummary)).Methods("GET", "OPTIONS")
+	r.HandleFunc("/evaluator/get_problem_details/{problem_id:[a-z0-9_]+}/{language:[a-z0-9_]+}",
+		MakeGzipHandler(getProblemDetails)).Methods("GET", "OPTIONS")
+	r.HandleFunc("/evaluator/evaluate/{problem_id:[a-z0-9_]+}/{language:[a-z0-9_]+}",
+		MakeGzipHandler(evaluate)).Methods("POST", "OPTIONS")
+	http.Handle("/", r)
 
-	/*
-		problem, err := GetProblemSummary("fizz_buzz")
-		if err != nil {
-			log.Panic(err)
-		}
-		log.Printf("%s", problem)
-	*/
-	/*
-		problem, err := GetProblemDetails("fizz_buzz", "python")
-		if err != nil {
-			log.Panic(err)
-		}
-		log.Printf("%s", problem)
-	*/
-	/*
-		problem, err := GetProblemUnitTest("fizz_buzz", "python")
-		if err != nil {
-			log.Panic(err)
-		}
-		log.Printf("%s", problem)
-	*/
+	graceful.Run("localhost:8081", 10*time.Second, r)
 }

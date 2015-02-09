@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -12,6 +13,14 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/smugmug/godynamo/types/item"
 )
+
+type ProblemNotFoundError struct {
+	Id string
+}
+
+func (e ProblemNotFoundError) Error() string {
+	return fmt.Sprintf("Problem ID '%s' not found", e.Id)
+}
 
 type Problem struct {
 	Id                 string                  `json:"id"`
@@ -98,15 +107,17 @@ func ParseProblems() (problems []Problem, err error) {
 // deserializes an Item into a Problem. Note that we've split up a Problem
 // into multiple tables. Hence the item will be incomplete and the parts
 // of the problem you didn't request will be null.
-func ItemToProblem(item item.Item) (Problem, error) {
+func ItemToProblem(logger *log.Logger, input_id string, item item.Item) (Problem, error) {
 	var problem Problem
-	if id, present := item["id"]; present == true {
-		problem.Id = id.S
+	id, present := item["id"]
+	if present == false {
+		return problem, ProblemNotFoundError{input_id}
 	}
+	problem.Id = id.S
 	if version, present := item["version"]; present == true {
 		value, err := strconv.Atoi(version.N)
 		if err != nil {
-			log.Printf("failed to deserialize number for problem: %s", err)
+			logger.Printf("failed to deserialize number for problem: %s", err)
 			return problem, err
 		}
 		problem.Version = value
@@ -120,7 +131,7 @@ func ItemToProblem(item item.Item) (Problem, error) {
 	if creation_date, present := item["creation_date"]; present == true {
 		creation_date_object, err := time.Parse(time.RFC3339, creation_date.S)
 		if err != nil {
-			log.Printf("failed to parse creation_date: %s", err)
+			logger.Printf("failed to parse creation_date: %s", err)
 			return problem, err
 		}
 		problem.CreationDate = &creation_date_object
@@ -128,15 +139,15 @@ func ItemToProblem(item item.Item) (Problem, error) {
 	if last_updated_date, present := item["last_updated_date"]; present == true {
 		last_updated_date_object, err := time.Parse(time.RFC3339, last_updated_date.S)
 		if err != nil {
-			log.Printf("failed to parse last_updated_date: %s", err)
+			logger.Printf("failed to parse last_updated_date: %s", err)
 			return problem, err
 		}
 		problem.LastUpdatedDate = &last_updated_date_object
 	}
 	if description_encoded, present := item["description"]; present == true {
-		description_decoded, err := decompressFromBase64(description_encoded.B)
+		description_decoded, err := decompressFromBase64(logger, description_encoded.B)
 		if err != nil {
-			log.Printf("failed to decompress/decode description: %s", err)
+			logger.Printf("failed to decompress/decode description: %s", err)
 			return problem, err
 		}
 		// Recall that for problem_details or unit_test the id is <problem_id>#<language>
@@ -147,9 +158,9 @@ func ItemToProblem(item item.Item) (Problem, error) {
 		problem.Description[language] = description{Markdown: description_decoded}
 	}
 	if initial_code_encoded, present := item["initial_code"]; present == true {
-		initial_code_decoded, err := decompressFromBase64(initial_code_encoded.B)
+		initial_code_decoded, err := decompressFromBase64(logger, initial_code_encoded.B)
 		if err != nil {
-			log.Printf("failed to decompress/decode initial_code: %s", err)
+			logger.Printf("failed to decompress/decode initial_code: %s", err)
 			return problem, err
 		}
 		// Recall that for problem_details or unit_test the id is <problem_id>#<language>
@@ -160,9 +171,9 @@ func ItemToProblem(item item.Item) (Problem, error) {
 		problem.InitialCode[language] = initial_code{Code: initial_code_decoded}
 	}
 	if unit_test_encoded, present := item["unit_test"]; present == true {
-		unit_test_decoded, err := decompressFromBase64(unit_test_encoded.B)
+		unit_test_decoded, err := decompressFromBase64(logger, unit_test_encoded.B)
 		if err != nil {
-			log.Printf("failed to decompress/decode unit_test: %s", err)
+			logger.Printf("failed to decompress/decode unit_test: %s", err)
 			return problem, err
 		}
 		// Recall that for problem_details or unit_test the id is <problem_id>#<language>
@@ -173,9 +184,9 @@ func ItemToProblem(item item.Item) (Problem, error) {
 		problem.UnitTest[language] = unit_test{Code: unit_test_decoded}
 	}
 	if solution_encoded, present := item["solution"]; present == true {
-		solution_decoded, err := decompressFromBase64(solution_encoded.B)
+		solution_decoded, err := decompressFromBase64(logger, solution_encoded.B)
 		if err != nil {
-			log.Printf("failed to decompress/decode solution: %s", err)
+			logger.Printf("failed to decompress/decode solution: %s", err)
 			return problem, err
 		}
 		// Recall that for problem_details or solution the id is <problem_id>#<language>
@@ -188,14 +199,14 @@ func ItemToProblem(item item.Item) (Problem, error) {
 	return problem, nil
 }
 
-func ItemsToProblems(items []item.Item) ([]Problem, error) {
-	log.Printf("ItemsToProblems() entry.")
-	defer log.Printf("ItemsToProblems() exit.")
+func ItemsToProblems(logger *log.Logger, items []item.Item) ([]Problem, error) {
+	logger.Printf("problem.ItemsToProblems() entry.")
+	defer logger.Printf("problem.ItemsToProblems() exit.")
 	problems := make([]Problem, 0)
 	for _, item := range items {
-		problem, err := ItemToProblem(item)
+		problem, err := ItemToProblem(logger, "", item)
 		if err != nil {
-			log.Printf("error while parsing item: %s", err)
+			logger.Printf("error while parsing item: %s", err)
 			return problems, err
 		}
 		problems = append(problems, problem)
