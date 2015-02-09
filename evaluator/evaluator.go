@@ -10,7 +10,7 @@ func main() {
 
 	Initialize()
 	//DeleteTables()
-	CreateTables()
+	//CreateTables()
 	LoadProblems()
 
 	/*
@@ -21,9 +21,25 @@ func main() {
 		log.Printf("%s", problems)
 	*/
 
-	problem, err := GetProblemSummary("fizz_buzz")
-	if err != nil {
-		log.Panic(err)
-	}
-	log.Printf("%s", problem)
+	/*
+		problem, err := GetProblemSummary("fizz_buzz")
+		if err != nil {
+			log.Panic(err)
+		}
+		log.Printf("%s", problem)
+	*/
+	/*
+		problem, err := GetProblemDetails("fizz_buzz", "python")
+		if err != nil {
+			log.Panic(err)
+		}
+		log.Printf("%s", problem)
+	*/
+	/*
+		problem, err := GetProblemUnitTest("fizz_buzz", "python")
+		if err != nil {
+			log.Panic(err)
+		}
+		log.Printf("%s", problem)
+	*/
 }

@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -52,17 +53,104 @@ func GetProblemSummaries() ([]Problem, error) {
 }
 
 func GetProblemSummary(problem_id string) (Problem, error) {
+	log.Printf("GetProblemSummary() entry. problem_id: %s", problem_id)
+	defer log.Printf("GetProblemSummary() exit.")
 	var problem Problem
+
+	get1 := get.NewGetItem()
+	get1.TableName = "problem_summary"
+	get1.Key["id"] = &attributevalue.AttributeValue{
+		S: problem_id}
+	body, code, err := get1.EndpointReq()
+	if err != nil || code != http.StatusOK {
+		log.Printf("get failed %d %v %s\n", code, err, body)
+		return problem, err
+	}
+
+	// Response is the full response from DynamoDB; Item and ConsumedCapacity
+	// DyanmoDB does e.g. {"S": "foobar"} for strings etc. in Item.
+	resp := get.NewResponse()
+	um_err := json.Unmarshal([]byte(body), resp)
+	if um_err != nil {
+		log.Printf("failed to unmarshal DynamoDB response (%s): %s", resp, um_err)
+		return problem, um_err
+	}
+
+	problem, err = ItemToProblem(resp.Item)
+	if err != nil {
+		log.Printf("error while converting item to problem: %s", err)
+		return problem, err
+	}
+
 	return problem, nil
 }
 
 func GetProblemDetails(problem_id string, language string) (Problem, error) {
+	log.Printf("GetProblemDetails() entry. problem_id: %s, language: %s", problem_id, language)
+	defer log.Printf("GetProblemDetails() exit.")
 	var problem Problem
+
+	get1 := get.NewGetItem()
+	get1.TableName = "problem_details"
+	id := fmt.Sprintf("%s#%s", problem_id, language)
+	get1.Key["id"] = &attributevalue.AttributeValue{
+		S: id}
+	body, code, err := get1.EndpointReq()
+	if err != nil || code != http.StatusOK {
+		log.Printf("get failed %d %v %s\n", code, err, body)
+		return problem, err
+	}
+
+	// Response is the full response from DynamoDB; Item and ConsumedCapacity
+	// DyanmoDB does e.g. {"S": "foobar"} for strings etc. in Item.
+	resp := get.NewResponse()
+	um_err := json.Unmarshal([]byte(body), resp)
+	if um_err != nil {
+		log.Printf("failed to unmarshal DynamoDB response (%s): %s", resp, um_err)
+		return problem, um_err
+	}
+
+	problem, err = ItemToProblem(resp.Item)
+	if err != nil {
+		log.Printf("error while converting item to problem: %s", err)
+		return problem, err
+	}
+
 	return problem, nil
+
 }
 
 func GetProblemUnitTest(problem_id string, language string) (Problem, error) {
+	log.Printf("GetProblemUnitTest() entry. problem_id: %s, language: %s", problem_id, language)
+	defer log.Printf("GetProblemUnitTest() exit.")
 	var problem Problem
+
+	get1 := get.NewGetItem()
+	get1.TableName = "unit_test"
+	id := fmt.Sprintf("%s#%s", problem_id, language)
+	get1.Key["id"] = &attributevalue.AttributeValue{
+		S: id}
+	body, code, err := get1.EndpointReq()
+	if err != nil || code != http.StatusOK {
+		log.Printf("get failed %d %v %s\n", code, err, body)
+		return problem, err
+	}
+
+	// Response is the full response from DynamoDB; Item and ConsumedCapacity
+	// DyanmoDB does e.g. {"S": "foobar"} for strings etc. in Item.
+	resp := get.NewResponse()
+	um_err := json.Unmarshal([]byte(body), resp)
+	if um_err != nil {
+		log.Printf("failed to unmarshal DynamoDB response (%s): %s", resp, um_err)
+		return problem, um_err
+	}
+
+	problem, err = ItemToProblem(resp.Item)
+	if err != nil {
+		log.Printf("error while converting item to problem: %s", err)
+		return problem, err
+	}
+
 	return problem, nil
 }
 
@@ -294,16 +382,13 @@ func isProblemNewer(problem *Problem, id string, table_name string) (bool, error
 		return false, um_err
 	}
 
-	// We decode with automatic type coercion.
-	c, cerr := resp.ToResponseItemJSON()
-	if cerr != nil {
-		log.Printf("failed to convert response to item JSON: %s", cerr)
-		return false, cerr
+	existing_problem, err := ItemToProblem(resp.Item)
+	if err != nil {
+		log.Printf("error while converting item to existing_problem: %s", err)
+		return false, err
 	}
 
-	// Need to forcefully cast to map
-	data := c.Item.(map[string]interface{})
-	rc := data["version"] == float64(problem.Version)
+	rc := existing_problem.Version == problem.Version
 	log.Printf("returning: %t", rc)
 	return rc, nil
 }
@@ -329,4 +414,36 @@ func compressToBase64(input string) (string, error) {
 	}
 	encoded := base64.StdEncoding.EncodeToString(b.Bytes())
 	return encoded, nil
+}
+
+func decompressFromBase64(input string) (string, error) {
+	log.Printf("decompressFromBase64() entry.")
+	defer log.Printf("decompressFromBase64() exit.")
+
+	// DecodedLen returns the maximum length in bytes of the decoded
+	// data. But this is a maximum. You must use the 'n' return value
+	// from the Decode call to know exactly how many bytes to use. If
+	// you don't you'll feed the gzip reader garbage nulls at the end.
+	// (Recall that base64 must be padded to the nearest 4 bytes).
+	decoded := make([]byte, base64.StdEncoding.DecodedLen(len(input)))
+	n, err := base64.StdEncoding.Decode(decoded, []byte(input))
+	if err != nil {
+		log.Printf("failed to base64 decode: %s", err)
+		return "", err
+	}
+	gz, err := gzip.NewReader(bytes.NewBuffer(decoded[:n]))
+	if err != nil {
+		log.Printf("failed to create gzip reader: %s", err)
+		return "", err
+	}
+	uncompressed, _ := ioutil.ReadAll(gz)
+	if err != nil {
+		log.Printf("failed to decompress string: %s", err)
+		return "", err
+	}
+	if err := gz.Close(); err != nil {
+		log.Printf("failed to close gzip: %s", err)
+		return "", err
+	}
+	return string(uncompressed), nil
 }

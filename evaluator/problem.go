@@ -14,32 +14,32 @@ import (
 )
 
 type Problem struct {
-	Id                 string
-	Version            int
-	Title              string                  `json:",omitempty"`
-	SupportedLanguages []string                `json:",omitempty"`
-	CreationDate       time.Time               `json:",omitempty"`
-	LastUpdatedDate    time.Time               `json:",omitempty"`
-	Description        map[string]description  `json:",omitempty"`
-	InitialCode        map[string]initial_code `json:",omitempty"`
-	UnitTest           map[string]unit_test    `json:",omitempty"`
-	Solution           map[string]solution     `json:",omitempty"`
+	Id                 string                  `json:"id"`
+	Version            int                     `json:"version"`
+	Title              string                  `json:"title,omitempty"`
+	SupportedLanguages []string                `json:"supported_languages,omitempty"`
+	CreationDate       *time.Time              `json:"creation_date,omitempty"`
+	LastUpdatedDate    *time.Time              `json:"last_updated_date,omitempty"`
+	Description        map[string]description  `json:"description,omitempty"`
+	InitialCode        map[string]initial_code `json:"initial_code,omitempty"`
+	UnitTest           map[string]unit_test    `json:"unit_test,omitempty"`
+	Solution           map[string]solution     `json:"solution,omitempty"`
 }
 
 type description struct {
-	Markdown string
+	Markdown string `json:"markdown,omitempty"`
 }
 
 type initial_code struct {
-	Code string
+	Code string `json:"code,omitempty"`
 }
 
 type unit_test struct {
-	Code string
+	Code string `json:"code,omitempty"`
 }
 
 type solution struct {
-	Code string
+	Code string `json:"code,omitempty"`
 }
 
 func (p *Problem) GetDescription(language string) (string, bool) {
@@ -123,7 +123,7 @@ func ItemToProblem(item item.Item) (Problem, error) {
 			log.Printf("failed to parse creation_date: %s", err)
 			return problem, err
 		}
-		problem.CreationDate = creation_date_object
+		problem.CreationDate = &creation_date_object
 	}
 	if last_updated_date, present := item["last_updated_date"]; present == true {
 		last_updated_date_object, err := time.Parse(time.RFC3339, last_updated_date.S)
@@ -131,7 +131,59 @@ func ItemToProblem(item item.Item) (Problem, error) {
 			log.Printf("failed to parse last_updated_date: %s", err)
 			return problem, err
 		}
-		problem.LastUpdatedDate = last_updated_date_object
+		problem.LastUpdatedDate = &last_updated_date_object
+	}
+	if description_encoded, present := item["description"]; present == true {
+		description_decoded, err := decompressFromBase64(description_encoded.B)
+		if err != nil {
+			log.Printf("failed to decompress/decode description: %s", err)
+			return problem, err
+		}
+		// Recall that for problem_details or unit_test the id is <problem_id>#<language>
+		// Hence we know the language. For problem_summary we don't, but never return
+		// anything language-specific.
+		language := strings.Split(problem.Id, "#")[1]
+		problem.Description = make(map[string]description)
+		problem.Description[language] = description{Markdown: description_decoded}
+	}
+	if initial_code_encoded, present := item["initial_code"]; present == true {
+		initial_code_decoded, err := decompressFromBase64(initial_code_encoded.B)
+		if err != nil {
+			log.Printf("failed to decompress/decode initial_code: %s", err)
+			return problem, err
+		}
+		// Recall that for problem_details or unit_test the id is <problem_id>#<language>
+		// Hence we know the language. For problem_summary we don't, but never return
+		// anything language-specific.
+		language := strings.Split(problem.Id, "#")[1]
+		problem.InitialCode = make(map[string]initial_code)
+		problem.InitialCode[language] = initial_code{Code: initial_code_decoded}
+	}
+	if unit_test_encoded, present := item["unit_test"]; present == true {
+		unit_test_decoded, err := decompressFromBase64(unit_test_encoded.B)
+		if err != nil {
+			log.Printf("failed to decompress/decode unit_test: %s", err)
+			return problem, err
+		}
+		// Recall that for problem_details or unit_test the id is <problem_id>#<language>
+		// Hence we know the language. For problem_summary we don't, but never return
+		// anything language-specific.
+		language := strings.Split(problem.Id, "#")[1]
+		problem.UnitTest = make(map[string]unit_test)
+		problem.UnitTest[language] = unit_test{Code: unit_test_decoded}
+	}
+	if solution_encoded, present := item["solution"]; present == true {
+		solution_decoded, err := decompressFromBase64(solution_encoded.B)
+		if err != nil {
+			log.Printf("failed to decompress/decode solution: %s", err)
+			return problem, err
+		}
+		// Recall that for problem_details or solution the id is <problem_id>#<language>
+		// Hence we know the language. For problem_summary we don't, but never return
+		// anything language-specific.
+		language := strings.Split(problem.Id, "#")[1]
+		problem.Solution = make(map[string]solution)
+		problem.Solution[language] = solution{Code: solution_decoded}
 	}
 	return problem, nil
 }
@@ -150,16 +202,3 @@ func ItemsToProblems(items []item.Item) ([]Problem, error) {
 	}
 	return problems, nil
 }
-
-/*
-	Id                 string
-	Version            int
-	Title              string
-	SupportedLanguages []string
-	CreationDate       time.Time
-	LastUpdatedDate    time.Time
-	Description        map[string]description
-	InitialCode        map[string]initial_code
-	UnitTest           map[string]unit_test
-	Solution           map[string]solution
-*/
