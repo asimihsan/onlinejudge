@@ -49,7 +49,13 @@ Notes
 
 ## TODO
 
+-   evaluator
+    -   need to put problems onto server if you want to upload them (or don't! maybe don't allow uploads from server)
+    -   rather make a command line argument to recreate/upload problems OR start server
 -   Make some automated tests.
+    -   evaluator
+        -   GET/OPTIONS work
+        -   unknown problem ID gives 404, even when you evaluate
 -   Fix suid on sandbox. It seems to be root again, able to e.g. delete all files.
 -   I think on boot the image can't ssh into ubuntu@localhost. Fix image.
 -   After running the following infinite print in Java can't run Java programs any more
@@ -184,6 +190,18 @@ watchmedo shell-command -c \
     scp -r -i ~/.ssh/digitalocean . root@www.runsomecode.com:~/sandbox && \
     ssh -i ~/.ssh/digitalocean root@www.runsomecode.com "rm -rf /tmp/foo/sandbox && cp -r ~/sandbox /tmp/foo && chmod -R 777 /tmp/foo/sandbox"' \
     -w -p '*.cpp' .
+```
+
+Refresh evaluator:
+
+```
+watchmedo shell-command -c \
+    'clear && date && GOOS=linux GOARCH=amd64 go build -o evaluator.linux && \
+    ssh -i ~/.ssh/digitalocean root@www.runsomecode.com "service evaluator stop" ; \
+    ssh -i ~/.ssh/digitalocean root@www.runsomecode.com "pkill evaluator.linux" ; \
+    scp -i ~/.ssh/digitalocean evaluator.linux root@www.runsomecode.com:/usr/local/bin/evaluator.linux && \
+    ssh -i ~/.ssh/digitalocean root@www.runsomecode.com "service evaluator start"' \
+    -w -p '*.go' .
 ```
 
 ## Requirements
