@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -153,7 +154,7 @@ func evaluate(w http.ResponseWriter, r *http.Request) {
 	data["code"] = string(t.Code)
 	data["unit_test"] = problem.UnitTest[language].Code
 
-	uri := "http://www.runsomecode.com/run/python"
+	uri := fmt.Sprintf("http://www.runsomecode.com/run/%s", language)
 	j, jerr := json.Marshal(data)
 	if jerr != nil {
 		logger.Panic(jerr)
@@ -163,7 +164,7 @@ func evaluate(w http.ResponseWriter, r *http.Request) {
 		logger.Println("Failed to create HTTP POST")
 		return
 	}
-	request.Header.Set("Content-Type", "application/json; charse=utf-8")
+	request.Header.Set("Content-Type", "application/json; charset=utf-8")
 
 	client := &http.Client{}
 	resp, err := client.Do(request)
