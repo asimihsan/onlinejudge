@@ -1,12 +1,5 @@
 package main
 
-/*
-curl -X POST -H "Content-Type: text/plain" --compressed \
-    --data-binary @foo.py http://localhost:8080/run/python
-*/
-
-// lxc-start-ephemeral -d -o ubase -n u1 -b /tmp/foo
-
 import (
 	"github.com/stretchr/graceful"
 
@@ -72,8 +65,9 @@ func makeGzipHandler(fn http.HandlerFunc) http.HandlerFunc {
 }
 
 type run_handler_struct struct {
-	Code      string
-	Recaptcha string
+	Code      string `json:"code,omitempty"`
+	UnitTest  string `json:"unit_test,omitempty"`
+	Recaptcha string `json:"recaptcha,omitempty"`
 }
 
 type verify_recaptcha_struct struct {
@@ -171,23 +165,23 @@ func runHandler(language string, w http.ResponseWriter, r *http.Request) {
 	codeFile := prepareCodeFile(logger, t.Code)
 	defer os.Remove(codeFile.Name())
 
+	unitTestFile := prepareCodeFile(logger, t.UnitTest)
+	defer os.Remove(unitTestFile.Name())
+
 	outputFile := prepareOutputFile(logger)
 	defer os.Remove(outputFile.Name())
 
-	cmd := runCommand(language, codeFile.Name())
-	runCode(cmd, codeFile, outputFile, logger, w, response)
+	cmd := runCommand(language, codeFile.Name(), unitTestFile.Name())
+	runCode(cmd, outputFile, logger, response)
 
 	if _, ok := response["success"]; !ok {
 		response["success"] = true
 	}
 	if val, _ := response["success"]; val != true {
-		// Something went wrong while running the code. There's a bug in Java
-		// where doing an infinite print means we can't run Java any more. By
-		// this I mean you run '/usr/local/bin/sandbox /usr/bin/javac' or java
-		// and it just quits with return code 0. This is odd, and strace isn't
-		// revealing. So for now let's always cycle the LXC container on any
-		// sort of failure.
 		logger.Println("code failure, so cycle the LXC container.")
+		ensureLxcContainerIsRunning()
+	} else if language == "java" {
+		logger.Println("java, so cycle the LXC container.")
 		ensureLxcContainerIsRunning()
 	}
 
@@ -244,8 +238,7 @@ func prepareOutputFile(logger *log.Logger) *os.File {
 	return outputFile
 }
 
-func runCode(cmd *exec.Cmd, codeFile *os.File, outputFile *os.File,
-	logger *log.Logger, w http.ResponseWriter, response map[string]interface{}) {
+func runCode(cmd *exec.Cmd, outputFile *os.File, logger *log.Logger, response map[string]interface{}) {
 	logger.Println("runCode() entry.")
 	defer logger.Println("runCode() exit.")
 	cmd.Stdout = outputFile
@@ -299,71 +292,53 @@ func runCode(cmd *exec.Cmd, codeFile *os.File, outputFile *os.File,
 	logger.Println("runCode() finished returning output.")
 }
 
-func runCommand(language string, filepath string) *exec.Cmd {
+func copyPrepareFile(source_filepath string, dest_filepath string) error {
+	if err := exec.Command("cp", "-f", source_filepath, dest_filepath).Run(); err != nil {
+		logger.Panicf("failed to copy code to %s", dest_filepath)
+		return err
+	}
+	if err := os.Chmod(dest_filepath, 0777); err != nil {
+		logger.Panicf("failed to chmod %s", dest_filepath)
+		return err
+	}
+	return nil
+}
+
+func runCommand(language string, code_filepath string, unittest_filepath string) *exec.Cmd {
+	if err := exec.Command("rm", "-f", "/tmp/foo/*").Run(); err != nil {
+		logger.Panicf("failed to clean up old out files in /tmp/foo")
+	}
 	switch language {
 	case "c":
-		if err := exec.Command("cp", "-f", filepath, "/tmp/foo/program.c").Run(); err != nil {
-			logger.Panicf("failed to copy code to /tmp/foo/program.c")
-		}
-		if err := os.Chmod("/tmp/foo/program.c", 0777); err != nil {
-			logger.Panicf("failed to chmod /tmp/foo/program.c")
-		}
-		if err := exec.Command("rm", "-f", "/tmp/foo/*.out").Run(); err != nil {
-			logger.Panicf("failed to clean up old out files in /tmp/foo")
-		}
+		copyPrepareFile(code_filepath, "/tmp/foo/program.c")
+		copyPrepareFile(unittest_filepath, "/tmp/foo/program_test.c")
 		return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
-			"su", "-", "ubuntu", "-c", "/usr/local/bin/sandbox /usr/bin/gcc -Wall -std=c99 /tmp/foo/program.c -o /tmp/foo/a.out && /usr/local/bin/sandbox /tmp/foo/a.out")
+			"su", "-", "ubuntu", "-c", "/usr/local/bin/sandbox /usr/bin/gcc -Wall -std=c99 /tmp/foo/*.c -o /tmp/foo/a.out && /usr/local/bin/sandbox /tmp/foo/a.out")
 	case "cpp":
-		if err := exec.Command("cp", "-f", filepath, "/tmp/foo/program.cpp").Run(); err != nil {
-			logger.Panicf("failed to copy code to /tmp/foo/program.cpp")
-		}
-		if err := os.Chmod("/tmp/foo/program.cpp", 0777); err != nil {
-			logger.Panicf("failed to chmod /tmp/foo/program.cpp")
-		}
-		if err := exec.Command("rm", "-f", "/tmp/foo/*.out").Run(); err != nil {
-			logger.Panicf("failed to clean up old out files in /tmp/foo")
-		}
+		copyPrepareFile(code_filepath, "/tmp/foo/program.cpp")
+		copyPrepareFile(unittest_filepath, "/tmp/foo/program_test.cpp")
 		return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
-			"su", "-", "ubuntu", "-c", "/usr/local/bin/sandbox /usr/bin/g++ -Wall -std=c++11 /tmp/foo/program.cpp -o /tmp/foo/a.out && /usr/local/bin/sandbox /tmp/foo/a.out")
+			"su", "-", "ubuntu", "-c", "/usr/local/bin/sandbox /usr/bin/g++ -Wall -std=c++11 /tmp/foo/*.cpp -o /tmp/foo/a.out && /usr/local/bin/sandbox /tmp/foo/a.out")
 	case "python":
-		if err := exec.Command("cp", "-f", filepath, "/tmp/foo/foo.py").Run(); err != nil {
-			logger.Panicf("failed to copy code to /tmp/foo/foo.py")
-		}
-		if err := os.Chmod("/tmp/foo/foo.py", 0777); err != nil {
-			logger.Panicf("failed to chmod /tmp/foo/foo.py")
-		}
+		copyPrepareFile(code_filepath, "/tmp/foo/foo.py")
+		copyPrepareFile(unittest_filepath, "/tmp/foo/foo_test.py")
 		return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
-			"su", "-", "ubuntu", "-c", "/usr/local/bin/sandbox /usr/bin/python /tmp/foo/foo.py")
+			"su", "-", "ubuntu", "-c", "/usr/local/bin/sandbox /usr/bin/python /tmp/foo/foo_test.py")
 	case "ruby":
-		if err := exec.Command("cp", "-f", filepath, "/tmp/foo/foo.rb").Run(); err != nil {
-			logger.Panicf("failed to copy code to /tmp/foo/foo.py")
-		}
-		if err := os.Chmod("/tmp/foo/foo.rb", 0777); err != nil {
-			logger.Panicf("failed to chmod /tmp/foo/foo.rb")
-		}
+		copyPrepareFile(code_filepath, "/tmp/foo/foo.rb")
+		copyPrepareFile(unittest_filepath, "/tmp/foo/foo_test.rb")
 		return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
 			"su", "-", "ubuntu", "-c", "/usr/local/bin/sandbox /usr/bin/ruby /tmp/foo/foo.rb")
 	case "java":
-		if err := exec.Command("cp", "-f", filepath, "/tmp/foo/Solution.java").Run(); err != nil {
-			logger.Panicf("failed to copy code to /tmp/foo/Solution.java")
-		}
-		if err := os.Chmod("/tmp/foo/Solution.java", 0777); err != nil {
-			logger.Panicf("failed to chmod /tmp/foo/Solution.java")
-		}
-		if err := exec.Command("rm", "-f", "/tmp/foo/*.class").Run(); err != nil {
-			logger.Panicf("failed to clean up old class files in /tmp/foo")
-		}
+		copyPrepareFile(code_filepath, "/tmp/foo/Solution.java")
+		copyPrepareFile(unittest_filepath, "/tmp/foo/SolutionTest.java")
 		return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
-			"su", "-", "ubuntu", "-c", "/usr/local/bin/sandbox /usr/bin/javac -J-Xmx350m /tmp/foo/Solution.java && /usr/local/bin/sandbox /usr/bin/java -Xmx350m -classpath /tmp/foo Solution")
+			"su", "-", "ubuntu", "-c", "/usr/local/bin/sandbox /usr/bin/javac -J-Xmx350m /tmp/foo/*.java && /usr/local/bin/sandbox /usr/bin/java -Xmx350m -classpath /tmp/foo Solution")
 	case "javascript":
-		if err := exec.Command("cp", "-f", filepath, "/tmp/foo/foo.js").Run(); err != nil {
-			logger.Panicf("failed to copy code to /tmp/foo/foo.js")
-		}
-		if err := os.Chmod("/tmp/foo/foo.js", 0777); err != nil {
-			logger.Panicf("failed to chmod /tmp/foo/foo.js")
-		}
+		copyPrepareFile(code_filepath, "/tmp/foo/foo.js")
+		copyPrepareFile(unittest_filepath, "/tmp/foo/foo_test.js")
 		return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
-			"su", "-", "ubuntu", "-c", "/usr/local/bin/sandbox /usr/bin/nodejs /tmp/foo/foo.js")
+			"su", "-", "ubuntu", "-c", "/usr/local/bin/sandbox /usr/bin/nodejs /tmp/foo/foo_test.js")
 	}
 	return nil
 }
