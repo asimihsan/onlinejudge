@@ -7,6 +7,10 @@ function grecaptchaOnLoad() {
 */
 
 (function() {
+    function setEditorValue(editor, text) {
+        editor.setValue(text);
+    }
+
     function getPersistedTextKey() {
         return window.location.href + '::' + 'persistedText';
     }
@@ -28,7 +32,7 @@ function grecaptchaOnLoad() {
 
     function createEditor(editorElement) {
         window.editor = CodeMirror.fromTextArea(editorElement, {});
-        window.editor.setValue(localStorage[getPersistedTextKey()] || window.editor.getValue());
+        setEditorValue(window.editor, localStorage[getPersistedTextKey()] || window.editor.getValue());
         window.editor.on("change", onChange);
         setCommonEditorOptions();
     }
@@ -46,7 +50,7 @@ function grecaptchaOnLoad() {
         setCommonEditorOptions();
         window.editor.setOption("mode", "text/x-csrc");
         if (text) {
-            window.editor.setValue(text);
+            setEditorValue(window.editor, text);
         }
     }
     function setupCPP(editorElement, text) {
@@ -55,7 +59,7 @@ function grecaptchaOnLoad() {
         setCommonEditorOptions();
         window.editor.setOption("mode", "text/x-c++src");
         if (text) {
-            window.editor.setValue(text);
+            setEditorValue(window.editor, text);
         }
     }
     function setupJava(editorElement, text) {
@@ -64,7 +68,7 @@ function grecaptchaOnLoad() {
         setCommonEditorOptions();
         window.editor.setOption("mode", "text/x-java");
         if (text) {
-            window.editor.setValue(text);
+            setEditorValue(window.editor, text);
         }
     }
     function setupJavaScript(editorElement, text) {
@@ -73,7 +77,7 @@ function grecaptchaOnLoad() {
         setCommonEditorOptions();
         window.editor.setOption("mode", "javascript");
         if (text) {
-            window.editor.setValue(text);
+            setEditorValue(window.editor, text);
         }
     }
     function setupPython(editorElement, text) {
@@ -82,7 +86,7 @@ function grecaptchaOnLoad() {
         setCommonEditorOptions();
         window.editor.setOption("mode", "python");
         if (text) {
-            window.editor.setValue(text);
+            setEditorValue(window.editor, text);
         }
     }
     function setupRuby(editorElement, text) {
@@ -91,7 +95,7 @@ function grecaptchaOnLoad() {
         setCommonEditorOptions();
         window.editor.setOption("mode", "ruby");
         if (text) {
-            window.editor.setValue(text);
+            setEditorValue(window.editor, text);
         }
     }
 
@@ -124,7 +128,7 @@ function grecaptchaOnLoad() {
             $("#output").text("");
         });
         $(".clear-code-button").click(function() {
-            window.editor.setValue("");
+            setEditorValue(window.editor, "");
             window.editor.clearHistory();
         });
         $(".submit-button").click(function() {
@@ -220,7 +224,7 @@ function grecaptchaOnLoad() {
         language = $(".language-select").val();
         url = rootUrl + "/evaluator/get_problem_details/" + problem + "/" + language;
         return $.get(url).done(function(problem) {
-            window.editor.setValue(problem.initial_code[language].code);
+            setEditorValue(window.editor, problem.initial_code[language].code);
             description = marked(problem.description[language].markdown, {
                 sanitize: true,
                 smartypants: true
@@ -238,5 +242,10 @@ function grecaptchaOnLoad() {
         setCodeButtonsCallbacks(rootUrl);
         setupLanguageSelect(editorElement, rootUrl);
         setupProblemSelect(rootUrl);
+
+        $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+          console.log("refresh");
+          window.editor.refresh();
+        });
     });
 }());
