@@ -51,10 +51,30 @@
 
       <div class="row">
         <div class="col-md-8">
-            <textarea id="editor" name="editor"></textarea>
+            <select class="problem-select">
+                <option value="<empty>">no problems found</option>
+            </select>
         </div>
-        <div class="col-md-4">
-            <div id="recaptcha"></div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-8">
+          <div role="tabpanel">
+            <!-- Nav tabs -->
+            <ul class="nav nav-tabs" role="tablist">
+                <li role="presentation" class="active"><a href="#description" aria-controller="description" role="tab" data-toggle="tab">Description</a></li>
+                <li role="presentation"><a href="#code" aria-controller="code" role="tab" data-toggle="tab">Code</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content">
+        <div role="tabpanel" class="tab-pane active" id="description">
+            Please select a problem.
+        </div>
+        <div role="tabpanel" class="tab-pane" id="code">
+            <textarea id="editor" name="editor"></textarea>
             <button type="submit" class="ladda-button submit-button" data-color="blue" data-style="contract" data-size="s" name="submit" id="submit">
                 <span class="ladda-label">Submit</span>
                 <span class="ladda-spinner"></span>
@@ -85,6 +105,8 @@
     <script src="bower_components/codemirror/mode/javascript/javascript.js"></script>
     <script src="bower_components/ladda/dist/spin.min.js"></script>
     <script src="bower_components/ladda/dist/ladda.min.js"></script>
+    <script src="bower_components/lodash/lodash.min.js"></script>
+    <script src="bower_components/marked/marked.min.js"></script>
     <script src="js/plugins.js"></script>
     <script src="js/main.js"></script>
     </body>

@@ -119,24 +119,7 @@ function grecaptchaOnLoad() {
         localStorage[getPersistedLanguageKey()] = language;
     }
 
-    //$(window).load(grecaptchaOnLoad);
-
-    $(function() {
-        var editorElement = document.getElementById("editor");
-        createEditor(editorElement);
-
-        $(".language-select").change(function(_, target) {
-            var text = window.editor.getValue();
-            language = $(".language-select").val();
-            onLanguageSelected(editorElement, language, text);
-        });
-
-        // triggering chosen:updated doesn't trigger the callback function,
-        // so we call it ourselves.
-        var language = localStorage[getPersistedLanguageKey()] || 'python';
-        $(".language-select").val(language);
-        onLanguageSelected(editorElement, language, window.editor.getValue());
-
+    function setCodeButtonsCallbacks(rootUrl) {
         $(".clear-output-button").click(function() {
             $("#output").text("");
         });
@@ -152,10 +135,13 @@ function grecaptchaOnLoad() {
             data = {
                 'code': window.editor.getValue(),
                 //'recaptcha': grecaptcha.getResponse(window.recaptcha),
-            }
+            };
+            var problem = $(".problem-select").val();
+            var language = $(".language-select").val();
+            var url = rootUrl + "/evaluator/evaluate/" + problem + "/" + language;
             $.ajax({
                 type: "POST",
-                url: "/run/" + language,
+                url: url,
                 data: JSON.stringify(data),
                 contentType: "application/json; charset=utf-8",
                 success: function(response) {
@@ -170,5 +156,87 @@ function grecaptchaOnLoad() {
                 }
             });
         });
+    }
+
+    function setupLanguageSelect(editorElement, rootUrl) {
+        $(".language-select").change(function() {
+            var text = window.editor.getValue();
+            language = $(".language-select").val();
+            onLanguageSelected(editorElement, language, text);
+            refreshProblemSelect(rootUrl).done(function() {
+                updateDescriptionAndCode(rootUrl);
+            });
+        });
+
+        // triggering chosen:updated doesn't trigger the callback function,
+        // so we call it ourselves.
+        var language = localStorage[getPersistedLanguageKey()] || 'python';
+        $(".language-select").val(language);
+        onLanguageSelected(editorElement, language, window.editor.getValue());
+    }
+
+    function refreshProblemSelect(rootUrl) {
+        var problemSelect = $(".problem-select");
+        problemSelect.prop("disabled", true);
+        return $.get(rootUrl + "/evaluator/get_problem_summaries")
+         .done(function(problems) {
+            problems = _.sortBy(problems, function(problem) {
+                return problem.title;
+            });
+            var language = $(".language-select").val();
+            matchingProblems = _.filter(problems, function(problem) {
+                return _.includes(problem.supported_languages, language);
+            });
+            problemSelect.empty();
+            if (_.size(matchingProblems) !== 0) {
+                _.each(problems, function(problem) {
+                    var option = $("<option></option>")
+                                 .attr("value", problem.id)
+                                 .text(problem.title);
+                    problemSelect.append(option);
+                });
+            } else {
+                var option = $("<option></option>")
+                             .attr("value", "")
+                             .text("No problems found");
+                problemSelect.append(option);
+                $("#description").html("<div></div>");
+            }
+            problemSelect.prop("disabled", false);
+         });
+    }
+
+    function setupProblemSelect(rootUrl) {
+        refreshProblemSelect(rootUrl).done(function() {
+            updateDescriptionAndCode(rootUrl);
+        });
+        $(".problem-select").change(function() {
+            updateDescriptionAndCode(rootUrl);
+        });
+    }
+
+    function updateDescriptionAndCode(rootUrl) {
+        problem = $(".problem-select").val();
+        language = $(".language-select").val();
+        url = rootUrl + "/evaluator/get_problem_details/" + problem + "/" + language;
+        return $.get(url).done(function(problem) {
+            window.editor.setValue(problem.initial_code[language].code);
+            description = marked(problem.description[language].markdown, {
+                sanitize: true,
+                smartypants: true
+            });
+            $("#description").html(description);
+        });
+    }
+
+    //$(window).load(grecaptchaOnLoad);
+
+    $(function() {
+        var editorElement = document.getElementById("editor");
+        var rootUrl = "http://www.runsomecode.com";
+        createEditor(editorElement);
+        setCodeButtonsCallbacks(rootUrl);
+        setupLanguageSelect(editorElement, rootUrl);
+        setupProblemSelect(rootUrl);
     });
 }());
