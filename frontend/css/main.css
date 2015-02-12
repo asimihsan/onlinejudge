@@ -101,6 +101,11 @@ textarea {
 body {
   padding-top: 20px;
   padding-bottom: 20px;
+  font-family: 'Open Sans', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
 }
 
 /* Everything but the jumbotron gets side spacing for mobile first views */
