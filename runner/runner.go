@@ -15,6 +15,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -25,6 +26,7 @@ var (
 	handlerSemaphore       = make(chan int, maxOutstandingRequests)
 	grecaptchaSecret       = "6LcB8gATAAAAAByLaeJzveuN4_lP_yDdiszVoL60"
 	outputLimit            = 10 * 1024
+	lxcMutex               = &sync.Mutex{}
 )
 
 func getLogger(prefix string) *log.Logger {
@@ -165,6 +167,10 @@ func runHandler(language string, w http.ResponseWriter, r *http.Request) {
 		<-handlerSemaphore
 	}()
 
+	// grab the mutex for the LXC container
+	lxcMutex.Lock()
+	defer lxcMutex.Unlock()
+
 	codeFile := prepareCodeFile(logger, t.Code)
 	defer os.Remove(codeFile.Name())
 
@@ -182,10 +188,10 @@ func runHandler(language string, w http.ResponseWriter, r *http.Request) {
 	}
 	if val, _ := response["success"]; val != true {
 		logger.Println("code failure, so cycle the LXC container.")
-		ensureLxcContainerIsRunning()
+		go func() { ensureLxcContainerIsRunning() }()
 	} else if language == "java" {
 		logger.Println("java, so cycle the LXC container.")
-		ensureLxcContainerIsRunning()
+		go func() { ensureLxcContainerIsRunning() }()
 	}
 }
 
@@ -348,6 +354,10 @@ func runCommand(language string, code_filepath string, unittest_filepath string)
 
 func ensureLxcContainerIsRunning() {
 	logger.Println("ensureLxcContainerIsRunning() entry.")
+
+	// grab the mutex for the LXC container
+	lxcMutex.Lock()
+	defer lxcMutex.Unlock()
 
 	logger.Println("Stopping container...")
 	proc := exec.Command("lxc-stop", "--timeout", "1", "--name", "u1")
