@@ -206,7 +206,10 @@ func putProblemIntoProblemSummary(logger *log.Logger, problem *Problem, table_na
 		same bool
 	)
 
-	if same, err = isProblemNewer(problem, problem.Id, table_name); err != nil {
+	same, err = isProblemNewer(problem, problem.Id, table_name)
+	if _, ok := err.(ProblemNotFoundError); ok {
+		logger.Printf("problem does not exist, continue creating it.")
+	} else if err != nil {
 		log.Printf("error while checking if current problem is newer: %s", err)
 		return err
 	}
@@ -258,7 +261,10 @@ func putProblemIntoProblemDetails(logger *log.Logger, problem *Problem, table_na
 		log.Printf("handling language: %s", language)
 
 		id := fmt.Sprintf("%s#%s", problem.Id, language)
-		if same, err = isProblemNewer(problem, id, table_name); err != nil {
+		same, err = isProblemNewer(problem, id, table_name)
+		if _, ok := err.(ProblemNotFoundError); ok {
+			logger.Printf("problem does not exist, continue creating it.")
+		} else if err != nil {
 			log.Printf("error while checking if current problem is newer: %s", err)
 			return err
 		}
@@ -322,7 +328,10 @@ func putProblemIntoUnitTest(logger *log.Logger, problem *Problem, table_name str
 		logger.Printf("handling language: %s", language)
 
 		id := fmt.Sprintf("%s#%s", problem.Id, language)
-		if same, err = isProblemNewer(problem, id, table_name); err != nil {
+		same, err = isProblemNewer(problem, id, table_name)
+		if _, ok := err.(ProblemNotFoundError); ok {
+			logger.Printf("problem does not exist, continue creating it.")
+		} else if err != nil {
 			logger.Printf("error while checking if current problem is newer: %s", err)
 			return err
 		}

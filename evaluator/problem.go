@@ -19,7 +19,7 @@ type ProblemNotFoundError struct {
 }
 
 func (e ProblemNotFoundError) Error() string {
-	return fmt.Sprintf("Problem ID '%s' not found", e.Id)
+	return fmt.Sprintf("problem ID '%s' not found", e.Id)
 }
 
 type Problem struct {
