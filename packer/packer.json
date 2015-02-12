@@ -33,6 +33,8 @@
 
     {"type": "file", "source": "../runner/runner.linux", "destination": "/usr/local/bin/runner.linux"},
     {"type": "file", "source": "../runner/runner_upstart.conf", "destination": "/etc/init/runner.conf"},
+    {"type": "file", "source": "java_libraries/hamcrest-core-1.3.jar", "destination": "/home/ubuntu/hamcrest-core-1.3.jar"},
+    {"type": "file", "source": "java_libraries/junit-4.12.jar", "destination": "/home/ubuntu/junit-4.12.jar"},
     {"type": "shell", "script": "shell/runner.sh"},
 
     {"type": "file", "source": "../evaluator/evaluator.linux", "destination": "/usr/local/bin/evaluator.linux"},

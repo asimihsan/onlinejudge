@@ -161,6 +161,9 @@ func runHandler(language string, w http.ResponseWriter, r *http.Request) {
 	// it's capacity it will block here; hence only "maxOutstandingRequests"
 	// permitted.
 	handlerSemaphore <- 1
+	defer func() {
+		<-handlerSemaphore
+	}()
 
 	codeFile := prepareCodeFile(logger, t.Code)
 	defer os.Remove(codeFile.Name())
@@ -184,8 +187,6 @@ func runHandler(language string, w http.ResponseWriter, r *http.Request) {
 		logger.Println("java, so cycle the LXC container.")
 		ensureLxcContainerIsRunning()
 	}
-
-	<-handlerSemaphore
 }
 
 func runCHandler(w http.ResponseWriter, r *http.Request) {
@@ -332,8 +333,10 @@ func runCommand(language string, code_filepath string, unittest_filepath string)
 	case "java":
 		copyPrepareFile(code_filepath, "/tmp/foo/Solution.java")
 		copyPrepareFile(unittest_filepath, "/tmp/foo/SolutionTest.java")
+		copyPrepareFile("/home/ubuntu/hamcrest-core-1.3.jar", "/tmp/foo/hamcrest-core-1.3.jar")
+		copyPrepareFile("/home/ubuntu/junit-4.12.jar", "/tmp/foo/junit-4.12.jar")
 		return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
-			"su", "-", "ubuntu", "-c", "/usr/local/bin/sandbox /usr/bin/javac -J-Xmx350m /tmp/foo/*.java && /usr/local/bin/sandbox /usr/bin/java -Xmx350m -classpath /tmp/foo Solution")
+			"su", "-", "ubuntu", "-c", "/usr/local/bin/sandbox /usr/bin/javac -J-Xmx350m -cp '/tmp/foo/:/tmp/foo/junit-4.12.jar:/tmp/foo/hamcrest-core-1.3.jar' /tmp/foo/*.java && /usr/local/bin/sandbox /usr/bin/java -cp '/tmp/foo/:/tmp/foo/junit-4.12.jar:/tmp/foo/hamcrest-core-1.3.jar' -Xmx350m SolutionTest")
 	case "javascript":
 		copyPrepareFile(code_filepath, "/tmp/foo/foo.js")
 		copyPrepareFile(unittest_filepath, "/tmp/foo/foo_test.js")

@@ -9,6 +9,9 @@ su - ubuntu -c 'touch ~/.ssh/known_hosts'
 su - ubuntu -c 'chmod 644 ~/.ssh/known_hosts'
 su - ubuntu -c 'ssh-keyscan -H localhost >> ~/.ssh/known_hosts'
 
+# Java libraries copied to LXC container
+sudo chown ubuntu:ubuntu /home/ubuntu/*.jar
+
 sudo chmod a+x /usr/local/bin/runner.linux
 
 sudo tee /usr/local/bin/runner_via_ssh >/dev/null <<"EOF"
