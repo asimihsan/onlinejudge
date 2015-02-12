@@ -193,7 +193,7 @@ function grecaptchaOnLoad() {
             });
             problemSelect.empty();
             if (_.size(matchingProblems) !== 0) {
-                _.each(problems, function(problem) {
+                _.each(matchingProblems, function(problem) {
                     var option = $("<option></option>")
                                  .attr("value", problem.id)
                                  .text(problem.title);
