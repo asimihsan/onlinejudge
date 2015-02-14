@@ -20,7 +20,6 @@ function grecaptchaOnLoad() {
     }
 
     function onChange(editor) {
-        localStorage[getPersistedTextKey()] = editor.getValue();
     }
 
     function setCommonEditorOptions() {
@@ -32,7 +31,6 @@ function grecaptchaOnLoad() {
 
     function createEditor(editorElement) {
         window.editor = CodeMirror.fromTextArea(editorElement, {});
-        setEditorValue(window.editor, localStorage[getPersistedTextKey()] || window.editor.getValue());
         window.editor.on("change", onChange);
         setCommonEditorOptions();
     }
@@ -120,7 +118,6 @@ function grecaptchaOnLoad() {
                 setupRuby(editorElement, text);
                 break;
         }
-        localStorage[getPersistedLanguageKey()] = language;
     }
 
     function setCodeButtonsCallbacks(rootUrl) {
@@ -174,7 +171,7 @@ function grecaptchaOnLoad() {
 
         // triggering chosen:updated doesn't trigger the callback function,
         // so we call it ourselves.
-        var language = localStorage[getPersistedLanguageKey()] || 'python';
+        var language = 'python';
         $(".language-select").val(language);
         onLanguageSelected(editorElement, language, window.editor.getValue());
     }
