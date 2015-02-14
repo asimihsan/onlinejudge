@@ -260,4 +260,31 @@ def are_delimiters_balanced(input):
                 return False
     return len(stack) == 0
 '''
+
+[Solution.java]
+code = '''
+import java.util.*;
+import java.io.*;
+
+public class Solution {
+    private static final Map<Character, Character> pairs = new HashMap<>();
+    static {
+        pairs.put('{', '}');
+        pairs.put('(', ')');
+        pairs.put('[', ']');
+    }
+    public static boolean are_delimiters_balanced(final String input) {
+        final Deque<Character> stack = new ArrayDeque<>();
+        for (int i = 0; i < input.length(); i++) {
+            final Character c = input.charAt(i);
+            if (pairs.containsKey(c)) {
+                stack.push(c);
+            } else if (stack.size() == 0 || !pairs.get(stack.pop()).equals(c)) {
+                return false;
+            }
+        }
+        return stack.size() == 0;
+    }
+}
+'''
 # ------------------------------------------------------------------------------
