@@ -49,6 +49,8 @@ Notes
 
 ## TODO
 
+-   user_data
+    -   make sure runsomecode.com redirects to www.runsomecode.com, in order for cookies to work.
 -   evaluator
     -   need to put problems onto server if you want to upload them (or don't! maybe don't allow uploads from server)
     -   rather make a command line argument to recreate/upload problems OR start server
@@ -179,7 +181,15 @@ Refresh frontend
 ```
 watchmedo shell-command \
     -c 'rsync -avz -e "ssh -i /Users/ai/.ssh/digitalocean" frontend/ root@www.runsomecode.com:/usr/share/nginx/html' \
-    -w frontend
+    -w -R frontend -p '*.js;*.html;*.css'
+```
+
+Refresh frontend (new angular before transition)
+
+```
+watchmedo shell-command \
+    -c 'rsync -avz -e "ssh -i /Users/ai/.ssh/digitalocean" frontend-angular/app/ root@www.runsomecode.com:/usr/share/nginx/html && rsync -avz -e "ssh -i /Users/ai/.ssh/digitalocean" frontend-angular/bower_components root@www.runsomecode.com:/usr/share/nginx/html' \
+    -w -R frontend-angular -p '*.js;*.html;*.css'
 ```
 
 Refresh sandbox
@@ -201,6 +211,16 @@ watchmedo shell-command -c \
     ssh -i ~/.ssh/digitalocean root@www.runsomecode.com "pkill evaluator.linux" ; \
     scp -i ~/.ssh/digitalocean evaluator.linux root@www.runsomecode.com:/usr/local/bin/evaluator.linux && \
     ssh -i ~/.ssh/digitalocean root@www.runsomecode.com "service evaluator start"' \
+    -w -p '*.go' .
+```
+
+Refresh user_data:
+
+```
+watchmedo shell-command -c \
+    'clear && date && GOOS=linux GOARCH=amd64 go build -o user_data.linux && \
+    ssh -i ~/.ssh/digitalocean root@www.runsomecode.com "pkill user_data.linux" ; \
+    scp -i ~/.ssh/digitalocean user_data.linux root@www.runsomecode.com:/usr/local/bin/user_data.linux' \
     -w -p '*.go' .
 ```
 
