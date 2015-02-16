@@ -30,6 +30,8 @@ frontend/bower_components
 frontend/node_modules
 evaluator/evaluator
 evaluator/evaluator.linux
+user_data/user_data
+user_data/user_data.linux
 
 doc/*.png
 doc/*.pdf
