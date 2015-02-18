@@ -20,7 +20,15 @@ angular
     'ngTouch',
     'ui.router',
     'ui.router.tabs',
+    'ui.codemirror',
+    'angular-ladda',
   ])
+  // allow DI for use in controllers, unit tests
+  .constant('_', window._)
+  // use in views, ng-repeat="x in _.range(3)"
+  .run(function ($rootScope) {
+     $rootScope._ = window._;
+  })
   .config(function ($stateProvider, $urlRouterProvider) {
     $stateProvider
       .state('prelogin', {
@@ -42,6 +50,19 @@ angular
         url: '/problem',
         templateUrl: 'views/problem.html',
         controller: 'ProblemCtrl',
+      })
+      .state('attempt', {
+        url: '/problem/{problemId:[a-z0-9_]+}/{language:[a-z0-9_]+}',
+        templateUrl: 'views/attempt.html',
+        controller: 'AttemptCtrl',
+      })
+      .state('attempt.description', {
+        url: '/description',
+        templateUrl: 'views/attempt-description.html',
+      })
+      .state('attempt.code', {
+        url: '/code',
+        templateUrl: 'views/attempt-code.html',
       })
       ;
     $urlRouterProvider

@@ -1,0 +1,12 @@
+<ol class="breadcrumb">
+  <li><a ui-sref='problem()'>Choose a problem</a></li>
+  <li>{{ problemId }} (in {{ language }})</li>
+</ol>
+
+<div role="tabpanel">
+  <ul class="nav nav-tabs" role="tablist">
+    <li role="presentation" ng-class="{active: state.current.name === 'attempt.description'}"><a ui-sref="attempt.description()" ui-sref-opts="{location:'replace'}" role="tab">Description</a></li>
+    <li role="presentation" ng-class="{active: state.current.name === 'attempt.code'}"><a ui-sref="attempt.code()" ui-sref-opts="{location:'replace'}" role="tab">Code</a></li>
+</div>
+
+<div ui-view=""></div>

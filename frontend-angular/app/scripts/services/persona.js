@@ -8,7 +8,7 @@
  * Factory in the onlinejudgeApp.
  */
 angular.module('onlinejudgeApp')
-  .factory('personaService', function($http, $q, $location, $state) {
+  .factory('personaService', function($http, $q, $location) {
     var user = {
       loggedIn: false,
       email: null,
@@ -52,7 +52,7 @@ angular.module('onlinejudgeApp')
               deferred.reject(response.data.reason);
             } else {
               deferred.resolve(response.data.email);
-              $state.go('problem');
+              $location.path('/problem/python');
             }
           });
       },

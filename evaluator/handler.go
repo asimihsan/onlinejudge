@@ -154,7 +154,7 @@ func evaluate(w http.ResponseWriter, r *http.Request) {
 	data["code"] = string(t.Code)
 	data["unit_test"] = problem.UnitTest[language].Code
 
-	uri := fmt.Sprintf("http://www.runsomecode.com/run/%s", language)
+	uri := fmt.Sprintf("http://runsomecode.com/run/%s", language)
 	j, jerr := json.Marshal(data)
 	if jerr != nil {
 		logger.Panic(jerr)

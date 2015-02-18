@@ -62,7 +62,7 @@ func main() {
 	Initialize()
 	//DeleteTables()
 	//CreateTables()
-	LoadProblems(logger)
+	//LoadProblems(logger)
 
 	rand.Seed(time.Now().UTC().UnixNano())
 	r := mux.NewRouter()

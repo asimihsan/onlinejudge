@@ -113,7 +113,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 func getCookieStore(r *http.Request, name string) (*sessions.Session, error) {
 	session, err := store.Get(r, name)
 	session.Options = &sessions.Options{
-		Domain:   "www.runsomecode.com",
+		Domain:   "runsomecode.com",
 	    Path:     "/",
 	    MaxAge:   86400 * 7,
 	    HttpOnly: true,
