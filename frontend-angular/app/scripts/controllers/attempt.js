@@ -77,11 +77,10 @@ angular.module('onlinejudgeApp')
     ];
 
     $scope.output = '';
-    $scope.submitCode = function() {
+    $scope.submitCode = function(problemId, language, code) {
       $scope.submitCodeLoading = true;
-      evaluateService.evaluateAttempt($scope.problemId, $scope.language, $scope.initialCode)
+      evaluateService.evaluateAttempt(problemId, language, code)
         .then(function(result) {
-          console.log(result);
           $scope.output = result.output;
           $scope.submitCodeLoading = false;
         });
