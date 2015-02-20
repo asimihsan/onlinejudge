@@ -8,10 +8,7 @@
  * Controller of the onlinejudgeApp
  */
 angular.module('onlinejudgeApp')
-  .controller('AboutCtrl', function ($scope) {
-    $scope.awesomeThings = [
-      'HTML5 Boilerplate',
-      'AngularJS',
-      'Karma'
-    ];
+  .controller('AboutCtrl', function ($scope, $state, $rootScope) {
+    // hack. should have a controller to handle nav bar
+    $rootScope.state = $state;
   });

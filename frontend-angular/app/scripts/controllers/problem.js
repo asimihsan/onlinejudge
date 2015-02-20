@@ -8,7 +8,10 @@
  * Controller of the onlinejudgeApp
  */
 angular.module('onlinejudgeApp')
-  .controller('ProblemCtrl', function ($scope, problemService) {
+  .controller('ProblemCtrl', function ($scope, $state, $rootScope, problemService) {
+    // hack. should have a controller to handle nav bar
+    $rootScope.state = $state;
+    
     $scope.language = null;
     $scope.languages = [
       {'value': 'c', 'text': 'C'},
