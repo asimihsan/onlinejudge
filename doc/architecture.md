@@ -6,7 +6,7 @@ How would you run a service that lets random strangers attempt to code a correct
 
 This article discusses a solution that I've developed for this problem. It is far from novel, nor is this a new problem. Please see the numerous references in the right margin for prior art or more information about concepts.
 
-![](architecture1.pdf)
+![](architecture1.png)
 
 ## Overview
 
