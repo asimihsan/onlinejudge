@@ -1,3 +1,9 @@
+img {
+  display: block;
+  height: auto;
+  max-width: 100%;
+}
+
 .browsehappy {
   margin: 0.2em 0;
   background: #ccc;
