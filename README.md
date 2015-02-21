@@ -180,16 +180,8 @@ Refresh frontend
 
 ```
 watchmedo shell-command \
-    -c 'rsync -avz -e "ssh -i /Users/ai/.ssh/digitalocean" frontend/ root@www.runsomecode.com:/usr/share/nginx/html' \
+    -c 'rsync -avz -e "ssh -i /Users/ai/.ssh/digitalocean" frontend/ root@www.runsomecode.com:/usr/share/nginx/html && rsync -avz -e "ssh -i /Users/ai/.ssh/digitalocean" frontend/bower_components root@www.runsomecode.com:/usr/share/nginx/html' \
     -w -R frontend -p '*.js;*.html;*.css'
-```
-
-Refresh frontend (new angular before transition)
-
-```
-watchmedo shell-command \
-    -c 'rsync -avz -e "ssh -i /Users/ai/.ssh/digitalocean" frontend-angular/app/ root@www.runsomecode.com:/usr/share/nginx/html && rsync -avz -e "ssh -i /Users/ai/.ssh/digitalocean" frontend-angular/bower_components root@www.runsomecode.com:/usr/share/nginx/html' \
-    -w -R frontend-angular -p '*.js;*.html;*.css'
 ```
 
 Refresh sandbox
