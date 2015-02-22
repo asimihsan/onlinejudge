@@ -46,6 +46,102 @@ Notes
 
 -   Problem descriptions may be language specific. Hence problem_details and unit_test are keyed using language.
 
+## Stopping naughty Python code from wrongly passing tests
+
+Python is very powerful. Here are ways I know to pass a naive test engine.
+
+### Summary of counters
+
+I don't think there's a 100% way of countering.
+
+-   Trap stderr during import.
+-   Use stderr to verify the test result.
+    -   But can't just test the last line for "OK", since you can just use an `atexit` and print it.
+    -   Instead of checking for success check for failure. Can't prevent the unit test output from showing fails, even if you print out fake successful lines.
+
+### Create or monkey patch unittest
+
+Is there any way of countering this?
+
+### Exit handler
+
+-   Return an exit code of 0 at the end by registering an exit handler, e.g.:
+
+```
+def savecounter():
+    import os
+    os._exit(0)
+
+import atexit
+atexit.register(savecounter)
+
+def are_delimiters_balanced(input):
+    pass
+```
+
+Counter:
+
+-   Use stderr to verify the test result. Even if you exit with a good return code the stderr is incorrect.
+
+### Fake stderr
+
+-   If the test engine relies on stderr then identify the necessary stderr, print it out, then exit, e.g.
+
+```
+print("""test4 (__main__.TestFizzBuzz) ... ok
+test5 (__main__.TestFizzBuzz) ... ok
+test6 (__main__.TestFizzBuzz) ... ok
+test7 (__main__.TestFizzBuzz) ... ok
+test8 (__main__.TestFizzBuzz) ... ok
+test9 (__main__.TestFizzBuzz) ... ok""")
+import os
+os._exit(0)
+
+def are_delimiters_balanced(input):
+    pass
+```
+
+Counter:
+
+-   Trap stderr and stdout before importing and use stderr to verify the tes result. That way even with return code of 0 the stderr will be empty.
+
+## Languages to support
+
+Java, PHP, JavaScript, C, Python, C++, C#, Obj-C
+
+-   Redmonk
+    -   JavaScript, Java, PHP, Python, C#, C++, Ruby, C, Obj-C, Perl
+-   TIBOE
+    -   C, Java, C++, Obj-C, C#, JavaScript, PHP, Python, VB .NET, VB
+-   Langpop.com
+    -   C, Java, PHP, JavaScript, C++, Python, Shell, Ruby, Obj-C, C#
+-   pypl.github.io
+    -   Java, PHP, Python, C#, C++, C, JavaScript, Obj-C, Matlab, R
+-   GitHut
+    -   JavaScript, Java, Python, PHP, Ruby, C++, C, Shell, C#, Obj-C
+-   Use average rankings to pick top five languages to seek solutions for, only for languages in all lists:
+
+```
+import collections
+import pprint
+
+lists = [
+    ['JavaScript', 'Java', 'PHP', 'Python', 'C#', 'C++', 'Ruby', 'C', 'Obj-C', 'Perl'],  # Redmonk
+    ['C', 'Java', 'C++', 'Obj-C', 'C#', 'JavaScript', 'PHP', 'Python', 'VB .NET', 'VB'],  # TIBOE
+    ['C', 'Java', 'PHP', 'JavaScript', 'C++', 'Python', 'Shell', 'Ruby', 'Obj-C', 'C#'],  # Langpop.com
+    ['Java', 'PHP', 'Python', 'C#', 'C++', 'C', 'JavaScript', 'Obj-C', 'Matlab', 'R'],  # pypl.github.io
+    ['JavaScript', 'Java', 'Python', 'PHP', 'Ruby', 'C++', 'C', 'Shell', 'C#', 'Obj-C'],  # GitHut
+]
+languages = set([x for xs in lists for x in xs
+                 if all(x in xs for xs in lists)])
+rankings = collections.defaultdict(int)
+for language in languages:
+    for xs in lists:
+        rankings[language] += (xs.index(language)+1)/float(len(lists))
+
+result = sorted([(x, language) for (language, x) in rankings.items()])
+pprint.pprint(result)
+```
 
 ## TODO
 
@@ -180,7 +276,7 @@ Refresh frontend
 
 ```
 watchmedo shell-command \
-    -c 'rsync -avz -e "ssh -i /Users/ai/.ssh/digitalocean" frontend/ root@www.runsomecode.com:/usr/share/nginx/html && rsync -avz -e "ssh -i /Users/ai/.ssh/digitalocean" frontend/bower_components root@www.runsomecode.com:/usr/share/nginx/html' \
+    -c 'rsync -avz -e "ssh -i /Users/ai/.ssh/digitalocean" frontend/app/ root@www.runsomecode.com:/usr/share/nginx/html && rsync -avz -e "ssh -i /Users/ai/.ssh/digitalocean" frontend/bower_components root@www.runsomecode.com:/usr/share/nginx/html' \
     -w -R frontend -p '*.js;*.html;*.css'
 ```
 
