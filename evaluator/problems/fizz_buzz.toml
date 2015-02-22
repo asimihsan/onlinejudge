@@ -16,7 +16,7 @@ Id = "fizz_buzz"
 
 # Increment version every time you want to re-upload a problem. You should
 # probably update last_updated_date if you increment the version.
-Version = 8
+Version = 15
 
 Title = "Fizz Buzz"
 SupportedLanguages = [
@@ -140,12 +140,12 @@ ping"""
         self.saved_stdout = sys.stdout
         sys.stdout = StringIO()
 
+    def tearDown(self):
+        sys.stdout = self.saved_stdout
+
     def test1(self):
         foo.fizz_buzz(7)
         self.assertEqual(self.test1_output, sys.stdout.getvalue().strip())
-
-    def tearDown(self):
-        sys.stdout = self.saved_stdout
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

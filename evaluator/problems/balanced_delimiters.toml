@@ -16,7 +16,7 @@ Id = "balanced_delimiters"
 
 # Increment version every time you want to re-upload a problem. You should
 # probably update last_updated_date if you increment the version.
-Version = 6
+Version = 12
 
 Title = "Balanced Delimiters"
 SupportedLanguages = [
