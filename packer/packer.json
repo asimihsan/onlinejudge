@@ -29,7 +29,8 @@
     {"type": "file", "source": "../sandbox", "destination": "/tmp"},
     {"type": "shell", "script": "shell/build_and_deploy_sandbox.sh"},
     {"type": "shell", "script": "shell/nginx.sh"},
-    {"type": "file", "source": "../frontend/", "destination": "/usr/share/nginx/html"},
+    {"type": "file", "source": "../frontend/app/", "destination": "/usr/share/nginx/html"},
+    {"type": "file", "source": "../frontend/bower_components", "destination": "/usr/share/nginx/html"},
 
     {"type": "file", "source": "../runner/runner.linux", "destination": "/usr/local/bin/runner.linux"},
     {"type": "file", "source": "../runner/runner_upstart.conf", "destination": "/etc/init/runner.conf"},
