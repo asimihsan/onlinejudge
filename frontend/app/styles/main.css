@@ -1,3 +1,10 @@
+h1, .h1 {
+  font-size: 200%;
+}
+h2, .h2 {
+  font-size: 150%;
+}
+
 img {
   display: block;
   height: auto;
@@ -116,4 +123,8 @@ body {
     outline: 0;
     box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102, 175, 233, .6);
     transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+}
+
+a .glyphicon {
+  padding-right: 0.5em;
 }
