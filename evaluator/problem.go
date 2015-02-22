@@ -82,7 +82,17 @@ func ParseProblems() (problems []Problem, err error) {
 	log.Printf("ParseProblems() entry.")
 	defer log.Printf("ParseProblems() exit.")
 
-	err = filepath.Walk("./problems/", func(filepath string, f os.FileInfo, err error) error {
+	root := "./problems"
+	f, err := os.Stat(root)
+	if os.IsNotExist(err) {
+		log.Printf("Root directory %s does not exist, can't load problems.", root)
+		return problems, nil
+	}
+	if !f.IsDir() {
+		log.Printf("Root directory %s is not a directory, can't load problems.", root)
+		return problems, nil
+	}
+	err = filepath.Walk(root, func(filepath string, f os.FileInfo, err error) error {
 		if f.IsDir() || !strings.HasSuffix(filepath, ".toml") {
 			return nil
 		}
