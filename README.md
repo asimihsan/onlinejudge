@@ -2,6 +2,58 @@
 
 Run untrusted code in a sandbox that prevents it from harming the host machine, other processes, and unauthorised use of the network.
 
+## User / solutions / forum schema
+
+-   Users log in using email addresses.
+-   Users have nicknames, default to the user part of the email address.
+
+### User
+
+-   user
+    -   attributes:
+        -   id (string, GUID)
+        -   email (string)
+        -   nickname (string)
+        -   role (string, e.g. admin, moderator, regular)
+    -   hash key: id
+    -   range key: <none>
+-   user_email_to_id (to use IDs publicly to map to emails, never reveal emails publicly)
+    -   attributes:
+        -   id (string, GUID)
+        -   email (string)
+    -   hash key: email
+    -   range key: <none>
+-   user_nickname_to_id (to map and constriant uniqueness on nicknames for users)
+    -   attributes:
+        -   id (string, GUID)
+        -   nickname (string)
+    -   hash key: nickname
+    -   range key: <none>
+-   solution_metadata
+    -   attributes
+        -   id (string, GUID)
+        -   problem_id (<problem id>#<language>) (string)
+        -   user_id (string, id of user who submitted)
+        -   creation_date (ISO 8601 datetime) (string)
+    -   hash key: problem_id
+    -   range key: id
+-   solution_content
+    -   attributes
+        -   id (string, GUID)
+        -   code (string)
+        -   description (string)
+    -   hash key: id
+    -   range key: <none>
+-   solution_vote (to see how many votes a given solution has, and when a user has already voted up/down for a solution)
+    -   attributes:
+        -   user_id (string, id of user)
+        -   solution_id (string, id of problem)
+        -   vote (string, either "u" or "d")
+        -   creation_date (ISO 8601 datetime) (string)
+    -   hash key: solution_id
+    -   range key: user_id
+
+
 ## Evaluator schema
 
 A service that allows people to:
