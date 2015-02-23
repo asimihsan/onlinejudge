@@ -16,7 +16,7 @@ Id = "fizz_buzz"
 
 # Increment version every time you want to re-upload a problem. You should
 # probably update last_updated_date if you increment the version.
-Version = 15
+Version = 17
 
 Title = "Fizz Buzz"
 SupportedLanguages = [
@@ -136,6 +136,10 @@ ping
 fizz buzz
 ping"""
 
+    test2_output = """ping
+fizz
+buzz"""
+
     def setUp(self):
         self.saved_stdout = sys.stdout
         sys.stdout = StringIO()
@@ -146,6 +150,10 @@ ping"""
     def test1(self):
         foo.fizz_buzz(7)
         self.assertEqual(self.test1_output, sys.stdout.getvalue().strip())
+
+    def test2(self):
+        foo.fizz_buzz(3)
+        self.assertEqual(self.test2_output, sys.stdout.getvalue().strip())
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
@@ -163,6 +171,8 @@ public class SolutionTest {
         new ByteArrayOutputStream();
     private final String test1_output =
         "ping\nfizz\nbuzz\nfizz\nping\nfizz buzz\nping";
+        private final String test2_output =
+            "ping\nfizz\nbuzz";
 
     @Before
     public void setUpStreams() {
@@ -178,6 +188,12 @@ public class SolutionTest {
     public void test1() {
         Solution.fizz_buzz(7);
         assertEquals(test1_output, outContent.toString().trim());
+    }
+
+    @Test
+    public void test2() {
+        Solution.fizz_buzz(3);
+        assertEquals(test2_output, outContent.toString().trim());
     }
 
     public static void main(String[] args) {
