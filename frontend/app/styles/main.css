@@ -1,8 +1,18 @@
 h1, .h1 {
   font-size: 200%;
+  font-weight: 700;
 }
 h2, .h2 {
   font-size: 150%;
+  font-weight: 700;
+}
+h3, .h3 {
+  font-size: 125%;
+  font-weight: 700;
+}
+h4, .h4 {
+  font-size: 110%;
+  font-weight: 700;
 }
 
 img {
