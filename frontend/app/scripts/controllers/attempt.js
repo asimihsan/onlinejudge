@@ -50,12 +50,19 @@ angular.module('onlinejudgeApp')
 
     $scope.problem = null;
     $scope.description = '';
+    $scope.descriptionRendered = false;
     $scope.initialCode = '';
     problemService.getProblemDescriptionAndInitialCode($scope.problemId, $scope.language)
       .then(function(problem) {
         /*jshint camelcase: false */
         $scope.problem = problem;
-        $scope.description = marked($scope.problem.description[$scope.language].markdown);
+        $scope.description = marked(
+          $scope.problem.description[$scope.language].markdown,
+          {
+            sanitize: true,
+            smartypants: true
+          });
+        $scope.descriptionRendered = true;
         $scope.initialCode = $scope.problem.initial_code[$scope.language].code;
       });
     setupEditor($scope.language);
