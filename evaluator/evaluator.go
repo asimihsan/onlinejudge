@@ -61,7 +61,7 @@ func main() {
 
 	Initialize()
 	//DeleteTables()
-	//CreateTables()
+	CreateTables()
 	LoadProblems(logger)
 
 	rand.Seed(time.Now().UTC().UnixNano())
