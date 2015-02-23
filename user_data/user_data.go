@@ -1,129 +1,51 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
-	"net/url"
-
-	"github.com/gorilla/sessions"
+	"os"
 )
-
-type personaResponse struct {
-	Status   string `json: "status"`
-	Email    string `json: "email"`
-	Audience string `json: "audience"`
-	Expires  int64  `json: "expires"`
-	Issuer   string `json: "issuer"`
-}
-
-type loginRequest struct {
-	Assertion string `json:"assertion"`
-	Host  	  string `json:"host"`
-	Port 	  int64  `json:"port"`
-}
 
 var (
-	secretKey = []byte("acaec567-a14b-449a-8910-1aad305ce6ad")
+	logger  = getLogger("logger")
+	letters = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
 )
 
-var store = sessions.NewCookieStore(secretKey)
-
-func loginCheckHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "GET POST OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	w.Header().Set("Access-Control-Allow-Credentials", "true")
-	w.Header().Set("Content-Type", "text/plain")
-	if r.Method == "OPTIONS" {
-		return
-	}
-	session, _ := getCookieStore(r, "persona-session")
-	email := session.Values["email"]
-	if email != nil {
-		fmt.Fprintf(w, email.(string))
-	} else {
-		fmt.Fprintf(w, "")
-	}
+func getLogger(prefix string) *log.Logger {
+	paddedPrefix := fmt.Sprintf("%-8s: ", prefix)
+	return log.New(os.Stdout, paddedPrefix,
+		log.Ldate|log.Ltime|log.Lmicroseconds)
 }
 
-func logoutHandler(w http.ResponseWriter, r *http.Request) {
-	session, _ := getCookieStore(r, "persona-session")
-	session.Values["email"] = nil
-	session.Save(r, w)
-	w.Write([]byte("OK"))
-}
-
-func loginHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "GET POST OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	w.Header().Set("Access-Control-Allow-Credentials", "true")
-	w.Header().Set("Content-Type", "application/json")
-
-	if r.Method == "OPTIONS" {
-		return
+func getLogPill() string {
+	b := make([]rune, 8)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
 	}
-
-	decoder := json.NewDecoder(r.Body)
-	var t loginRequest
-	err := decoder.Decode(&t)
-	if err != nil {
-		log.Panicf("Could not decode JSON POST request")
-	}
-
-	log.Printf("host: %s, port: %s, assertion: %s", t.Host, t.Port, t.Assertion)
-
-	data := url.Values{
-		"assertion": {t.Assertion},
-		"audience": {fmt.Sprintf("%s:%d", t.Host, t.Port)},
-	}
-
-	resp, err := http.PostForm("https://verifier.login.persona.org/verify", data)
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(400)
-		w.Write([]byte("Bad Request."))
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(400)
-		w.Write([]byte("Bad Request."))
-	}
-
-	pr := &personaResponse{}
-	err = json.Unmarshal(body, pr)
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(400)
-		w.Write([]byte("Bad Request."))
-	}
-
-	session, _ := getCookieStore(r, "persona-session")
-	session.Values["email"] = pr.Email
-	session.Save(r, w)
-
-	w.Write(body)
-}
-
-func getCookieStore(r *http.Request, name string) (*sessions.Session, error) {
-	session, err := store.Get(r, name)
-	session.Options = &sessions.Options{
-		Domain:   "runsomecode.com",
-	    Path:     "/",
-	    MaxAge:   86400 * 7,
-	    HttpOnly: true,
-	}
-	return session, err
+	return string(b)
 }
 
 func main() {
+	Initialize()
+	//DeleteTables()
+	//CreateTables()
+
+	/*
+		user, err := NewUser(logger)
+		if err != nil {
+			log.Printf("failed to new user")
+		}
+		user.Email = "user@host.com"
+		user.Nickname = "user"
+		PutUserIntoUser(logger, user, "user")
+	*/
+
 	http.HandleFunc("/auth/check", loginCheckHandler)
 	http.HandleFunc("/auth/login", loginHandler)
 	http.HandleFunc("/auth/logout", logoutHandler)
+
+	log.Printf("Starting HTTP server...")
 	log.Fatal(http.ListenAndServe("localhost:9001", nil))
 }
