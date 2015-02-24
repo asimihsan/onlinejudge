@@ -39,7 +39,21 @@ func main() {
 		}
 		user.Email = "user@host.com"
 		user.Nickname = "user"
-		PutUserIntoUser(logger, user, "user")
+		PutUser(logger, user, "user", "user_email_to_id", "user_nickname_to_id")
+	*/
+
+	/*
+		user, err := GetUserWithEmail(logger, "user@host.com")
+		if err != nil {
+			log.Printf("failed to get user: %s", err)
+		}
+		log.Printf("%s", user)
+
+		user, err = GetUserWithNickname(logger, "user")
+		if err != nil {
+			log.Printf("failed to get user: %s", err)
+		}
+		log.Printf("%s", user)
 	*/
 
 	http.HandleFunc("/auth/check", loginCheckHandler)
