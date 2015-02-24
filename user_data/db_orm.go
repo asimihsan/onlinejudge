@@ -14,6 +14,14 @@ import (
 	"github.com/smugmug/godynamo/types/item"
 )
 
+type UserWithEmailAlreadyExists struct {
+	Email string
+}
+
+func (e UserWithEmailAlreadyExists) Error() string {
+	return fmt.Sprintf("user with email '%s' already exists", e.Email)
+}
+
 func executeGetItem(logger *log.Logger, get_request *get.GetItem) (*get.Response, error) {
 	body, code, err := get_request.EndpointReq()
 	if err != nil || code != http.StatusOK {
@@ -131,6 +139,12 @@ func PutUser(logger *log.Logger, user *User,
 		p2 batch_write_item.PutRequest
 		p3 batch_write_item.PutRequest
 	)
+
+	user, err := GetUserWithEmail(logger, user.Email)
+	if _, ok := err.(UserEmailNotFoundError); !ok {
+		log.Printf("user with email address %s already exists: %s", user.Email, err)
+		return UserWithEmailAlreadyExists{user.Email}
+	}
 
 	b := batch_write_item.NewBatchWriteItem()
 	b.RequestItems[user_table_name] = make([]batch_write_item.RequestInstance, 0)
