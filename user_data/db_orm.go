@@ -41,9 +41,11 @@ func executeGetItem(logger *log.Logger, get_request *get.GetItem) (*get.Response
 	return resp, nil
 }
 
-func GetUserWithId(logger *log.Logger, user_id string) (*User, error) {
+func GetUserWithId(logger *log.Logger, user_id string) (User, error) {
 	logger.Printf("db_orm.GetUserWithId() entry. user_id: %s", user_id)
 	defer logger.Printf("db_orm.GetUserWithId() exit.")
+
+	var user User
 
 	get1 := get.NewGetItem()
 	get1.TableName = "user"
@@ -53,21 +55,23 @@ func GetUserWithId(logger *log.Logger, user_id string) (*User, error) {
 	resp, err := executeGetItem(logger, get1)
 	if err != nil {
 		log.Printf("failed to execute get item: %s", err)
-		return nil, err
+		return user, err
 	}
 
-	user, err := ItemToUser(logger, user_id, resp.Item)
+	user, err = ItemToUser(logger, user_id, resp.Item)
 	if err != nil {
 		logger.Printf("error while converting item to user: %s", err)
-		return nil, err
+		return user, err
 	}
 
-	return &user, nil
+	return user, nil
 }
 
-func GetUserWithEmail(logger *log.Logger, user_email string) (*User, error) {
+func GetUserWithEmail(logger *log.Logger, user_email string) (User, error) {
 	logger.Printf("db_orm.GetUserWithEmail() entry. user_email: %s", user_email)
 	defer logger.Printf("db_orm.GetUserWithEmail() exit.")
+
+	var user User
 
 	get1 := get.NewGetItem()
 	get1.TableName = "user_email_to_id"
@@ -77,27 +81,29 @@ func GetUserWithEmail(logger *log.Logger, user_email string) (*User, error) {
 	resp, err := executeGetItem(logger, get1)
 	if err != nil {
 		log.Printf("failed to execute get item: %s", err)
-		return nil, err
+		return user, err
 	}
 
 	user_id, present := resp.Item["id"]
 	if present == false {
 		log.Printf("could not find user with user_email: %s", user_email)
-		return nil, UserEmailNotFoundError{user_email}
+		return user, UserEmailNotFoundError{user_email}
 	}
 
-	user, err := GetUserWithId(logger, user_id.S)
+	user, err = GetUserWithId(logger, user_id.S)
 	if err != nil {
 		log.Printf("Failed to get user with ID %s: %s", user_id, err)
-		return nil, err
+		return user, err
 	}
 
 	return user, nil
 }
 
-func GetUserWithNickname(logger *log.Logger, user_nickname string) (*User, error) {
+func GetUserWithNickname(logger *log.Logger, user_nickname string) (User, error) {
 	logger.Printf("db_orm.GetUserWithNickname() entry. user_nickname: %s", user_nickname)
 	defer logger.Printf("db_orm.GetUserWithNickname() exit.")
+
+	var user User
 
 	get1 := get.NewGetItem()
 	get1.TableName = "user_nickname_to_id"
@@ -107,25 +113,25 @@ func GetUserWithNickname(logger *log.Logger, user_nickname string) (*User, error
 	resp, err := executeGetItem(logger, get1)
 	if err != nil {
 		log.Printf("failed to execute get item: %s", err)
-		return nil, err
+		return user, err
 	}
 
 	user_id, present := resp.Item["id"]
 	if present == false {
 		log.Printf("could not find user with user_nickname: %s", user_nickname)
-		return nil, UserEmailNotFoundError{user_nickname}
+		return user, UserEmailNotFoundError{user_nickname}
 	}
 
-	user, err := GetUserWithId(logger, user_id.S)
+	user, err = GetUserWithId(logger, user_id.S)
 	if err != nil {
 		log.Printf("Failed to get user with ID %s: %s", user_id, err)
-		return nil, err
+		return user, err
 	}
 
 	return user, nil
 }
 
-func PutUser(logger *log.Logger, user *User,
+func PutUser(logger *log.Logger, user User,
 	user_table_name string, user_email_to_id_table_name string,
 	user_nickname_to_id_table_name string) error {
 	log.Printf("db_orm.PutUser() entry. user.Id: %s, user_table_name: %s, "+
@@ -140,7 +146,7 @@ func PutUser(logger *log.Logger, user *User,
 		p3 batch_write_item.PutRequest
 	)
 
-	user, err := GetUserWithEmail(logger, user.Email)
+	_, err := GetUserWithEmail(logger, user.Email)
 	if _, ok := err.(UserEmailNotFoundError); !ok {
 		log.Printf("user with email address %s already exists: %s", user.Email, err)
 		return UserWithEmailAlreadyExists{user.Email}
@@ -150,6 +156,8 @@ func PutUser(logger *log.Logger, user *User,
 	b.RequestItems[user_table_name] = make([]batch_write_item.RequestInstance, 0)
 	b.RequestItems[user_email_to_id_table_name] = make([]batch_write_item.RequestInstance, 0)
 	b.RequestItems[user_nickname_to_id_table_name] = make([]batch_write_item.RequestInstance, 0)
+
+	logger.Printf("user to create in DB: %s", user)
 
 	p1.Item = item.NewItem()
 	p1.Item["id"] = &attributevalue.AttributeValue{S: user.Id}

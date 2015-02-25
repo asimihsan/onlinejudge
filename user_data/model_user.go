@@ -49,19 +49,20 @@ func (u User) String() string {
 
 // Returns a new User object with Id, Role, CreationDate, and LastUpdatedDate
 // set up for you. You'll still need to fill in Email and Nickname.
-func NewUser(logger *log.Logger) (*User, error) {
+func NewUser(logger *log.Logger) (User, error) {
+	var user User
 	new_uuid, err := uuid.NewV4()
 	if err != nil {
 		log.Printf("failed to create new UUID.")
-		return nil, err
+		return user, err
 	}
-	user := User{
+	user = User{
 		Id:              new_uuid.String(),
 		Role:            "regular",
 		CreationDate:    time.Now(),
 		LastUpdatedDate: time.Now(),
 	}
-	return &user, nil
+	return user, nil
 }
 
 // An Item is a returned attributebaluemap from godynamo. This function

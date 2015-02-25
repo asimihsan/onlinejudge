@@ -15,18 +15,20 @@ angular.module('onlinejudgeApp')
     };
     var isAuthenticated = function() {
       var deferred = $q.defer();
-      $http.post('/auth/check')
-        .then(function(response) {
-          console.log('auth check response');
-          console.log(response);
-          if (response.statusText === 'OK' && response.data !== '') {
-            user.loggedIn = true;
-            user.email = response.data;
-            deferred.resolve(true);
-          }
-          else {
-            deferred.resolve(false);
-          }
+      $http.post('/auth/check').
+        success(function(data, status) {
+          console.log('auth check response success. status: ' + status);
+          console.log(data);
+          user.loggedIn = true;
+          user.email = data.email;
+          deferred.resolve(true);
+        }).
+        error(function(data, status) {
+          console.log('auth check response error. status: ' + status);
+          console.log(data);
+          user.loggedIn = false;
+          user.email = null;
+          deferred.resolve(false);
         });
         return deferred.promise;
     };
@@ -44,16 +46,17 @@ angular.module('onlinejudgeApp')
         };
         console.log('data');
         console.log(data);
-        $http.post('/auth/login', data)
-          .then(function(response) {
-            console.log('response');
-            console.log(response);
-            if (response.data.status !== 'okay') {
-              deferred.reject(response.data.reason);
-            } else {
-              deferred.resolve(response.data.email);
-              $location.path('/problem/python');
-            }
+        $http.post('/auth/login', data).
+          success(function(data, status) {
+            console.log('persona login response is success, status: ' + status);
+            console.log(data);
+            deferred.resolve(data.email);
+            $location.path('/problem/python');
+          }).
+          error(function(data, status) {
+            console.log('persona login response is failure. status: ' + status);
+            console.log(data);
+            deferred.reject();
           });
       },
       onlogout: function($http) {
