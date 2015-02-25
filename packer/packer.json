@@ -40,6 +40,10 @@
 
     {"type": "file", "source": "../evaluator/evaluator.linux", "destination": "/usr/local/bin/evaluator.linux"},
     {"type": "file", "source": "../evaluator/evaluator_upstart.conf", "destination": "/etc/init/evaluator.conf"},
-    {"type": "shell", "script": "shell/evaluator.sh"}
+    {"type": "shell", "script": "shell/evaluator.sh"},
+
+    {"type": "file", "source": "../user_data/user_data.linux", "destination": "/usr/local/bin/user_data.linux"},
+    {"type": "file", "source": "../user_data/user_data_upstart.conf", "destination": "/etc/init/user_data.conf"},
+    {"type": "shell", "script": "shell/user_data.sh"}
   ]
 }

@@ -5,10 +5,9 @@ set -e
 export PACKER_LOG=1
 
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-cd $DIR/../runner/
-GOOS=linux go build -o ../runner/runner.linux
-cd $DIR/../evaluator
-GOOS=linux go build -o ../evaluator/evaluator.linux
+cd $DIR/../runner/ && make all-linux
+cd $DIR/../evaluator/ && make all-linux
+cd $DIR/../user_data/ && make all-linux
 cd $DIR
 
 #packer build --only=amazon-ebs packer.json
