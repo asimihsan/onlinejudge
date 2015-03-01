@@ -123,7 +123,7 @@ body {
     transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
 
     /* Code Mirror Settings */
-    font-family: monospace;
+    font-family: Consolas, "Andale Mono WT", "Andale Mono", "Lucida Console", "Lucida Sans Typewriter", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Liberation Mono", "Nimbus Mono L", Monaco, "Courier New", Courier, monospace;
     position: relative;
     overflow: hidden;
 }
@@ -137,4 +137,8 @@ body {
 
 a .glyphicon {
   padding-right: 0.5em;
+}
+
+pre {
+  font-family: Consolas, "Andale Mono WT", "Andale Mono", "Lucida Console", "Lucida Sans Typewriter", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Liberation Mono", "Nimbus Mono L", Monaco, "Courier New", Courier, monospace;
 }
