@@ -42,19 +42,19 @@ func executeGetItem(logger *log.Logger, get_request *get.GetItem) (*get.Response
 }
 
 func GetUserWithId(logger *log.Logger, user_id string) (User, error) {
-	logger.Printf("db_orm.GetUserWithId() entry. user_id: %s", user_id)
-	defer logger.Printf("db_orm.GetUserWithId() exit.")
+	logger.Printf("db_orm_user.GetUserWithId() entry. user_id: %s", user_id)
+	defer logger.Printf("db_orm_user.GetUserWithId() exit.")
 
 	var user User
 
 	get1 := get.NewGetItem()
 	get1.TableName = "user"
-	get1.Key["id"] = &attributevalue.AttributeValue{
+	get1.Key["user_id"] = &attributevalue.AttributeValue{
 		S: user_id}
 
 	resp, err := executeGetItem(logger, get1)
 	if err != nil {
-		log.Printf("failed to execute get item: %s", err)
+		logger.Printf("failed to execute get item: %s", err)
 		return user, err
 	}
 
@@ -68,8 +68,8 @@ func GetUserWithId(logger *log.Logger, user_id string) (User, error) {
 }
 
 func GetUserWithEmail(logger *log.Logger, user_email string) (User, error) {
-	logger.Printf("db_orm.GetUserWithEmail() entry. user_email: %s", user_email)
-	defer logger.Printf("db_orm.GetUserWithEmail() exit.")
+	logger.Printf("db_orm_user.GetUserWithEmail() entry. user_email: %s", user_email)
+	defer logger.Printf("db_orm_user.GetUserWithEmail() exit.")
 
 	var user User
 
@@ -80,19 +80,19 @@ func GetUserWithEmail(logger *log.Logger, user_email string) (User, error) {
 
 	resp, err := executeGetItem(logger, get1)
 	if err != nil {
-		log.Printf("failed to execute get item: %s", err)
+		logger.Printf("failed to execute get item: %s", err)
 		return user, err
 	}
 
-	user_id, present := resp.Item["id"]
+	user_id, present := resp.Item["user_id"]
 	if present == false {
-		log.Printf("could not find user with user_email: %s", user_email)
+		logger.Printf("could not find user with user_email: %s", user_email)
 		return user, UserEmailNotFoundError{user_email}
 	}
 
 	user, err = GetUserWithId(logger, user_id.S)
 	if err != nil {
-		log.Printf("Failed to get user with ID %s: %s", user_id, err)
+		logger.Printf("Failed to get user with ID %s: %s", user_id, err)
 		return user, err
 	}
 
@@ -100,8 +100,8 @@ func GetUserWithEmail(logger *log.Logger, user_email string) (User, error) {
 }
 
 func GetUserWithNickname(logger *log.Logger, user_nickname string) (User, error) {
-	logger.Printf("db_orm.GetUserWithNickname() entry. user_nickname: %s", user_nickname)
-	defer logger.Printf("db_orm.GetUserWithNickname() exit.")
+	logger.Printf("db_orm_user.GetUserWithNickname() entry. user_nickname: %s", user_nickname)
+	defer logger.Printf("db_orm_user.GetUserWithNickname() exit.")
 
 	var user User
 
@@ -112,19 +112,19 @@ func GetUserWithNickname(logger *log.Logger, user_nickname string) (User, error)
 
 	resp, err := executeGetItem(logger, get1)
 	if err != nil {
-		log.Printf("failed to execute get item: %s", err)
+		logger.Printf("failed to execute get item: %s", err)
 		return user, err
 	}
 
-	user_id, present := resp.Item["id"]
+	user_id, present := resp.Item["user_id"]
 	if present == false {
-		log.Printf("could not find user with user_nickname: %s", user_nickname)
+		logger.Printf("could not find user with user_nickname: %s", user_nickname)
 		return user, UserEmailNotFoundError{user_nickname}
 	}
 
 	user, err = GetUserWithId(logger, user_id.S)
 	if err != nil {
-		log.Printf("Failed to get user with ID %s: %s", user_id, err)
+		logger.Printf("Failed to get user with ID %s: %s", user_id, err)
 		return user, err
 	}
 
@@ -134,11 +134,11 @@ func GetUserWithNickname(logger *log.Logger, user_nickname string) (User, error)
 func PutUser(logger *log.Logger, user User,
 	user_table_name string, user_email_to_id_table_name string,
 	user_nickname_to_id_table_name string) error {
-	log.Printf("db_orm.PutUser() entry. user.Id: %s, user_table_name: %s, "+
+	logger.Printf("db_orm_user.PutUser() entry. user.UserId: %s, user_table_name: %s, "+
 		"user_email_to_id_table_name: %s, user_nickname_to_id_table_name: %s",
-		user.Id, user_table_name, user_email_to_id_table_name,
+		user.UserId, user_table_name, user_email_to_id_table_name,
 		user_nickname_to_id_table_name)
-	defer log.Printf("PutUser() exit.")
+	defer logger.Printf("db_orm_user.PutUser() exit.")
 
 	var (
 		p1 batch_write_item.PutRequest
@@ -148,7 +148,7 @@ func PutUser(logger *log.Logger, user User,
 
 	_, err := GetUserWithEmail(logger, user.Email)
 	if _, ok := err.(UserEmailNotFoundError); !ok {
-		log.Printf("user with email address %s already exists: %s", user.Email, err)
+		logger.Printf("user with email address %s already exists: %s", user.Email, err)
 		return UserWithEmailAlreadyExists{user.Email}
 	}
 
@@ -160,7 +160,7 @@ func PutUser(logger *log.Logger, user User,
 	logger.Printf("user to create in DB: %s", user)
 
 	p1.Item = item.NewItem()
-	p1.Item["id"] = &attributevalue.AttributeValue{S: user.Id}
+	p1.Item["user_id"] = &attributevalue.AttributeValue{S: user.UserId}
 	p1.Item["email"] = &attributevalue.AttributeValue{S: user.Email}
 	p1.Item["nickname"] = &attributevalue.AttributeValue{S: user.Nickname}
 	p1.Item["role"] = &attributevalue.AttributeValue{S: user.Role}
@@ -172,14 +172,14 @@ func PutUser(logger *log.Logger, user User,
 
 	p2.Item = item.NewItem()
 	p2.Item["email"] = &attributevalue.AttributeValue{S: user.Email}
-	p2.Item["id"] = &attributevalue.AttributeValue{S: user.Id}
+	p2.Item["user_id"] = &attributevalue.AttributeValue{S: user.UserId}
 	b.RequestItems[user_email_to_id_table_name] = append(
 		b.RequestItems[user_email_to_id_table_name],
 		batch_write_item.RequestInstance{PutRequest: &p2})
 
 	p3.Item = item.NewItem()
 	p3.Item["nickname"] = &attributevalue.AttributeValue{S: user.Nickname}
-	p3.Item["id"] = &attributevalue.AttributeValue{S: user.Id}
+	p3.Item["user_id"] = &attributevalue.AttributeValue{S: user.UserId}
 	b.RequestItems[user_nickname_to_id_table_name] = append(
 		b.RequestItems[user_nickname_to_id_table_name],
 		batch_write_item.RequestInstance{PutRequest: &p3})

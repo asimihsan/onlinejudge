@@ -32,29 +32,6 @@ func main() {
 	//DeleteTables()
 	//CreateTables()
 
-	user, err := NewUser(logger)
-	if err != nil {
-		log.Printf("failed to new user")
-	}
-	user.Email = "user@host.com"
-	user.Nickname = "user"
-	err = PutUser(logger, user, "user", "user_email_to_id", "user_nickname_to_id")
-	log.Printf("%s", err)
-
-	/*
-		user, err := GetUserWithEmail(logger, "user@host.com")
-		if err != nil {
-			log.Printf("failed to get user: %s", err)
-		}
-		log.Printf("%s", user)
-
-		user, err = GetUserWithNickname(logger, "user")
-		if err != nil {
-			log.Printf("failed to get user: %s", err)
-		}
-		log.Printf("%s", user)
-	*/
-
 	http.HandleFunc("/auth/check", loginCheckHandler)
 	http.HandleFunc("/auth/login", loginHandler)
 	http.HandleFunc("/auth/logout", logoutHandler)

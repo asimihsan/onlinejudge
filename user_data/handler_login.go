@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -14,8 +13,9 @@ import (
 )
 
 var (
-	secretKey = []byte("acaec567-a14b-449a-8910-1aad305ce6ad")
-	store     = sessions.NewCookieStore(secretKey)
+	store = sessions.NewCookieStore(
+		[]byte("5bf9c796032240f1b846ffe751278a7108292c09c96d46468fd6ff2925bd643b"),
+	)
 )
 
 type personaResponse struct {
@@ -47,18 +47,27 @@ func loginCheckHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := map[string]interface{}{}
-	defer writeJSONResponse(logger, response, w)
+	defer WriteJSONResponse(logger, response, w)
 	response["success"] = false
 
 	session, _ := getCookieStore(r, "persona-session")
-	email := session.Values["email"]
-	if email != nil {
-		logger.Printf("user has valid secure cookie set with email: %s", email.(string))
+	user_id := session.Values["user_id"]
+	if user_id != nil {
+		email := session.Values["email"]
+		role := session.Values["role"]
+		logger.Printf("user has valid secure cookie set with user_id: %s, email: %s, role: %s",
+			user_id.(string), email.(string), role.(string))
 		response["email"] = email.(string)
+		response["user_id"] = user_id.(string)
+		response["role"] = role.(string)
 		response["success"] = true
 	} else {
 		logger.Printf("user does not have valid secure cookie set.")
 		w.WriteHeader(401)
+		session.Values["email"] = nil
+		session.Values["user_id"] = nil
+		session.Values["role"] = nil
+		session.Save(r, w)
 	}
 }
 
@@ -77,11 +86,13 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := map[string]interface{}{}
-	defer writeJSONResponse(logger, response, w)
+	defer WriteJSONResponse(logger, response, w)
 	response["success"] = false
 
 	session, _ := getCookieStore(r, "persona-session")
 	session.Values["email"] = nil
+	session.Values["user_id"] = nil
+	session.Values["role"] = nil
 	session.Save(r, w)
 
 	response["success"] = true
@@ -103,7 +114,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := map[string]interface{}{}
-	defer writeJSONResponse(logger, response, w)
+	defer WriteJSONResponse(logger, response, w)
 	response["success"] = false
 
 	decoder := json.NewDecoder(r.Body)
@@ -179,9 +190,13 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	session, _ := getCookieStore(r, "persona-session")
-	session.Values["email"] = pr.Email
+	session.Values["email"] = user.Email
+	session.Values["user_id"] = user.UserId
+	session.Values["role"] = user.Role
 	session.Save(r, w)
-	response["email"] = pr.Email
+	response["email"] = user.Email
+	response["user_id"] = user.UserId
+	response["role"] = user.Role
 	response["success"] = true
 }
 
@@ -194,11 +209,4 @@ func getCookieStore(r *http.Request, name string) (*sessions.Session, error) {
 		HttpOnly: true,
 	}
 	return session, err
-}
-
-func writeJSONResponse(logger *log.Logger, response map[string]interface{}, w http.ResponseWriter) {
-	logger.Println("writeJSONResponse() entry")
-	defer logger.Println("writeJSONResponse() exit")
-	responseEncoded, _ := json.Marshal(response)
-	io.WriteString(w, string(responseEncoded))
 }

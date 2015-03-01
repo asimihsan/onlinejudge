@@ -22,7 +22,8 @@ var (
 	DeleteTableTimeOut           = errors.New("Delete table time out.")
 	tables                       = []string{
 		"user", "user_email_to_id", "user_nickname_to_id",
-		"solution_metadata", "solution_content", "solution_vote"}
+		"solution_metadata", "solution_content", "solution_vote",
+		"user_vote"}
 )
 
 func CreateTables() (err error) {
@@ -44,8 +45,12 @@ func CreateTables() (err error) {
 		log.Printf("could not create solution_content table: %s", err)
 	}
 	if err = createSolutionVoteTable("solution_vote"); err != nil {
+		log.Printf("could not create solution_vote table: %s", err)
+	}
+	if err = createUserVoteTable("user_vote"); err != nil {
 		log.Printf("could not create user_vote table: %s", err)
 	}
+	time.Sleep(5 * time.Second)
 	for _, table := range tables {
 		log.Printf("checking for ACTIVE status for table %s...", table)
 		_, poll_err := desc.PollTableStatus(table, desc.ACTIVE, 100)
@@ -72,6 +77,7 @@ func DeleteTables() error {
 			return err
 		}
 	}
+	time.Sleep(5 * time.Second)
 	for _, table := range tables {
 		cnt := 0
 		for cnt < 10 {
@@ -84,7 +90,7 @@ func DeleteTables() error {
 				break
 			}
 			cnt += 1
-			if cnt == 10 {
+			if cnt == 20 {
 				log.Printf("timed out waiting for table %s to delete", table)
 				return DeleteTableTimeOut
 			}
@@ -202,9 +208,9 @@ func createUserTable(table_name string) error {
 	create1.ProvisionedThroughput.WriteCapacityUnits = 1
 
 	create1.AttributeDefinitions = append(create1.AttributeDefinitions,
-		attributedefinition.AttributeDefinition{AttributeName: "id", AttributeType: ep.S})
+		attributedefinition.AttributeDefinition{AttributeName: "user_id", AttributeType: ep.S})
 	create1.KeySchema = append(create1.KeySchema,
-		keydefinition.KeyDefinition{AttributeName: "id", KeyType: ep.HASH})
+		keydefinition.KeyDefinition{AttributeName: "user_id", KeyType: ep.HASH})
 
 	if err := executeCreateTable(create1); err != nil {
 		log.Printf("failed to create table: %s", err)
@@ -312,11 +318,11 @@ func createSolutionMetadataTable(table_name string) error {
 	create1.AttributeDefinitions = append(create1.AttributeDefinitions,
 		attributedefinition.AttributeDefinition{AttributeName: "problem_id", AttributeType: ep.S})
 	create1.AttributeDefinitions = append(create1.AttributeDefinitions,
-		attributedefinition.AttributeDefinition{AttributeName: "id", AttributeType: ep.S})
+		attributedefinition.AttributeDefinition{AttributeName: "user_id", AttributeType: ep.S})
 	create1.KeySchema = append(create1.KeySchema,
 		keydefinition.KeyDefinition{AttributeName: "problem_id", KeyType: ep.HASH})
 	create1.KeySchema = append(create1.KeySchema,
-		keydefinition.KeyDefinition{AttributeName: "id", KeyType: ep.RANGE})
+		keydefinition.KeyDefinition{AttributeName: "user_id", KeyType: ep.RANGE})
 
 	if err := executeCreateTable(create1); err != nil {
 		log.Printf("failed to create table: %s", err)
@@ -350,9 +356,9 @@ func createSolutionContentTable(table_name string) error {
 	create1.ProvisionedThroughput.WriteCapacityUnits = 1
 
 	create1.AttributeDefinitions = append(create1.AttributeDefinitions,
-		attributedefinition.AttributeDefinition{AttributeName: "id", AttributeType: ep.S})
+		attributedefinition.AttributeDefinition{AttributeName: "solution_id", AttributeType: ep.S})
 	create1.KeySchema = append(create1.KeySchema,
-		keydefinition.KeyDefinition{AttributeName: "id", KeyType: ep.HASH})
+		keydefinition.KeyDefinition{AttributeName: "solution_id", KeyType: ep.HASH})
 
 	if err := executeCreateTable(create1); err != nil {
 		log.Printf("failed to create table: %s", err)
@@ -365,6 +371,42 @@ func createSolutionContentTable(table_name string) error {
 func createSolutionVoteTable(table_name string) error {
 	log.Printf("createSolutionVoteTable() entry.")
 	defer log.Printf("createSolutionVoteTable() exit.")
+
+	var (
+		exists bool
+		err    error
+	)
+
+	if exists, err = doesTableExist(table_name); err != nil {
+		log.Printf("unable to check for table existence")
+		return CannotCheckForTableExistence
+	}
+	if exists == true {
+		log.Printf("table %s already exists.", table_name)
+		return TableAlreadyExists
+	}
+
+	create1 := create_table.NewCreateTable()
+	create1.TableName = table_name
+	create1.ProvisionedThroughput.ReadCapacityUnits = 5
+	create1.ProvisionedThroughput.WriteCapacityUnits = 1
+
+	create1.AttributeDefinitions = append(create1.AttributeDefinitions,
+		attributedefinition.AttributeDefinition{AttributeName: "solution_id", AttributeType: ep.S})
+	create1.KeySchema = append(create1.KeySchema,
+		keydefinition.KeyDefinition{AttributeName: "solution_id", KeyType: ep.HASH})
+
+	if err := executeCreateTable(create1); err != nil {
+		log.Printf("failed to create table: %s", err)
+		return err
+	}
+
+	return nil
+}
+
+func createUserVoteTable(table_name string) error {
+	log.Printf("createUserVoteTable() entry.")
+	defer log.Printf("createUserVoteTable() exit.")
 
 	var (
 		exists bool

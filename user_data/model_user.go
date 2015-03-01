@@ -19,15 +19,15 @@ func (e UserEmailNotFoundError) Error() string {
 }
 
 type UserIdNotFoundError struct {
-	Id string
+	UserId string
 }
 
 func (e UserIdNotFoundError) Error() string {
-	return fmt.Sprintf("user id '%s' not found", e.Id)
+	return fmt.Sprintf("user id '%s' not found", e.UserId)
 }
 
 type User struct {
-	Id              string    `json:"id"`
+	UserId          string    `json:"user_id"`
 	Email           string    `json:"email,omitempty"`
 	Nickname        string    `json:"nickname,omitempty"`
 	Role            string    `json:"role,omitempty"`
@@ -57,7 +57,7 @@ func NewUser(logger *log.Logger) (User, error) {
 		return user, err
 	}
 	user = User{
-		Id:              new_uuid.String(),
+		UserId:          new_uuid.String(),
 		Role:            "regular",
 		CreationDate:    time.Now(),
 		LastUpdatedDate: time.Now(),
@@ -69,11 +69,11 @@ func NewUser(logger *log.Logger) (User, error) {
 // deserializes an Item into a User.
 func ItemToUser(logger *log.Logger, input_id string, item item.Item) (User, error) {
 	var user User
-	id, present := item["id"]
+	user_id, present := item["user_id"]
 	if present == false {
 		return user, UserIdNotFoundError{input_id}
 	}
-	user.Id = id.S
+	user.UserId = user_id.S
 	if email, present := item["email"]; present == true {
 		user.Email = email.S
 	}
