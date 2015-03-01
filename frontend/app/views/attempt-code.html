@@ -1,7 +1,8 @@
 <div ui-codemirror ui-codemirror-opts="editorOptions" ng-model="initialCode" ui-refresh='refreshCodemirror'></div>
 
-<button ladda="submitCodeLoading" data-style="contract" data-size="s" data-color="blue" ng-click="submitCode(problemId, language, initialCode)">Submit</button>
+<button ladda="checkCodeLoading" data-style="contract" data-size="s" data-color="blue" ng-click="checkCode(problemId, language, initialCode)">Check</button>
 <button ladda="clearOutputLoading" data-style="contract" data-size="s" data-color="green" ng-click="clearOutput()">Clear output</button>
 <button ladda="clearCodeLoading" data-style="contract" data-size="s" data-color="red" ng-click="clearCode()">Clear code</button>
+<button ladda="submitCodeLoading" data-style="contract" data-size="s" data-color="orange" ng-click="submitCode(problemId, language, initialCode)">Submit code</button>
 
 <pre class="output" id="output">{{ output }}</pre>
