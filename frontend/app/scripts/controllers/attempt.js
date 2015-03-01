@@ -84,12 +84,12 @@ angular.module('onlinejudgeApp')
     ];
 
     $scope.output = '';
-    $scope.submitCode = function(problemId, language, code) {
-      $scope.submitCodeLoading = true;
+    $scope.checkCode = function(problemId, language, code) {
+      $scope.checkCodeLoading = true;
       evaluateService.evaluateAttempt(problemId, language, code)
         .then(function(result) {
           $scope.output = result.output;
-          $scope.submitCodeLoading = false;
+          $scope.checkCodeLoading = false;
         });
     };
     $scope.clearOutput = function() {
@@ -97,5 +97,17 @@ angular.module('onlinejudgeApp')
     };
     $scope.clearCode = function() {
       $scope.initialCode = '';
+    };
+    $scope.submitCode = function(problemId, language, code) {
+      $scope.submitCodeLoading = true;
+      evaluateService.evaluateAttempt(problemId, language, code)
+        .then(function(result) {
+          if (result.success === true) {
+            $scope.output = "<your code passed the tests, and has been submitted! check the solutions section>";
+          } else {
+            $scope.output = "<your code did not pass the tests. try 'check code' to debug>";
+          }
+          $scope.submitCodeLoading = false;
+        });
     };
   });
