@@ -11,7 +11,7 @@ Run untrusted code in a sandbox that prevents it from harming the host machine, 
 
 -   user
     -   attributes:
-        -   id (string, GUID)
+        -   user_id (string, GUID)
         -   email (string)
         -   nickname (string)
         -   role (string, e.g. admin, moderator, regular)
@@ -19,40 +19,48 @@ Run untrusted code in a sandbox that prevents it from harming the host machine, 
     -   range key: <none>
 -   user_email_to_id (to use IDs publicly to map to emails, never reveal emails publicly)
     -   attributes:
-        -   id (string, GUID)
+        -   user_id (string, GUID)
         -   email (string)
     -   hash key: email
     -   range key: <none>
 -   user_nickname_to_id (to map and constriant uniqueness on nicknames for users)
     -   attributes:
-        -   id (string, GUID)
+        -   user_id (string, GUID)
         -   nickname (string)
     -   hash key: nickname
     -   range key: <none>
 -   solution_metadata
     -   attributes
-        -   id (string, GUID)
+        -   solution_id (string, GUID)
         -   problem_id (<problem id>#<language>) (string)
         -   user_id (string, id of user who submitted)
+        -   nickname (string, nickname of user who submitted)
         -   creation_date (ISO 8601 datetime) (string)
     -   hash key: problem_id
-    -   range key: id
+    -   range key: user_id
 -   solution_content
     -   attributes
-        -   id (string, GUID)
+        -   solution_id (string, GUID)
+        -   problem_id (<problem id>#<language>) (string)
+        -   user_id (string, id of user who submitted)
         -   code (string)
         -   description (string)
-    -   hash key: id
+    -   hash key: solution_id
     -   range key: <none>
--   solution_vote (to see how many votes a given solution has, and when a user has already voted up/down for a solution)
+-   solution_vote (to see how many votes a given solution has)
     -   attributes:
-        -   user_id (string, id of user)
         -   solution_id (string, id of problem)
-        -   vote (string, either "u" or "d")
-        -   creation_date (ISO 8601 datetime) (string)
+        -   up (int, up votes)
+        -   down (int, down votes)
+    -   hash key: solution_id
+    -   range key: <none>
+-   user_vote
+    -   attributes:
+        -   user_id (string)
+        -   solution_id (string)
+        -   vote (string, "u" or "d")
     -   hash key: solution_id
     -   range key: user_id
-
 
 ## Evaluator schema
 
@@ -358,9 +366,10 @@ Refresh user_data:
 
 ```
 watchmedo shell-command -c \
-    'clear && date && GOOS=linux GOARCH=amd64 go build -o user_data.linux && \
-    ssh -i ~/.ssh/digitalocean root@www.runsomecode.com "pkill user_data.linux" ; \
-    scp -i ~/.ssh/digitalocean user_data.linux root@www.runsomecode.com:/usr/local/bin/user_data.linux' \
+    'clear && date && make all-linux && \
+    ssh -i ~/.ssh/digitalocean root@www.runsomecode.com "service user_data stop" ; \
+    scp -i ~/.ssh/digitalocean user_data.linux root@www.runsomecode.com:/usr/local/bin/user_data.linux && \
+    ssh -i ~/.ssh/digitalocean root@www.runsomecode.com "service user_data start"' \
     -w -p '*.go' .
 ```
 
