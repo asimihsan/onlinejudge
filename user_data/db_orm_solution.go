@@ -2,16 +2,56 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
 
+	ep "github.com/smugmug/godynamo/endpoint"
 	"github.com/smugmug/godynamo/endpoints/batch_write_item"
 	get "github.com/smugmug/godynamo/endpoints/get_item"
 	put "github.com/smugmug/godynamo/endpoints/put_item"
+	"github.com/smugmug/godynamo/endpoints/query"
 	"github.com/smugmug/godynamo/types/attributevalue"
+	"github.com/smugmug/godynamo/types/condition"
 	"github.com/smugmug/godynamo/types/item"
 )
+
+func GetSolutions(logger *log.Logger, problem_id string, table_name string) ([]*Solution, error) {
+	logger.Printf("db_orm_solution.GetSolutions() entry. problem_id: %s, table_name: %s", table_name, problem_id)
+	defer logger.Printf("db_orm_solution.GetSolutions() exit.")
+
+	q := query.NewQuery()
+	q.TableName = table_name
+	q.Select = ep.SELECT_ALL
+	q.Limit = 100
+	kc := condition.NewCondition()
+	kc.AttributeValueList = make([]*attributevalue.AttributeValue, 1)
+	kc.AttributeValueList[0] = &attributevalue.AttributeValue{S: problem_id}
+	kc.ComparisonOperator = query.OP_EQ
+	q.KeyConditions["problem_id"] = kc
+
+	body, code, err := q.EndpointReq()
+	if err != nil || code != http.StatusOK {
+		logger.Printf("scan failed %d %v %s\n", code, err, body)
+		return nil, err
+	}
+	// Response is the full response from DynamoDB; Item and ConsumedCapacity
+	// DyanmoDB does e.g. {"S": "foobar"} for strings etc. in Item.
+	var resp query.Response
+	um_err := json.Unmarshal([]byte(body), &resp)
+	if um_err != nil {
+		e := fmt.Sprintf("unmarshal Response: %v", um_err)
+		logger.Printf("%s\n", e)
+		return make([]*Solution, 0), um_err
+	}
+	solutions, err := ItemsToSolutions(logger, resp.Items)
+	if err != nil {
+		logger.Printf("error while converting items to solutions: %s", err)
+		return solutions, err
+	}
+	return solutions, nil
+}
 
 func executePutItem(put_item *put.PutItem) error {
 	body, code, err := put_item.EndpointReq()

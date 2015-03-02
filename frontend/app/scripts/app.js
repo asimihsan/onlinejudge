@@ -22,6 +22,7 @@ angular
     'ui.router.tabs',
     'ui.codemirror',
     'angular-ladda',
+    'hljs',
   ])
   // allow DI for use in controllers, unit tests
   .constant('_', window._)
@@ -29,7 +30,9 @@ angular
   .run(function ($rootScope) {
      $rootScope._ = window._;
   })
-  .config(function ($stateProvider, $urlRouterProvider) {
+  .config(function ($stateProvider, $urlRouterProvider, hljsServiceProvider) {
+    hljsServiceProvider.setOptions({
+    });
     $stateProvider
       .state('prelogin', {
         url: '/',
@@ -63,6 +66,16 @@ angular
       .state('attempt.code', {
         url: '/code',
         templateUrl: 'views/attempt-code.html',
+      })
+      .state('solution', {
+        url: '/solution',
+        templateUrl: 'views/solution.html',
+        controller: 'SolutionCtrl',
+      })
+      .state('solutionDetail', {
+        url: '/solution/{problemId:[a-z0-9_]+}/{language:[a-z0-9_]+}',
+        templateUrl: 'views/solution-detail.html',
+        controller: 'SolutionDetailCtrl',
       })
       ;
     $urlRouterProvider

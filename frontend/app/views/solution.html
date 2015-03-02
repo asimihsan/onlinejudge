@@ -1,0 +1,24 @@
+<ol class="breadcrumb">
+  <li><strong>Solutions</strong></li>
+</ol>
+
+<h1>Solutions</h1>
+
+<div class="row">
+    <div class="col-md-2">
+        <ul class="nav nav-pills nav-stacked">
+          <li ng-repeat="language in languages" role="presentation" ng-class="{active: data.selectedLanguage === '{{ language.value }}' }"><a href ng-click="languageSelected(language.value)">{{ language.text }}</a></li>
+        </ul>
+    </div>
+    <div class="col-md-10">
+        <div ng-show="_.isNull(data.selectedLanguage)">
+            <p>Select a language!</p>
+        </div>
+        <div ng-if="data.problems.length == 0 && !_.isNull(data.selectedLanguage)">
+          No problems found for this language right now, sorry!
+        </div>
+        <li ng-repeat="problem in data.problems">
+          <a ui-sref="solutionDetail({problemId: '{{ problem.id }}', language: '{{ data.selectedLanguage }}' })">{{ problem.title }}</a>
+        </li>
+    </div>
+</div>

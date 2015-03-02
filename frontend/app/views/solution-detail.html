@@ -1,0 +1,25 @@
+<ol class="breadcrumb">
+  <li><a ui-sref='solution()'>Solutions</a></li>
+  <li><a ui-sref='solution()'>{{ data.language }}</a></li>
+  <li><strong>{{ data.problemId }}</strong></li>
+</ol>
+
+<h1>Solutions for {{ data.problemId }} (in {{ data.language }})</h1>
+
+<div class="row">
+    <div class="col-md-12">
+        <div ng-if="data.problems.length == 0 && !_.isNull(data.selectedLanguage)">
+          No problems found for this language right now, sorry!
+        </div>
+        <div ng-repeat="solution in data.solutions">
+            <div class="row">
+                <div class="col-md-4">
+                    <p>By {{ solution.nickname }}, last updated {{ solution.last_updated_date }}</p>
+                </div>
+                <div class="col-md-8">
+                    <div hljs language="{{ data.language }}" source="solution.code" class="hljs-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

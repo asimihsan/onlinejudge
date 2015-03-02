@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 type solutionSubmitRequest struct {
@@ -19,6 +21,36 @@ type solutionSubmitRequest struct {
 type evaluatorResponse struct {
 	Success bool   `json:"success,omitempty"`
 	Output  string `json:"output,omitempty"`
+}
+
+func getSolutions(w http.ResponseWriter, r *http.Request) {
+	SetCORS(w)
+	if r.Method == "OPTIONS" {
+		return
+	}
+
+	vars := mux.Vars(r)
+	problem_id := vars["problem_id"]
+	language := vars["language"]
+	logger = GetLogger(GetLogPill())
+	logger.Printf("handler_solution.getSolutions() entry. problem_id: %s, language: %s", problem_id, language)
+	defer logger.Printf("handler_solution.getSolutions() exit.")
+
+	response := map[string]interface{}{}
+	defer WriteJSONResponse(logger, response, w)
+	response["success"] = false
+
+	problem_key := fmt.Sprintf("%s#%s", problem_id, language)
+	solutions, err := GetSolutions(logger, problem_key, "solution")
+	if err != nil {
+		error_msg := fmt.Sprintf("failed to get solutions: %s", err)
+		logger.Printf(error_msg)
+		w.WriteHeader(400)
+		response["error"] = error_msg
+		return
+	}
+	response["success"] = true
+	response["solutions"] = solutions
 }
 
 func solutionSubmitHandler(w http.ResponseWriter, r *http.Request) {

@@ -10,23 +10,9 @@
  * Controller of the onlinejudgeApp
  */
 angular.module('onlinejudgeApp')
-  .controller('AttemptCtrl', function ($scope, $state, $stateParams, problemService, evaluateService) {
-    var indentSizes = {
-      'c': 4,
-      'cpp': 4,
-      'java': 4,
-      'javascript': 2,
-      'python': 4,
-      'ruby': 2,
-    };
-    var codemirrorModes = {
-      'c': 'text/x-csrc',
-      'cpp': 'text/x-c++src',
-      'java': 'text/x-java',
-      'javascript': 'javascript',
-      'python': 'python',
-      'ruby': 'ruby',
-    };
+  .controller('AttemptCtrl', function ($scope, $state, $stateParams, problemService, evaluateService, languageService) {
+    var indentSizes = languageService.getIndentSizes();
+    var codemirrorModes = languageService.getCodemirrorModes();
     function setupEditor(language) {
       $scope.editorOptions = {
         lineWrapping : true,
