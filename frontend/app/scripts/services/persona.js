@@ -11,15 +11,21 @@ angular.module('onlinejudgeApp')
   .factory('personaService', function($http, $q, $location) {
     var user = {
       loggedIn: false,
+      id: null,
       email: null,
     };
+    var getId = function() { return user.id; }
+    var getEmail = function() { return user.email; }
+    var getLoggedIn = function() { return user.loggedIn; }
+
     var isAuthenticated = function() {
       var deferred = $q.defer();
-      $http.post('/auth/check').
+      $http.post('/user_data/auth/check').
         success(function(data, status) {
           console.log('auth check response success. status: ' + status);
           console.log(data);
           user.loggedIn = true;
+          user.id = data.id;
           user.email = data.email;
           deferred.resolve(true);
         }).
@@ -27,6 +33,7 @@ angular.module('onlinejudgeApp')
           console.log('auth check response error. status: ' + status);
           console.log(data);
           user.loggedIn = false;
+          user.id = null;
           user.email = null;
           deferred.resolve(false);
         });
@@ -46,7 +53,7 @@ angular.module('onlinejudgeApp')
         };
         console.log('data');
         console.log(data);
-        $http.post('/auth/login', data).
+        $http.post('/user_data/auth/login', data).
           success(function(data, status) {
             console.log('persona login response is success, status: ' + status);
             console.log(data);
@@ -60,7 +67,7 @@ angular.module('onlinejudgeApp')
           });
       },
       onlogout: function($http) {
-        $http.post('/auth/logout')
+        $http.post('/user_data/auth/logout')
           .then(function() {
             window.location = '/auth/login';
           });
@@ -70,5 +77,8 @@ angular.module('onlinejudgeApp')
     return {
       isAuthenticated: isAuthenticated,
       login: login,
+      getId: getId,
+      getEmail: getEmail,
+      getLoggedIn: getLoggedIn,
     };
   });

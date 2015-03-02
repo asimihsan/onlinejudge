@@ -7,15 +7,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	_ "strings"
-
-	"github.com/gorilla/sessions"
-)
-
-var (
-	store = sessions.NewCookieStore(
-		[]byte("5bf9c796032240f1b846ffe751278a7108292c09c96d46468fd6ff2925bd643b"),
-	)
 )
 
 type personaResponse struct {
@@ -33,15 +24,11 @@ type loginRequest struct {
 }
 
 func loginCheckHandler(w http.ResponseWriter, r *http.Request) {
-	logger = getLogger(getLogPill())
+	logger = GetLogger(GetLogPill())
 	logger.Printf("handler_login.loginCheckHandler() entry. method: %s", r.Method)
 	defer logger.Printf("handler_login.loginCheckHandler() exit.")
 
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "GET POST OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	w.Header().Set("Access-Control-Allow-Credentials", "true")
-	w.Header().Set("Content-Type", "text/plain")
+	SetCORS(w)
 	if r.Method == "OPTIONS" {
 		return
 	}
@@ -50,14 +37,16 @@ func loginCheckHandler(w http.ResponseWriter, r *http.Request) {
 	defer WriteJSONResponse(logger, response, w)
 	response["success"] = false
 
-	session, _ := getCookieStore(r, "persona-session")
+	session, _ := GetCookieStore(r, "persona-session")
 	user_id := session.Values["user_id"]
 	if user_id != nil {
 		email := session.Values["email"]
+		nickname := session.Values["nickname"]
 		role := session.Values["role"]
 		logger.Printf("user has valid secure cookie set with user_id: %s, email: %s, role: %s",
 			user_id.(string), email.(string), role.(string))
 		response["email"] = email.(string)
+		response["nickname"] = nickname.(string)
 		response["user_id"] = user_id.(string)
 		response["role"] = role.(string)
 		response["success"] = true
@@ -65,6 +54,7 @@ func loginCheckHandler(w http.ResponseWriter, r *http.Request) {
 		logger.Printf("user does not have valid secure cookie set.")
 		w.WriteHeader(401)
 		session.Values["email"] = nil
+		session.Values["nickname"] = nil
 		session.Values["user_id"] = nil
 		session.Values["role"] = nil
 		session.Save(r, w)
@@ -72,15 +62,11 @@ func loginCheckHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
-	logger = getLogger(getLogPill())
+	logger = GetLogger(GetLogPill())
 	logger.Printf("handler_login.logoutHandler() entry. method: %s", r.Method)
 	defer logger.Printf("handler_login.logoutHandler() exit.")
 
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "GET POST OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	w.Header().Set("Access-Control-Allow-Credentials", "true")
-	w.Header().Set("Content-Type", "text/plain")
+	SetCORS(w)
 	if r.Method == "OPTIONS" {
 		return
 	}
@@ -89,8 +75,9 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	defer WriteJSONResponse(logger, response, w)
 	response["success"] = false
 
-	session, _ := getCookieStore(r, "persona-session")
+	session, _ := GetCookieStore(r, "persona-session")
 	session.Values["email"] = nil
+	session.Values["nickname"] = nil
 	session.Values["user_id"] = nil
 	session.Values["role"] = nil
 	session.Save(r, w)
@@ -99,16 +86,11 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
-	logger = getLogger(getLogPill())
+	logger = GetLogger(GetLogPill())
 	logger.Printf("handler_login.loginHandler() entry. method: %s", r.Method)
 	defer logger.Printf("handler_login.loginHandler() exit.")
 
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "GET POST OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	w.Header().Set("Access-Control-Allow-Credentials", "true")
-	w.Header().Set("Content-Type", "application/json")
-
+	SetCORS(w)
 	if r.Method == "OPTIONS" {
 		return
 	}
@@ -189,24 +171,15 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	session, _ := getCookieStore(r, "persona-session")
+	session, _ := GetCookieStore(r, "persona-session")
 	session.Values["email"] = user.Email
+	session.Values["nickname"] = user.Nickname
 	session.Values["user_id"] = user.UserId
 	session.Values["role"] = user.Role
 	session.Save(r, w)
 	response["email"] = user.Email
 	response["user_id"] = user.UserId
+	response["nickname"] = user.Nickname
 	response["role"] = user.Role
 	response["success"] = true
-}
-
-func getCookieStore(r *http.Request, name string) (*sessions.Session, error) {
-	session, err := store.Get(r, name)
-	session.Options = &sessions.Options{
-		Domain:   "runsomecode.com",
-		Path:     "/",
-		MaxAge:   86400 * 7,
-		HttpOnly: true,
-	}
-	return session, err
 }

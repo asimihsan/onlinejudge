@@ -78,7 +78,7 @@ server {
     location ^~ /evaluator {
         proxy_pass http://localhost:8081;
     }
-    location ^~ /auth {
+    location ^~ /user_data {
         proxy_pass http://localhost:9001;
     }
     location / {

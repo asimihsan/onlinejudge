@@ -1,41 +1,37 @@
 package main
 
 import (
-	"fmt"
-	"log"
+	"github.com/gorilla/mux"
+	"github.com/stretchr/graceful"
 	"math/rand"
 	"net/http"
-	"os"
+	"time"
 )
 
 var (
-	logger  = getLogger("logger")
-	letters = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
+	logger = GetLogger("logger")
 )
 
-func getLogger(prefix string) *log.Logger {
-	paddedPrefix := fmt.Sprintf("%-8s: ", prefix)
-	return log.New(os.Stdout, paddedPrefix,
-		log.Ldate|log.Ltime|log.Lmicroseconds)
-}
-
-func getLogPill() string {
-	b := make([]rune, 8)
-	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
-	}
-	return string(b)
-}
-
 func main() {
+	logger.Println("main() entry.")
+
 	Initialize()
-	//DeleteTables()
-	//CreateTables()
+	//DeleteTables(logger)
+	//CreateTables(logger)
 
-	http.HandleFunc("/auth/check", loginCheckHandler)
-	http.HandleFunc("/auth/login", loginHandler)
-	http.HandleFunc("/auth/logout", logoutHandler)
+	rand.Seed(time.Now().UTC().UnixNano())
+	r := mux.NewRouter()
 
-	log.Printf("Starting HTTP server...")
-	log.Fatal(http.ListenAndServe("localhost:9001", nil))
+	r.HandleFunc("/user_data/auth/check",
+		MakeGzipHandler(loginCheckHandler)).Methods("POST", "OPTIONS")
+	r.HandleFunc("/user_data/auth/login",
+		MakeGzipHandler(loginHandler)).Methods("POST", "OPTIONS")
+	r.HandleFunc("/user_data/auth/logout",
+		MakeGzipHandler(loginHandler)).Methods("POST", "OPTIONS")
+	r.HandleFunc("/user_data/solution/submit",
+		MakeGzipHandler(solutionSubmitHandler)).Methods("POST", "OPTIONS")
+	http.Handle("/", r)
+
+	logger.Printf("Starting HTTP server...")
+	graceful.Run("localhost:9001", 10*time.Second, r)
 }

@@ -29,31 +29,20 @@ Run untrusted code in a sandbox that prevents it from harming the host machine, 
         -   nickname (string)
     -   hash key: nickname
     -   range key: <none>
--   solution_metadata
+-   solution
     -   attributes
         -   solution_id (string, GUID)
         -   problem_id (<problem id>#<language>) (string)
         -   user_id (string, id of user who submitted)
         -   nickname (string, nickname of user who submitted)
-        -   creation_date (ISO 8601 datetime) (string)
-    -   hash key: problem_id
-    -   range key: user_id
--   solution_content
-    -   attributes
-        -   solution_id (string, GUID)
-        -   problem_id (<problem id>#<language>) (string)
-        -   user_id (string, id of user who submitted)
         -   code (string)
         -   description (string)
-    -   hash key: solution_id
-    -   range key: <none>
--   solution_vote (to see how many votes a given solution has)
-    -   attributes:
-        -   solution_id (string, id of problem)
         -   up (int, up votes)
         -   down (int, down votes)
-    -   hash key: solution_id
-    -   range key: <none>
+        -   creation_date (ISO 8601 datetime) (string)
+        -   last_updated_date (ISO 8601 datetime) (string)
+    -   hash key: problem_id
+    -   range key: user_id
 -   user_vote
     -   attributes:
         -   user_id (string)
