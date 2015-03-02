@@ -10,12 +10,12 @@
 angular.module('onlinejudgeApp')
   .factory('languageService', function () {
     var languages = [
-      {'value': 'c', 'text': 'C'},
-      {'value': 'cpp', 'text': 'C++'},
+      //{'value': 'c', 'text': 'C'},
+      //{'value': 'cpp', 'text': 'C++'},
       {'value': 'java', 'text': 'Java'},
-      {'value': 'javascript', 'text': 'JavaScript'},
+      //{'value': 'javascript', 'text': 'JavaScript'},
       {'value': 'python', 'text': 'Python'},
-      {'value': 'ruby', 'text': 'Ruby'},
+      //{'value': 'ruby', 'text': 'Ruby'},
     ];
     var indentSizes = {
       'c': 4,
