@@ -17,6 +17,7 @@ angular.module('onlinejudgeApp')
       problems: [],
     };
     $scope.languages = languageService.getLanguages();
+    $scope.languageValueToText = languageService.getLanguageValueToText();
     $scope.languageSelected = function(language) {
       $scope.data.selectedLanguage = language;
       problemService.getProblemSummaries()

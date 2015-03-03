@@ -3,7 +3,7 @@
 </ol>
 <ol ng-if="state.current.name === 'solution.languageSelected'" class="breadcrumb">
   <li><a ui-sref="solution({})">Solutions</a></li>
-  <li><strong>{{ data.selectedLanguage }}</strong></li>
+  <li><strong>{{ languageValueToText[data.selectedLanguage] }}</strong></li>
 </ol>
 
 <h1>Solutions</h1>
@@ -19,7 +19,7 @@
             <p>Select a language!</p>
         </div>
         <div ng-show="!_.isNull(data.selectedLanguage)">
-            <h2>{{ data.selectedLanguage }}</h2>
+            <h2>{{ languageValueToText[data.selectedLanguage] }}</h2>
         </div>
         <div ng-if="data.problems.length == 0 && !_.isNull(data.selectedLanguage)">
           No problems found for this language right now, sorry!

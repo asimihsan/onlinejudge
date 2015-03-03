@@ -17,6 +17,14 @@ angular.module('onlinejudgeApp')
       {'value': 'python', 'text': 'Python'},
       //{'value': 'ruby', 'text': 'Ruby'},
     ];
+    var languageValueToText = {
+      'c': 'C',
+      'cpp': 'C++',
+      'java': 'Java',
+      'python': 'Python',
+      'javascript': 'JavaScript',
+      'ruby': 'Ruby',
+    };
     var indentSizes = {
       'c': 4,
       'cpp': 4,
@@ -37,6 +45,9 @@ angular.module('onlinejudgeApp')
     var getLanguages = function() {
       return languages;
     };
+    var getLanguageValueToText = function() {
+      return languageValueToText;
+    };
     var getIndentSizes = function() {
       return indentSizes;
     };
@@ -47,6 +58,7 @@ angular.module('onlinejudgeApp')
     // Public API here
     return {
       getLanguages: getLanguages,
+      getLanguageValueToText: getLanguageValueToText,
       getIndentSizes: getIndentSizes,
       getCodemirrorModes: getCodemirrorModes,
     };

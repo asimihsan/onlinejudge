@@ -8,12 +8,13 @@
  * Controller of the onlinejudgeApp
  */
 angular.module('onlinejudgeApp')
-  .controller('SolutionDetailCtrl', function ($scope, $state, $stateParams, solutionService) {
+  .controller('SolutionDetailCtrl', function ($scope, $state, $stateParams, solutionService, languageService) {
     $scope.data = {
       solutions: [],
       problemId: $stateParams.problemId,
       language: $stateParams.language,
       state: $state,
+      languageValueToText: languageService.getLanguageValueToText(),
     };
     solutionService.getSolutions($scope.data.problemId, $scope.data.language)
       .then(function(response) {
