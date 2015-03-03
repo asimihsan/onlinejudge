@@ -55,7 +55,7 @@ angular
         controller: 'ProblemCtrl',
       })
       .state('attempt', {
-        url: '/problem/{problemId:[a-z0-9_]+}/{language:[a-z0-9_]+}',
+        url: '/problem/{language:[a-z0-9_]+}/{problemId:[a-z0-9_]+}',
         templateUrl: 'views/attempt.html',
         controller: 'AttemptCtrl',
       })
@@ -72,8 +72,12 @@ angular
         templateUrl: 'views/solution.html',
         controller: 'SolutionCtrl',
       })
+      .state('solution.languageSelected', {
+        url: '/{language:[a-z0-9_]+}',
+        templateUrl: 'views/solution.html'
+      })
       .state('solutionDetail', {
-        url: '/solution/{problemId:[a-z0-9_]+}/{language:[a-z0-9_]+}',
+        url: '/solution/{language:[a-z0-9_]+}/{problemId:[a-z0-9_]+}',
         templateUrl: 'views/solution-detail.html',
         controller: 'SolutionDetailCtrl',
       })

@@ -1,6 +1,6 @@
 <ol class="breadcrumb">
-  <li><a ui-sref='solution()'>Solutions</a></li>
-  <li><a ui-sref='solution()'>{{ data.language }}</a></li>
+  <li><a ui-sref="solution()">Solutions</a></li>
+  <li><a ui-sref="solution.languageSelected({language: '{{ data.language }}'})">{{ data.language }}</a></li>
   <li><strong>{{ data.problemId }}</strong></li>
 </ol>
 

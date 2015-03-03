@@ -1,5 +1,9 @@
-<ol class="breadcrumb">
+<ol ng-if="state.current.name === 'solution'" class="breadcrumb">
   <li><strong>Solutions</strong></li>
+</ol>
+<ol ng-if="state.current.name === 'solution.languageSelected'" class="breadcrumb">
+  <li><a ui-sref="solution({})">Solutions</a></li>
+  <li><strong>{{ data.selectedLanguage }}</strong></li>
 </ol>
 
 <h1>Solutions</h1>
@@ -13,6 +17,9 @@
     <div class="col-md-10">
         <div ng-show="_.isNull(data.selectedLanguage)">
             <p>Select a language!</p>
+        </div>
+        <div ng-show="!_.isNull(data.selectedLanguage)">
+            <h2>{{ data.selectedLanguage }}</h2>
         </div>
         <div ng-if="data.problems.length == 0 && !_.isNull(data.selectedLanguage)">
           No problems found for this language right now, sorry!
