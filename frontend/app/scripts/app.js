@@ -14,8 +14,6 @@ angular
     'ngAria',
     'ngCookies',
     'ngMessages',
-    'ngResource',
-    'ngRoute',
     'ngSanitize',
     'ngTouch',
     'ui.router',
@@ -30,6 +28,7 @@ angular
   .run(function ($rootScope, $state) {
      $rootScope._ = window._;
      $rootScope.state = $state;
+     window.loading_screen.finish();
   })
   .config(function ($stateProvider, $urlRouterProvider, hljsServiceProvider) {
     hljsServiceProvider.setOptions({

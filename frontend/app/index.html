@@ -7,18 +7,41 @@
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+
+    <!-- build:css(.) styles/please-wait.css -->
+    <link rel="stylesheet" href="bower_components/spinkit/css/spinners/1-rotating-plane.css" />
+    <link rel="stylesheet" href="bower_components/please-wait/build/please-wait.css">
+    <!-- endbuild -->
+    <style media="screen" type="text/css">
+      .loading-message {
+        color: #fff;
+      }
+
+      .loading-message > .sk-spinner-rotating-plane.sk-spinner {
+        background-color: #fff;
+      }
+    </style>
+    <!-- build:js(.) scripts/please-wait.js -->
+    <script type="text/javascript" src="bower_components/please-wait/build/please-wait.min.js"></script>
+    <!-- endbuild -->
+
     <!-- build:css(.) styles/vendor.css -->
     <!-- bower:css -->
     <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css" />
-    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap-theme.css" />
-    <link rel="stylesheet" href="bower_components/codemirror/lib/codemirror.css">
-    <link rel="stylesheet" href="bower_components/codemirror/theme/solarized.css">
-    <link rel="stylesheet" href="bower_components/highlightjs/styles/docco.css">
-    <link rel="stylesheet" href="bower_components/ladda/dist/ladda.min.css">
-    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
-    <link href='http://fonts.googleapis.com/css?family=Droid+Sans+Mono' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="bower_components/codemirror/lib/codemirror.css" />
+    <link rel="stylesheet" href="bower_components/ladda/dist/ladda.min.css" />
+    <link rel="stylesheet" href="bower_components/highlightjs/styles/default.css" />
+    <link rel="stylesheet" href="bower_components/spinkit/css/spinkit.css" />
     <!-- endbower -->
     <!-- endbuild -->
+    <!-- build:css(.) styles/vendor-theme.css -->
+    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap-theme.css" />
+    <link rel="stylesheet" href="bower_components/codemirror/theme/solarized.css">
+    <link rel="stylesheet" href="bower_components/highlightjs/styles/docco.css">
+    <!-- endbuild -->
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:700' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Droid+Sans+Mono' rel='stylesheet' type='text/css'>
     <!-- build:css(.tmp) styles/main.css -->
     <link rel="stylesheet" href="styles/main.css">
     <!-- endbuild -->
@@ -27,6 +50,15 @@
     <!--[if lt IE 7]>
       <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
     <![endif]-->
+    
+    <script type="text/javascript">
+      /*jshint camelcase: false */
+      window.loading_screen = window.pleaseWait({
+        logo: '',
+        backgroundColor: '#f46d3b',
+        loadingHtml: '<div class="loading-message"><p>Please wait while the page loads...</p><div class="sk-spinner sk-spinner-rotating-plane"></div></div>'
+      });
+    </script>
 
     <div class="navbar navbar-default navbar-static-top" role="navigation">
       <div class="container">
@@ -65,49 +97,50 @@
     <!-- build:js(.) scripts/vendor.js -->
     <!-- bower:js -->
     <script src="bower_components/jquery/dist/jquery.js"></script>
-    <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
-    <script src="bower_components/codemirror/lib/codemirror.js"></script>
-    <script src="bower_components/codemirror/mode/clike/clike.js"></script>
-    <script src="bower_components/codemirror/mode/python/python.js"></script>
-    <script src="bower_components/codemirror/mode/ruby/ruby.js"></script>
-    <script src="bower_components/codemirror/mode/javascript/javascript.js"></script>
-    <script src="bower_components/ladda/dist/spin.min.js"></script>
-    <script src="bower_components/ladda/dist/ladda.min.js"></script>
-    <script src="bower_components/lodash/lodash.js"></script>
-    <script src="bower_components/marked/marked.min.js"></script>
-    <script src="bower_components/highlightjs/highlight.pack.js"></script>
     <script src="bower_components/angular/angular.js"></script>
-    <script src="bower_components/angular-bootstrap/ui-bootstrap-tpls.js"></script>
+    <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
     <script src="bower_components/angular-animate/angular-animate.js"></script>
     <script src="bower_components/angular-aria/angular-aria.js"></script>
     <script src="bower_components/angular-cookies/angular-cookies.js"></script>
     <script src="bower_components/angular-messages/angular-messages.js"></script>
-    <script src="bower_components/angular-resource/angular-resource.js"></script>
-    <script src="bower_components/angular-route/angular-route.js"></script>
     <script src="bower_components/angular-sanitize/angular-sanitize.js"></script>
     <script src="bower_components/angular-touch/angular-touch.js"></script>
     <script src="bower_components/angular-ui-router/release/angular-ui-router.js"></script>
+    <script src="bower_components/angular-bootstrap/ui-bootstrap-tpls.js"></script>
     <script src="bower_components/angular-ui-router-tabs/src/ui-router-tabs.js"></script>
+    <script src="bower_components/lodash/lodash.js"></script>
+    <script src="bower_components/marked/lib/marked.js"></script>
+    <script src="bower_components/codemirror/lib/codemirror.js"></script>
     <script src="bower_components/angular-ui-codemirror/ui-codemirror.js"></script>
+    <script src="bower_components/spin.js/spin.js"></script>
+    <script src="bower_components/ladda/dist/ladda.min.js"></script>
     <script src="bower_components/angular-ladda/dist/angular-ladda.min.js"></script>
-    <script src="bower_components/angular-highlightjs/angular-highlightjs.js"></script>
+    <script src="bower_components/highlightjs/highlight.pack.js"></script>
+    <script src="bower_components/angular-highlightjs/build/angular-highlightjs.js"></script>
+    <script src="bower_components/please-wait/build/please-wait.js"></script>
     <!-- endbower -->
     <!-- endbuild -->
+    <!-- build:js(.) scripts/vendor-additional.js -->
+    <script src="bower_components/codemirror/mode/clike/clike.js"></script>
+    <script src="bower_components/codemirror/mode/python/python.js"></script>
+    <script src="bower_components/codemirror/mode/ruby/ruby.js"></script>
+    <script src="bower_components/codemirror/mode/javascript/javascript.js"></script>
+    <!-- endbuild -->
 
-        <!-- build:js({.tmp,app}) scripts/scripts.js -->
-        <script src="scripts/app.js"></script>
-        <script src="scripts/controllers/login.js"></script>
-        <script src="scripts/controllers/about.js"></script>
-        <script src="scripts/services/persona.js"></script>
-        <script src="scripts/controllers/problem.js"></script>
-        <script src="scripts/controllers/prelogin.js"></script>
-        <script src="scripts/services/problem.js"></script>
-        <script src="scripts/controllers/attempt.js"></script>
-        <script src="scripts/services/evaluate.js"></script>
-        <script src="scripts/services/solution.js"></script>
-        <script src="scripts/controllers/solution.js"></script>
-        <script src="scripts/services/language.js"></script>
-        <script src="scripts/controllers/solution-detail.js"></script>
-        <!-- endbuild -->
+    <!-- build:js({.tmp,app}) scripts/scripts.js -->
+    <script src="scripts/app.js"></script>
+    <script src="scripts/controllers/login.js"></script>
+    <script src="scripts/controllers/about.js"></script>
+    <script src="scripts/services/persona.js"></script>
+    <script src="scripts/controllers/problem.js"></script>
+    <script src="scripts/controllers/prelogin.js"></script>
+    <script src="scripts/services/problem.js"></script>
+    <script src="scripts/controllers/attempt.js"></script>
+    <script src="scripts/services/evaluate.js"></script>
+    <script src="scripts/services/solution.js"></script>
+    <script src="scripts/controllers/solution.js"></script>
+    <script src="scripts/services/language.js"></script>
+    <script src="scripts/controllers/solution-detail.js"></script>
+    <!-- endbuild -->
 </body>
 </html>
