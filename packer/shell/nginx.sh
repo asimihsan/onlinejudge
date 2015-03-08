@@ -47,8 +47,7 @@ http {
     gzip_disable "msie6";
     gzip_vary on;
     gzip_proxied expired no-cache no-store private auth;
-    gzip_comp_level 6;
-    gzip_buffers 16 8k;
+    gzip_comp_level 9;
     gzip_http_version 1.1;
     gzip_types text/plain text/css application/json application/javascript application/x-javascript text/xml application/xml application/xml+rss text/javascript;
 
