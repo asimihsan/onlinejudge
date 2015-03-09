@@ -1,23 +1,31 @@
-<ol class="breadcrumb">
+<ol ng-if="state.current.name === 'problem'" class="breadcrumb">
   <li><strong>Problems</strong></li>
+</ol>
+<ol ng-if="state.current.name === 'problem.languageSelected'" class="breadcrumb">
+  <li><a ui-sref="problem({})">Problems</a></li>
+  <li><strong>{{ languageValueToText[data.selectedLanguage] }}</strong></li>
 </ol>
 
 <h1>Problems</h1>
 
 <div class="row">
-  <div class="col-md-8">
-    <div ng-if="_.isNull(language)">
-      Please select a language to see available problems. Not all problems are available for all languages - we're working on it!
+    <div class="col-md-2">
+        <ul class="nav nav-pills nav-stacked">
+          <li ng-repeat="language in languages" role="presentation" ng-class="{active: data.selectedLanguage === '{{ language.value }}' }"><a href ng-click="languageSelected(language.value)">{{ language.text }}</a></li>
+        </ul>
     </div>
-
-    <select ng-options="language.text for language in languages track by language.value" ng-model="language" ng-change="changeLanguage()" class="language-select">
-      <option style="display:none" value="">select a language</option>
-    </select>
-    <div ng-if="problems.length == 0 && !_.isNull(language)">
-      No problems found for this language right now, sorry!
+    <div class="col-md-10">
+        <div ng-show="_.isNull(data.selectedLanguage)">
+            <p>Select a language!</p>
+        </div>
+        <div ng-show="!_.isNull(data.selectedLanguage)">
+            <h2>{{ languageValueToText[data.selectedLanguage] }}</h2>
+        </div>
+        <div ng-if="data.problems.length == 0 && !_.isNull(data.selectedLanguage)">
+          No problems found for this language right now, sorry!
+        </div>
+        <li ng-repeat="problem in data.problems">
+          <a ui-sref="attempt.description({problemId: '{{ problem.id }}', language: '{{ data.selectedLanguage }}' })">{{ problem.title }}</a>
+        </li>
     </div>
-    <li ng-repeat="problem in problems">
-      <a ui-sref='attempt.description({problemId: problem.id, language: language.value})'>{{ problem.title }}</a>
-    </li>
-  </div>
 </div>

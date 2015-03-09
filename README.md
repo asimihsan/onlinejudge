@@ -45,11 +45,11 @@ Run untrusted code in a sandbox that prevents it from harming the host machine, 
     -   range key: user_id
 -   user_vote
     -   attributes:
-        -   user_id (string)
+        -   user_vote_id (<user_id>#<problem_id>) (string)
         -   solution_id (string)
         -   vote (string, "u" or "d")
-    -   hash key: solution_id
-    -   range key: user_id
+    -   hash key: user_vote_id
+    -   range key: solution_id
 
 ## Evaluator schema
 
@@ -194,6 +194,11 @@ pprint.pprint(result)
 
 ## TODO
 
+-   prettify code so people can't submit badly formatted code
+    -   java: astyle
+    -   python: autopep8
+-   scratchpad; just a text box to run arbitrary code in
+    -   change runner to optionally accept a unit test; if not there just run the code file.
 -   user_data
     -   make sure runsomecode.com redirects to www.runsomecode.com, in order for cookies to work.
 -   evaluator
@@ -325,8 +330,15 @@ Refresh frontend
 
 ```
 watchmedo shell-command \
-    -c 'rsync -avz -e "ssh -i /Users/ai/.ssh/digitalocean" frontend/app/ root@www.runsomecode.com:/usr/share/nginx/html && rsync -avz -e "ssh -i /Users/ai/.ssh/digitalocean" frontend/bower_components root@www.runsomecode.com:/usr/share/nginx/html' \
-    -w -R frontend -p '*.js;*.html;*.css'
+    -c 'rsync -avz -e "ssh -i /Users/ai/.ssh/digitalocean" app/ root@www.runsomecode.com:/usr/share/nginx/html && rsync -avz -e "ssh -i /Users/ai/.ssh/digitalocean" bower_components root@www.runsomecode.com:/usr/share/nginx/html' \
+    -w -R app -p '*.js;*.html;*.css'
+```
+
+Refresh frontend (dist, final version) (be in the `frontend` directory)
+
+```
+watchmedo shell-command \
+    -c 'grunt build && rsync -avz -e "ssh -i /Users/ai/.ssh/digitalocean" --delete dist/ root@www.runsomecode.com:/usr/share/nginx/html' -w -R app -p '*.js;*.html;*.css'
 ```
 
 Refresh sandbox

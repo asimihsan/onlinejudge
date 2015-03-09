@@ -1,9 +1,10 @@
 <ol class="breadcrumb">
-  <li><a ui-sref='problem()'>Problems</a></li>
-  <li><strong>{{ problemId }} (in {{ language }})</strong></li>
+  <li><a ui-sref="problem()">Problems</a></li>
+  <li><a ui-sref="problem.languageSelected({language: '{{ language }}'})">{{ languageValueToText[language] }}</a></li>
+  <li><strong>{{ problemId }}</strong></li>
 </ol>
 
-<h1>Attempting {{ problemId }} (in {{ language }})</h1>
+<h1>Attempting {{ problemId }} (in {{ languageValueToText[language] }})</h1>
 
 <div role="tabpanel">
   <ul class="nav nav-tabs" role="tablist">

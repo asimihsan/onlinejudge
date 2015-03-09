@@ -21,11 +21,13 @@ angular
     'ui.codemirror',
     'angular-ladda',
     'hljs',
+    'angular-loading-bar',
   ])
   // allow DI for use in controllers, unit tests
   .constant('_', window._)
   // use in views, ng-repeat="x in _.range(3)"
   .run(function ($rootScope, $state) {
+    /*jshint camelcase: false */
      $rootScope._ = window._;
      $rootScope.state = $state;
      window.loading_screen.finish();
@@ -53,6 +55,10 @@ angular
         url: '/problem',
         templateUrl: 'views/problem.html',
         controller: 'ProblemCtrl',
+      })
+      .state('problem.languageSelected', {
+        url: '/{language:[a-z0-9_]+}',
+        templateUrl: 'views/problem.html',
       })
       .state('attempt', {
         url: '/problem/{language:[a-z0-9_]+}/{problemId:[a-z0-9_]+}',

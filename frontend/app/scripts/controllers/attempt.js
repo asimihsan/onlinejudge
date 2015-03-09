@@ -32,6 +32,7 @@ angular.module('onlinejudgeApp')
 
     $scope.problemId = $stateParams.problemId;
     $scope.language = $stateParams.language;
+    $scope.languageValueToText = languageService.getLanguageValueToText();
     $scope.state = $state;
 
     $scope.problem = null;
