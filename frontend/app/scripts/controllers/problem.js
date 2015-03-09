@@ -10,8 +10,7 @@
  * Controller of the onlinejudgeApp
  */
 angular.module('onlinejudgeApp')
-  .controller('ProblemCtrl', function ($scope, $state, $rootScope, problemService, languageService) {
-    $scope.state = $state;
+  .controller('ProblemCtrl', function ($scope, languageService, problemService) {
     $scope.data = {
       selectedLanguage: null,
       problems: [],
@@ -30,7 +29,6 @@ angular.module('onlinejudgeApp')
               return _.includes(problem.supported_languages, $scope.data.selectedLanguage);
           });
           $scope.data.problems = problems;
-          $scope.state.go('problem.languageSelected', {language: $scope.data.selectedLanguage});
         });
     };
     $scope.clearSelectedLanguage = function() {
