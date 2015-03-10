@@ -179,7 +179,14 @@ module.exports = function (grunt) {
     wiredep: {
       app: {
         src: ['<%= yeoman.app %>/index.html'],
-        ignorePath:  /\.\.\//
+        ignorePath:  /\.\.\//,
+        fileTypes:{
+          html: {
+            replace: {
+              js: '<script defer src="{{filePath}}"></script>'
+            }
+          }
+        }
       },
       test: {
         devDependencies: true,
