@@ -45,7 +45,7 @@ func SetCORS(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Methods", "GET POST OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
-	w.Header().Set("Content-Type", "applucation/json")
+	w.Header().Set("Content-Type", "application/json")
 }
 
 type gzipResponseWriter struct {

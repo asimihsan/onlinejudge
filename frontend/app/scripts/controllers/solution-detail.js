@@ -25,4 +25,8 @@ angular.module('onlinejudgeApp')
         console.log('solutionService.getSolutions() failed.');
         console.log(response);
       });
+    $scope.vote = function(solutionId, voteType) {
+      console.log('vote. solutionId: ' + solutionId + ', voteType: ' + voteType);
+      solutionService.vote(solutionId, voteType);
+    };
   });

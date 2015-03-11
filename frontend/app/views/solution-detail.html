@@ -13,12 +13,19 @@
         </div>
         <div ng-repeat="solution in data.solutions">
             <div class="row">
-                <div class="col-md-4">
-                    <p>By {{ solution.nickname }}, last updated {{ solution.last_updated_date }}</p>
-                </div>
-                <div class="col-md-8">
-                    <div hljs language="{{ data.language }}" source="solution.code" class="hljs-container"></div>
-                </div>
+              <div class="col-md-1">
+                <a href ng-click="vote(solution.solution_id, 'up')">
+                <span class="glyphicon glyphicon-arrow-up vote-arrow" aria-label="vote up" aria-hidden="true"></span></a>
+                <div class="vote-count">{{ solution.effective_vote }}</div>
+                <a href ng-click="vote(solution.solution_id, 'down')">
+                <span class="glyphicon glyphicon-arrow-down vote-arrow" aria-label="vote down" aria-hidden="true"></span></a>              
+              </div>
+              <div class="col-md-3">
+                <p>By {{ solution.nickname }}, last updated {{ solution.last_updated_date }}</p>
+              </div>
+              <div class="col-md-8">
+                  <div hljs language="{{ data.language }}" source="solution.code" class="hljs-container"></div>
+              </div>
             </div>
         </div>
     </div>

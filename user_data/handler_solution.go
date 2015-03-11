@@ -53,6 +53,38 @@ func getSolutions(w http.ResponseWriter, r *http.Request) {
 	response["solutions"] = solutions
 }
 
+func solutionVoteHandler(w http.ResponseWriter, r *http.Request) {
+	logger = GetLogger(GetLogPill())
+	logger.Printf("handler_solution.solutionVoteHandler() entry. method: %s", r.Method)
+	defer logger.Printf("handler_solution.solutionVoteHandler() exit.")
+
+	SetCORS(w)
+	if r.Method == "OPTIONS" {
+		return
+	}
+
+	response := map[string]interface{}{}
+	defer WriteJSONResponse(logger, response, w)
+	response["success"] = false
+
+	session, _ := GetCookieStore(r, "persona-session")
+	user_id := session.Values["user_id"]
+	if user_id == nil {
+		error_msg := "user does not have a valid secure cookie set."
+		logger.Printf(error_msg)
+		w.WriteHeader(401)
+		response["error"] = error_msg
+		return
+	}
+
+	vars := mux.Vars(r)
+	solution_id := vars["solution_id"]
+	vote_type := vars["type"]
+	logger.Printf("user_id: %s, solution_id: %s, vote_type: %s", user_id, solution_id, vote_type)
+
+	response["success"] = true
+}
+
 func solutionSubmitHandler(w http.ResponseWriter, r *http.Request) {
 	logger = GetLogger(GetLogPill())
 	logger.Printf("handler_solution.solutionSubmitHandler() entry. method: %s", r.Method)

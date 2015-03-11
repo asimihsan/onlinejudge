@@ -158,3 +158,12 @@ pre, code {
 div.hljs-container > pre {
   padding: 0;
 }
+
+.vote-arrow {
+  font-size: 2em;
+}
+
+.vote-count {
+  font-size: 2em;
+  padding-left: 0.25em;
+}

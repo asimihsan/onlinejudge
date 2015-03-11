@@ -33,8 +33,9 @@ type Solution struct {
 	ProblemId       string    `json:"problem_id,omitempty"`
 	UserId          string    `json:"user_id,omitempty"`
 	Nickname        string    `json:"nickname,omitempty"`
-	Up              int64     `json:"up,omitempty"`
-	Down            int64     `json:"down,omitempty"`
+	Up              int64     `json:"up"`
+	Down            int64     `json:"down"`
+	EffectiveVote   int64     `json:"effective_vote"`
 	Code            string    `json:"code,omitempty"`
 	Description     string    `json:"description,omitempty"`
 	CreationDate    time.Time `json:"creation_date,omitempty"`
@@ -100,6 +101,7 @@ func ItemToSolution(logger *log.Logger, input_problem_id string, input_user_id s
 		}
 		solution.Down = value
 	}
+	setEffectiveVote(logger, &solution)
 	if code_encoded, present := item["code"]; present == true {
 		code_decoded, err := DecompressFromBase64(logger, code_encoded.B)
 		if err != nil {
@@ -148,4 +150,8 @@ func ItemsToSolutions(logger *log.Logger, items []item.Item) ([]*Solution, error
 		solutions = append(solutions, solution)
 	}
 	return solutions, nil
+}
+
+func setEffectiveVote(logger *log.Logger, solution *Solution) {
+	solution.EffectiveVote = solution.Up - solution.Down
 }
