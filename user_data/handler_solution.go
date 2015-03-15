@@ -2,9 +2,12 @@ package main
 
 import (
 	"bytes"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -240,10 +243,31 @@ func sendSolutionToEvaluator(logger *log.Logger, request *solutionSubmitRequest)
 	}
 	post_request.Header.Set("Content-Type", "application/json; charset=utf-8")
 
-	client := &http.Client{}
+	// TODO FIXME probably need to manually put Gandi intermediate certs here
+	/*
+		h01fvk1n: 2015/03/15 16:36:12.918482 evaluator failed to evaluate the
+		solution: Post https://www.runsomecode.com/evaluator/evaluate/balanced_delimiters/python:
+		x509: certificate signed by unknown authority
+	*/
+	certs := x509.NewCertPool()
+	pemData, err := ioutil.ReadFile("/etc/ssl/certs/GandiStandardSSLCA2.pem")
+	if err != nil {
+		logger.Printf("Could not get SSL CA cert file: %s", err)
+		return &response, err
+	}
+	certs.AppendCertsFromPEM(pemData)
+	cfg := &tls.Config{
+		RootCAs: certs,
+	}
+	transport := &http.Transport{
+		TLSClientConfig: cfg,
+	}
+	client := &http.Client{
+		Transport: transport,
+	}
 	resp, err := client.Do(post_request)
 	if err != nil {
-		logger.Println("Failed during HTTP POST")
+		logger.Println("Failed during HTTP POST: %s", err)
 		return &response, err
 	}
 	defer resp.Body.Close()

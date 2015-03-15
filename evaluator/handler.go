@@ -3,9 +3,12 @@ package main
 import (
 	"bytes"
 	"compress/gzip"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
@@ -166,7 +169,22 @@ func evaluate(w http.ResponseWriter, r *http.Request) {
 	}
 	request.Header.Set("Content-Type", "application/json; charset=utf-8")
 
-	client := &http.Client{}
+	certs := x509.NewCertPool()
+	pemData, err := ioutil.ReadFile("/etc/ssl/certs/GandiStandardSSLCA2.pem")
+	if err != nil {
+		logger.Printf("Could not get SSL CA cert file: %s", err)
+		return
+	}
+	certs.AppendCertsFromPEM(pemData)
+	cfg := &tls.Config{
+		RootCAs: certs,
+	}
+	transport := &http.Transport{
+		TLSClientConfig: cfg,
+	}
+	client := &http.Client{
+		Transport: transport,
+	}
 	resp, err := client.Do(request)
 	if err != nil {
 		logger.Println("Failed during HTTP POST")

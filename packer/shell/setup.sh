@@ -26,6 +26,11 @@ sudo apt-get --assume-yes --quiet install zsh
 curl -L http://install.ohmyz.sh | zsh
 sed -i 's/ZSH_THEME=.*$/ZSH_THEME="bira"/' ~/.zshrc
 
+# Get Gandi and intermediate CA chain for golang HTTP clients
+(wget --no-check-certificate -q -O - https://www.gandi.net/static/CAs/GandiStandardSSLCA2.pem && \
+    wget -q -O - http://crt.usertrust.com/USERTrustRSAAddTrustCA.crt | \
+    openssl x509 -inform der -outform pem) > /etc/ssl/certs/GandiStandardSSLCA2.pem
+
 sudo apt-get clean
 
 # Generate SSH keypair
