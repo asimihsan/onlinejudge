@@ -8,11 +8,11 @@
  * Factory in the onlinejudgeApp.
  */
 angular.module('onlinejudgeApp')
-  .factory('problemService', function($http, $q) {
+  .factory('problemService', function($http, $q, configService) {
 
     var getProblemSummaries = function() {
       var deferred = $q.defer();
-      $http.get('/evaluator/get_problem_summaries')
+      $http.get(configService.backendBaseUrl() + '/evaluator/get_problem_summaries')
       .success(function(response) {
         deferred.resolve(response);
       }).error(function(msg, code) {
@@ -24,7 +24,7 @@ angular.module('onlinejudgeApp')
 
     var getProblemDescriptionAndInitialCode = function(problem, language) {
       var deferred = $q.defer();
-      var url = '/evaluator/get_problem_details/' + problem + '/' + language;
+      var url = configService.backendBaseUrl() + '/evaluator/get_problem_details/' + problem + '/' + language;
       $http.get(url)
       .success(function(response) {
         deferred.resolve(response);

@@ -60,13 +60,13 @@ EOF
 # not escaped in host shell
 sudo tee /etc/nginx/sites-enabled/default >/dev/null <<"EOF"
 server {
-    server_name www.runsomecode.com;
+    server_name runsomecode.com;
     listen 80;
-    return 301 $scheme://runsomecode.com$request_uri;
+    return 301 $scheme://www.runsomecode.com$request_uri;
 }
 
 server {
-    server_name runsomecode.com;
+    server_name www.runsomecode.com;
     listen 80 default_server;
     listen [::]:80 default_server ipv6only=on;
     root /usr/share/nginx/html;

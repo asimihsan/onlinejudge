@@ -1,0 +1,221 @@
+#!/usr/bin/env python
+
+import boto
+import contextlib
+import cStringIO as StringIO
+import datetime
+import hashlib
+import multiprocessing
+import os
+import pprint
+import re
+import subprocess
+
+# -----------------------------------------------------------------------------
+#   Logging.
+# -----------------------------------------------------------------------------
+import logging
+logger = logging.getLogger('upload')
+logger.setLevel(logging.DEBUG)
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(message)s')
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+# -----------------------------------------------------------------------------
+
+
+ROOT_DIR = os.path.abspath(os.path.dirname(__file__))
+OUTPUT_DIR = os.path.join(ROOT_DIR, 'dist')
+
+
+def get_manifest_from_file(f_in):
+    return_value = {}
+    for line in f_in:
+        match = re.search('^\"(?P<path>[^"]+)\" (?P<checksum>.*)$', line)
+        assert match, 'get_local_manifest() line %s doesn\'t match pattern' % line
+        return_value[match.groupdict()['path']] = match.groupdict()['checksum']
+    return return_value
+
+
+def get_local_manifest():
+    with open(os.path.join(OUTPUT_DIR, 'manifest.txt')) as f_in:
+        return get_manifest_from_file(f_in)
+
+
+def get_remote_manifest_and_key(bucket):
+    remote_manifest_key = bucket.get_key('manifest.txt')
+    if not remote_manifest_key:
+        logger.info('remote manifest does not exist')
+        remote_manifest = {}
+        remote_manifest_key = bucket.new_key('manifest.txt')
+    else:
+        logger.info('remote manifest exists')
+        contents = remote_manifest_key.get_contents_as_string()
+        remote_manifest = get_manifest_from_file(StringIO.StringIO(contents))
+    return (remote_manifest, remote_manifest_key)
+
+
+def process_local_files(local_manifest, remote_manifest, bucket):
+    modified_files = []
+    for (local_filepath, local_checksum) in local_manifest.items():
+        if (local_filepath.endswith('.gz') and
+                re.sub(r'(\.gz)$', '', local_filepath) in local_manifest):
+            logger.info('skipping GZIP\'d local_filepath %s' % local_filepath)
+            continue
+        key = bucket.get_key(local_filepath)
+        if (key is not None and
+                remote_manifest.get(local_filepath, None) == local_checksum):
+            logger.info('local_filepath %s exists, and identical to '
+                        'remote, so skip' % local_filepath)
+            continue
+        modified_files.append(local_filepath)
+        if key is None:
+            logger.info('local_filepath %s does not exist' % local_filepath)
+            key = bucket.new_key(local_filepath)
+        gzipped_filepath = '%s.gz' % local_filepath
+        is_gzipped = gzipped_filepath in local_manifest
+        if is_gzipped:
+            local_fullpath = os.path.join(OUTPUT_DIR, gzipped_filepath)
+        else:
+            local_fullpath = os.path.join(OUTPUT_DIR, local_filepath)
+        if is_gzipped:
+            logger.info('local filepath %s is gzipped so change Content-Encoding' %
+                        local_filepath)
+            key.set_metadata("Content-Encoding", "gzip")
+        if local_filepath.endswith('.html'):
+            logger.info('local_filepath %s is HTML, so set Content-Type header w/ utf-8' %
+                        local_filepath)
+            key.set_metadata("Content-Type", "text/html; charset=utf-8")
+        set_expires_and_cache_control(key, local_filepath)
+        key.set_contents_from_filename(local_fullpath)
+        key.make_public()
+        logger.info('uploaded local_filepath: %s' % local_filepath)
+    return modified_files
+
+
+def prune_old_remote_files(local_manifest, remote_manifest, bucket):
+    logger.info("prune_old_remote_files entry.")
+    for (remote_filepath, remote_checksum) in remote_manifest.items():
+        logger.info("considering remote filepath: %s" % remote_filepath)
+        if local_manifest.get(remote_filepath, None) is not None:
+            logger.info("remote filepath also exists locally, skip.")
+            continue
+        key = bucket.get_key(remote_filepath)
+        if key is None:
+            logger.info("remote filepath doesn't exist, skip")
+            continue
+        logger.info("deleting remote filepath: %s" % remote_filepath)
+        key.delete()
+
+
+def upload_to_s3(s3_bucket='www.runsomecode.com', force_refresh=False):
+    modified_files = []
+    local_manifest = get_local_manifest()
+    with contextlib.closing(boto.connect_s3()) as conn:
+        with contextlib.closing(boto.connect_cloudfront()) as conn_cloudfront:
+            cloudfront_distribution = [elem for elem in conn_cloudfront.get_all_distributions()
+                                       if elem.origin.dns_name.startswith(s3_bucket)][0]
+            cloudfront_distribution = cloudfront_distribution.get_distribution()
+            bucket = conn.get_bucket(s3_bucket)
+            (remote_manifest, remote_manifest_key) = get_remote_manifest_and_key(bucket)
+            if force_refresh:
+                remote_manifest = {}
+            modified_files = process_local_files(local_manifest, remote_manifest, bucket)
+
+            # In order to invalidate root object, i.e. index.html, need to invalidate as slash
+            # instead of index.html. As a hack always invalidate the root object.
+            if len(modified_files) > 0:
+                modified_files.append('/')
+
+            prune_old_remote_files(local_manifest, remote_manifest, bucket)
+    modified_files.sort()
+    if len(modified_files) > 0:
+        logger.info("invalidate the following on cloudfront:\n%s" % pprint.pformat(modified_files))
+        conn_cloudfront.create_invalidation_request(cloudfront_distribution.id, modified_files)
+    else:
+        logger.info("no modified files, so nothing to invalidate on cloudfront")
+
+    logger.info('uploading manifest file...')
+    remote_manifest_key.set_contents_from_filename(os.path.join(OUTPUT_DIR, 'manifest.txt'))
+    remote_manifest_key.make_public()
+
+
+def set_expires_and_cache_control(key, local_filepath):
+    if local_filepath.endswith('.html'):
+        duration = datetime.timedelta(minutes=1)
+    else:
+        duration = datetime.timedelta(days=7)
+    logger.info('local_filepath %s expires in %s' % (local_filepath, duration))
+
+    expires = datetime.datetime.utcnow() + duration
+    expires = expires.strftime("%a, %d %b %Y %H:%M:%S GMT")
+    logger.info("Setting Expires to %s for local_filepath %s" % (expires, local_filepath))
+    key.set_metadata("Expires", expires)
+
+    cache_control = "max-age=%d, public" % duration.total_seconds()
+    logger.info("Setting Cache-Control to %s for local_filepath %s" %
+                (cache_control, local_filepath))
+    key.set_metadata("Cache-Control", cache_control)
+
+
+@contextlib.contextmanager
+def get_pool():
+    pool = multiprocessing.Pool(max(multiprocessing.cpu_count() - 2, 1))
+    try:
+        yield pool
+    finally:
+        pool.close()
+        pool.join()
+        pool.terminate()
+
+
+def compress_output():
+    texts = []
+    for root, dirs, files in os.walk(OUTPUT_DIR):
+        for name in files:
+            fullpath = os.path.join(root, name)
+            if re.search('.*\.(html|htm|js|css|map|ttf|svg)$', fullpath):
+                texts.append(fullpath)
+    with get_pool() as pool:
+        pool.map(gzip_text, texts)
+
+
+def gzip_text(fullpath):
+    subprocess.check_call(['pigz', '-11', '--keep', '--force', '--processes', '1', '--verbose',
+                          fullpath])
+
+
+def generate_manifest():
+    paths = []
+    for root, dirs, files in os.walk(OUTPUT_DIR):
+        for name in files:
+            paths.append(os.path.join(root, name))
+    with get_pool() as pool:
+        result = pool.map(calculate_hash, paths)
+    with open(os.path.join(OUTPUT_DIR, 'manifest.txt'), 'w') as f_out:
+        for (path, checksum) in zip(paths, result):
+            subpath = path.replace(OUTPUT_DIR, '', 1).lstrip(r'/')
+            f_out.write('"%s" %s\n' % (subpath, checksum))
+
+
+def calculate_hash(filepath, algorithm=hashlib.md5, length=16 * 1024):
+    m = algorithm()
+    with open(filepath) as f_in:
+        while True:
+            buf = f_in.read(length)
+            if not buf:
+                break
+            m.update(buf)
+    return m.hexdigest()
+
+
+def main():
+    logger.info("starting. OUTPUT_DIR: %s" % OUTPUT_DIR)
+    compress_output()
+    generate_manifest()
+    upload_to_s3()
+
+
+if __name__ == "__main__":
+    main()

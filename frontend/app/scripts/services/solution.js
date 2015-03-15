@@ -8,10 +8,10 @@
  * Factory in the onlinejudgeApp.
  */
 angular.module('onlinejudgeApp')
-  .factory('solutionService', function($http, $q) {
+  .factory('solutionService', function($http, $q, configService) {
     var getSolutions = function(problem, language) {
       var deferred = $q.defer();
-      var url = '/user_data/solution/get/' + problem + '/' + language;
+      var url = configService.backendBaseUrl() + '/user_data/solution/get/' + problem + '/' + language;
       $http.get(url)
       .success(function(response) {
         deferred.resolve(response);
@@ -21,12 +21,22 @@ angular.module('onlinejudgeApp')
       });
       return deferred.promise;
     };
-    var vote = function(solutionId, voteType) {
+    var vote = function(problemId, language, solutionId, voteType) {
       /*jshint camelcase: false */
       var deferred = $q.defer();
-      var url = '/user_data/solution/vote/' + solutionId + '/' + voteType;
-      $http.post(url)
-      .success(function(response) {
+      var data = {
+        problemId: problemId,
+        language: language,
+        solutionId: solutionId,
+        voteType: voteType
+      };
+      var url = configService.backendBaseUrl() + '/user_data/solution/vote';
+      $http({
+        url: url,
+        method: 'POST',
+        data: JSON.stringify(data),
+        headers: {'Content-Type': 'application/json'}
+      }).success(function(response) {
         deferred.resolve(response);
       }).error(function(msg, code) {
         deferred.reject(msg);

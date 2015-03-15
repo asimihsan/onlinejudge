@@ -77,7 +77,7 @@ func MakeGzipHandler(fn http.HandlerFunc) http.HandlerFunc {
 func GetCookieStore(r *http.Request, name string) (*sessions.Session, error) {
 	session, err := store.Get(r, name)
 	session.Options = &sessions.Options{
-		Domain:   "runsomecode.com",
+		Domain:   "www.runsomecode.com",
 		Path:     "/",
 		MaxAge:   86400 * 7,
 		HttpOnly: true,

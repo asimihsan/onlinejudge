@@ -23,6 +23,13 @@ type evaluatorResponse struct {
 	Output  string `json:"output,omitempty"`
 }
 
+type voteRequest struct {
+	ProblemId  string `json:"problemId,omitempty"`
+	Language   string `json:"language,omitempty"`
+	SolutionId string `json:"solutionId,omitempty"`
+	VoteType   string `json:"voteType,omitempty"`
+}
+
 func getSolutions(w http.ResponseWriter, r *http.Request) {
 	SetCORS(w)
 	if r.Method == "OPTIONS" {
@@ -76,13 +83,39 @@ func solutionVoteHandler(w http.ResponseWriter, r *http.Request) {
 		response["error"] = error_msg
 		return
 	}
+	user_id_value, ok := user_id.(string)
+	if !ok {
+		error_msg := "failed to convert user ID from session to string."
+		logger.Printf(error_msg)
+		w.WriteHeader(401)
+		response["error"] = error_msg
+		return
+	}
 
-	vars := mux.Vars(r)
-	solution_id := vars["solution_id"]
-	vote_type := vars["type"]
-	logger.Printf("user_id: %s, solution_id: %s, vote_type: %s", user_id, solution_id, vote_type)
+	decoder := json.NewDecoder(r.Body)
+	var t voteRequest
+	err := decoder.Decode(&t)
+	if err != nil {
+		response["success"] = false
+		response["output"] = "<could not decode JSON POST request>"
+		logger.Panicf("Could not decode JSON POST request")
+	}
 
-	response["success"] = true
+	problem_id := fmt.Sprintf("%s#%s", t.ProblemId, t.Language)
+	solution_id := t.SolutionId
+	vote_type := t.VoteType
+	logger.Printf("user_id: %s, problem_id: %s, solution_id: %s, vote_type: %s", user_id, problem_id, solution_id, vote_type)
+
+	success, err := PutSolutionVote(logger, user_id_value, problem_id, solution_id, vote_type)
+	if err != nil {
+		error_msg := fmt.Sprintf("Failed during PutSolutionVote call: %s", err)
+		response["success"] = false
+		response["output"] = error_msg
+		logger.Printf(error_msg)
+		w.WriteHeader(401)
+		return
+	}
+	response["success"] = success
 }
 
 func solutionSubmitHandler(w http.ResponseWriter, r *http.Request) {
@@ -191,7 +224,7 @@ func sendSolutionToEvaluator(logger *log.Logger, request *solutionSubmitRequest)
 		response evaluatorResponse
 	)
 
-	uri := fmt.Sprintf("http://runsomecode.com/evaluator/evaluate/%s/%s",
+	uri := fmt.Sprintf("https://www.runsomecode.com/evaluator/evaluate/%s/%s",
 		request.ProblemId, request.Language)
 	data := make(map[string]string)
 	data["code"] = request.Code

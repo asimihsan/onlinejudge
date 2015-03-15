@@ -8,19 +8,19 @@
  * Factory in the onlinejudgeApp.
  */
 angular.module('onlinejudgeApp')
-  .factory('personaService', function($http, $q, $location) {
+  .factory('personaService', function($http, $q, $location, configService) {
     var user = {
       loggedIn: false,
       id: null,
       email: null,
     };
-    var getId = function() { return user.id; }
-    var getEmail = function() { return user.email; }
-    var getLoggedIn = function() { return user.loggedIn; }
+    var getId = function() { return user.id; };
+    var getEmail = function() { return user.email; };
+    var getLoggedIn = function() { return user.loggedIn; };
 
     var isAuthenticated = function() {
       var deferred = $q.defer();
-      $http.post('/user_data/auth/check').
+      $http.post(configService.backendBaseUrl() + '/user_data/auth/check').
         success(function(data, status) {
           console.log('auth check response success. status: ' + status);
           console.log(data);
@@ -53,7 +53,7 @@ angular.module('onlinejudgeApp')
         };
         console.log('data');
         console.log(data);
-        $http.post('/user_data/auth/login', data).
+        $http.post(configService.backendBaseUrl() + '/user_data/auth/login', data).
           success(function(data, status) {
             console.log('persona login response is success, status: ' + status);
             console.log(data);
@@ -67,7 +67,7 @@ angular.module('onlinejudgeApp')
           });
       },
       onlogout: function($http) {
-        $http.post('/user_data/auth/logout')
+        $http.post(configService.backendBaseUrl() + '/user_data/auth/logout')
           .then(function() {
             window.location = '/auth/login';
           });

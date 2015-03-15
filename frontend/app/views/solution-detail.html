@@ -14,10 +14,10 @@
         <div ng-repeat="solution in data.solutions">
             <div class="row">
               <div class="col-md-1">
-                <a href ng-click="vote(solution.solution_id, 'up')">
+                <a href ng-click="vote(solution.solution_id, 'u')">
                 <span class="glyphicon glyphicon-arrow-up vote-arrow" aria-label="vote up" aria-hidden="true"></span></a>
                 <div class="vote-count">{{ solution.effective_vote }}</div>
-                <a href ng-click="vote(solution.solution_id, 'down')">
+                <a href ng-click="vote(solution.solution_id, 'd')">
                 <span class="glyphicon glyphicon-arrow-down vote-arrow" aria-label="vote down" aria-hidden="true"></span></a>              
               </div>
               <div class="col-md-3">

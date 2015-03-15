@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	ep "github.com/smugmug/godynamo/endpoint"
@@ -16,6 +18,88 @@ import (
 	"github.com/smugmug/godynamo/types/condition"
 	"github.com/smugmug/godynamo/types/item"
 )
+
+var (
+	VoteOfSameTypeAlreadyExists = errors.New("Vote of same type already exists.")
+)
+
+func PutSolutionVote(logger *log.Logger, user_id string, problem_id string, solution_id string, vote_type string) (bool, error) {
+	logger.Printf("db_orm_solution.PutSolutionVote() entry. user_id: %s, problem_id: %s, solution_id: %s, vote_type: %s", user_id, problem_id, solution_id, vote_type)
+	defer logger.Printf("db_orm_solution.PutSolutionVote() exit.")
+
+	put_item, err := getPutVoteIntoUserVote(logger, user_id, problem_id, solution_id, vote_type)
+	if err != nil {
+		logger.Printf("failed to build put_item for putting into user_vote: %s", err)
+		return false, err
+	}
+	response, err := executePut(logger, put_item)
+	if err != nil {
+		logger.Printf("failed to execute put_item for putting into user_vote: %s", err)
+		if err == VoteOfSameTypeAlreadyExists {
+			logger.Printf("Vote of same type exists isn't a true error, tell client call succeeded")
+			return true, nil
+		}
+		return false, err
+	}
+
+	// Since we requested ReturnValues = ALL_OLD on Put, response.Attributes
+	// will be a map of the old item. If this is empty there was no old item.
+	logger.Printf("length of resp attrs: %s", len(response.Attributes))
+
+	return true, nil
+}
+
+func executePut(logger *log.Logger, put_item *put.PutItem) (*put.Response, error) {
+	body, code, err := put_item.EndpointReq()
+	if err != nil || code != http.StatusOK {
+		if strings.Contains(string(body), "ConditionalCheckFailedException") {
+			logger.Printf("Vote of same type already exists.")
+			return nil, VoteOfSameTypeAlreadyExists
+		}
+		logger.Printf("failed to execute put into user_vote: %s, %s, %s", body, code, err)
+		return nil, err
+	}
+
+	// Response is the full response from DynamoDB; Item and ConsumedCapacity
+	// DyanmoDB does e.g. {"S": "foobar"} for strings etc. in Item.
+	var resp put.Response
+	um_err := json.Unmarshal([]byte(body), &resp)
+	if um_err != nil {
+		e := fmt.Sprintf("unmarshal Response: %v", um_err)
+		logger.Printf("%s\n", e)
+		return nil, um_err
+	}
+
+	return &resp, nil
+}
+
+// Put a row into user_vote to record that the user made a vote
+// -	Set ReturnValues to ALL_OLD to return the old vote. If no vote was ever
+// 		made then response.Attributes will be an empty map, else will be a
+// 		non-empty map.
+// -	Set a condition for any existing vote to not be the same. That way if
+// 		the user vote again in the same way we don't update the main solution
+// 		vote count.
+func getPutVoteIntoUserVote(logger *log.Logger, user_id string, problem_id string, solution_id string, vote_type string) (*put.PutItem, error) {
+	logger.Printf("db_orm_solution.getPutVoteIntoUserVote() entry. user_id: %s, problem_id: %s, solution_id: %s, vote_type: %s", user_id, problem_id, solution_id, vote_type)
+	defer logger.Printf("db_orm_solution.getPutVoteIntoUserVote() exit.")
+
+	if vote_type != "u" && vote_type != "d" {
+		error_msg := "vote_type must be 'u' or 'd'"
+		logger.Printf(error_msg)
+		return nil, errors.New(error_msg)
+	}
+
+	put_item := put.NewPutItem()
+	put_item.TableName = "user_vote"
+	put_item.Item["user_vote_id"] = &attributevalue.AttributeValue{S: fmt.Sprintf("%s#%s", user_id, problem_id)}
+	put_item.Item["solution_id"] = &attributevalue.AttributeValue{S: solution_id}
+	put_item.Item["vote"] = &attributevalue.AttributeValue{S: vote_type}
+	put_item.ReturnValues = put.RETVAL_ALL_OLD
+	put_item.ConditionExpression = fmt.Sprintf("vote <> :v")
+	put_item.ExpressionAttributeValues[":v"] = &attributevalue.AttributeValue{S: vote_type}
+	return put_item, nil
+}
 
 func GetSolutions(logger *log.Logger, problem_id string, table_name string) ([]*Solution, error) {
 	logger.Printf("db_orm_solution.GetSolutions() entry. problem_id: %s, table_name: %s", table_name, problem_id)

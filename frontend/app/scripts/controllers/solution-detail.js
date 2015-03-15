@@ -20,13 +20,16 @@ angular.module('onlinejudgeApp')
       .then(function(response) {
         console.log('solutionService.getSolutions() succeeded.');
         console.log(response);
-        $scope.data.solutions = response.solutions;
+        $scope.data.solutions = _.sortBy(response.solutions, function(solution) {
+          return -solution.effective_vote;
+        });
       }, function(response) {
         console.log('solutionService.getSolutions() failed.');
         console.log(response);
       });
     $scope.vote = function(solutionId, voteType) {
-      console.log('vote. solutionId: ' + solutionId + ', voteType: ' + voteType);
-      solutionService.vote(solutionId, voteType);
+      console.log('SolutionDetailCtrl vote. problemId: ' + $scope.data.problemId +
+        ', language: ' + $scope.data.language + ', solutionId' + solutionId + ', voteType: ' + voteType);
+      solutionService.vote($scope.data.problemId, $scope.data.language, solutionId, voteType);
     };
   });

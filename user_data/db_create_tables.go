@@ -349,13 +349,13 @@ func createUserVoteTable(logger *log.Logger, table_name string) error {
 	create1.ProvisionedThroughput.WriteCapacityUnits = 1
 
 	create1.AttributeDefinitions = append(create1.AttributeDefinitions,
-		attributedefinition.AttributeDefinition{AttributeName: "solution_id", AttributeType: ep.S})
+		attributedefinition.AttributeDefinition{AttributeName: "user_vote_id", AttributeType: ep.S})
 	create1.AttributeDefinitions = append(create1.AttributeDefinitions,
-		attributedefinition.AttributeDefinition{AttributeName: "user_id", AttributeType: ep.S})
+		attributedefinition.AttributeDefinition{AttributeName: "solution_id", AttributeType: ep.S})
 	create1.KeySchema = append(create1.KeySchema,
-		keydefinition.KeyDefinition{AttributeName: "solution_id", KeyType: ep.HASH})
+		keydefinition.KeyDefinition{AttributeName: "user_vote_id", KeyType: ep.HASH})
 	create1.KeySchema = append(create1.KeySchema,
-		keydefinition.KeyDefinition{AttributeName: "user_id", KeyType: ep.RANGE})
+		keydefinition.KeyDefinition{AttributeName: "solution_id", KeyType: ep.RANGE})
 
 	if err := executeCreateTable(logger, create1); err != nil {
 		logger.Printf("failed to create table: %s", err)

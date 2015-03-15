@@ -14,7 +14,7 @@ AWS_ACCESS_KEY_ID = os.environ['ONLINEJUDGE_ROUTE_53_ACCESS_KEY_ID']
 AWS_SECURE_ACCESS_KEY = os.environ['ONLINEJUDGE_ROUTE_53_SECURE_ACCESS_KEY']
 DO_TOKEN = os.environ['DO_TOKEN']
 TTL = 60
-A_NAMES = ['www.runsomecode.com.', 'runsomecode.com.']
+A_NAMES = ['backend.runsomecode.com.']
 DO_NAME_FILTER = 'runsomecode.com'
 
 get_change_id = lambda response: response['ChangeInfo']['Id'].split('/')[-1]

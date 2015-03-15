@@ -8,13 +8,13 @@
  * Factory in the onlinejudgeApp.
  */
 angular.module('onlinejudgeApp')
-  .factory('evaluateService', function($http, $q) {
+  .factory('evaluateService', function($http, $q, configService) {
     var evaluateAttempt = function(problem, language, code) {
       var deferred = $q.defer();
       var data = {
         'code': code,
       };
-      var url = '/evaluator/evaluate/' + problem + '/' + language;
+      var url = configService.backendBaseUrl() + '/evaluator/evaluate/' + problem + '/' + language;
       $http({
         url: url,
         method: 'POST',
@@ -39,7 +39,7 @@ angular.module('onlinejudgeApp')
         'language': language,
         'code': code,
       };
-      var url = '/user_data/solution/submit';
+      var url = configService.backendBaseUrl() + '/user_data/solution/submit';
       $http({
         url: url,
         method: 'POST',
