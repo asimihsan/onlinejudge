@@ -319,10 +319,10 @@ Refresh runner code:
 ```
 watchmedo shell-command -c \
     'clear && date && GOOS=linux GOARCH=amd64 go build -o runner.linux && \
-    ssh -i ~/.ssh/digitalocean root@www.runsomecode.com "service runner stop" ; \
-    ssh -i ~/.ssh/digitalocean root@www.runsomecode.com "pkill runner.linux" ; \
-    scp -i ~/.ssh/digitalocean runner.linux root@www.runsomecode.com:/usr/local/bin/runner.linux && \
-    ssh -i ~/.ssh/digitalocean root@www.runsomecode.com "service runner start"' \
+    ssh -i ~/.ssh/digitalocean root@backend.runsomecode.com "service runner stop" ; \
+    ssh -i ~/.ssh/digitalocean root@backend.runsomecode.com "pkill runner.linux" ; \
+    scp -i ~/.ssh/digitalocean runner.linux root@backend.runsomecode.com:/usr/local/bin/runner.linux && \
+    ssh -i ~/.ssh/digitalocean root@backend.runsomecode.com "service runner start"' \
     -w -p '*.go' .
 ```
 
@@ -330,7 +330,7 @@ Refresh frontend
 
 ```
 watchmedo shell-command \
-    -c 'rsync -avz -e "ssh -i /Users/ai/.ssh/digitalocean" app/ root@www.runsomecode.com:/usr/share/nginx/html && rsync -avz -e "ssh -i /Users/ai/.ssh/digitalocean" bower_components root@www.runsomecode.com:/usr/share/nginx/html' \
+    -c 'rsync -avz -e "ssh -i /Users/ai/.ssh/digitalocean" app/ root@backend.runsomecode.com:/usr/share/nginx/html && rsync -avz -e "ssh -i /Users/ai/.ssh/digitalocean" bower_components root@backend.runsomecode.com:/usr/share/nginx/html' \
     -w -R app -p '*.js;*.html;*.css'
 ```
 
@@ -338,7 +338,7 @@ Refresh frontend (dist, final version) (be in the `frontend` directory)
 
 ```
 watchmedo shell-command \
-    -c 'grunt build && rsync -avz -e "ssh -i /Users/ai/.ssh/digitalocean" --delete dist/ root@www.runsomecode.com:/usr/share/nginx/html' -w -R app -p '*.js;*.html;*.css'
+    -c 'grunt build && rsync -avz -e "ssh -i /Users/ai/.ssh/digitalocean" --delete dist/ root@backend.runsomecode.com:/usr/share/nginx/html' -w -R app -p '*.js;*.html;*.css'
 ```
 
 Refresh sandbox
@@ -346,8 +346,8 @@ Refresh sandbox
 ```
 watchmedo shell-command -c \
     'clear && date && \
-    scp -r -i ~/.ssh/digitalocean . root@www.runsomecode.com:~/sandbox && \
-    ssh -i ~/.ssh/digitalocean root@www.runsomecode.com "rm -rf /tmp/foo/sandbox && cp -r ~/sandbox /tmp/foo && chmod -R 777 /tmp/foo/sandbox"' \
+    scp -r -i ~/.ssh/digitalocean . root@backend.runsomecode.com:~/sandbox && \
+    ssh -i ~/.ssh/digitalocean root@backend.runsomecode.com "rm -rf /tmp/foo/sandbox && cp -r ~/sandbox /tmp/foo && chmod -R 777 /tmp/foo/sandbox"' \
     -w -p '*.cpp' .
 ```
 
@@ -356,10 +356,10 @@ Refresh evaluator:
 ```
 watchmedo shell-command -c \
     'clear && date && GOOS=linux GOARCH=amd64 go build -o evaluator.linux && \
-    ssh -i ~/.ssh/digitalocean root@www.runsomecode.com "service evaluator stop" ; \
-    ssh -i ~/.ssh/digitalocean root@www.runsomecode.com "pkill evaluator.linux" ; \
-    scp -i ~/.ssh/digitalocean evaluator.linux root@www.runsomecode.com:/usr/local/bin/evaluator.linux && \
-    ssh -i ~/.ssh/digitalocean root@www.runsomecode.com "service evaluator start"' \
+    ssh -i ~/.ssh/digitalocean root@backend.runsomecode.com "service evaluator stop" ; \
+    ssh -i ~/.ssh/digitalocean root@backend.runsomecode.com "pkill evaluator.linux" ; \
+    scp -i ~/.ssh/digitalocean evaluator.linux root@backend.runsomecode.com:/usr/local/bin/evaluator.linux && \
+    ssh -i ~/.ssh/digitalocean root@backend.runsomecode.com "service evaluator start"' \
     -w -p '*.go' .
 ```
 
@@ -368,9 +368,9 @@ Refresh user_data:
 ```
 watchmedo shell-command -c \
     'clear && date && make all-linux && \
-    ssh -i ~/.ssh/digitalocean root@www.runsomecode.com "service user_data stop" ; \
-    scp -i ~/.ssh/digitalocean user_data.linux root@www.runsomecode.com:/usr/local/bin/user_data.linux && \
-    ssh -i ~/.ssh/digitalocean root@www.runsomecode.com "service user_data start"' \
+    ssh -i ~/.ssh/digitalocean root@backend.runsomecode.com "service user_data stop" ; \
+    scp -i ~/.ssh/digitalocean user_data.linux root@backend.runsomecode.com:/usr/local/bin/user_data.linux && \
+    ssh -i ~/.ssh/digitalocean root@backend.runsomecode.com "service user_data start"' \
     -w -p '*.go' .
 ```
 
@@ -405,6 +405,17 @@ Currently the output AMIs we use are:
 -   Put results onto an "outgoing" AWS SQS queue.
 
 ## Learnings
+
+Uploading SSL key to Cloudfront after buying it from Gandi.net:
+
+```
+aws iam upload-server-certificate \
+    --server-certificate-name www_runsomecode_com \
+    --certificate-body 'file://runsomecode.crt' \
+    --private-key 'file://runsomecode.key' \
+    --certificate-chain 'file://runsomecode.intermediate1.key' \
+    --path '/cloudfront/www_runsomecode_com/'
+```
 
 ### Sandbox
 
