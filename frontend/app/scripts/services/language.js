@@ -13,7 +13,7 @@ angular.module('onlinejudgeApp')
       //{'value': 'c', 'text': 'C'},
       //{'value': 'cpp', 'text': 'C++'},
       {'value': 'java', 'text': 'Java'},
-      //{'value': 'javascript', 'text': 'JavaScript'},
+      {'value': 'javascript', 'text': 'JavaScript'},
       {'value': 'python', 'text': 'Python'},
       //{'value': 'ruby', 'text': 'Ruby'},
     ];

@@ -186,13 +186,7 @@ func runHandler(language string, w http.ResponseWriter, r *http.Request) {
 	if _, ok := response["success"]; !ok {
 		response["success"] = true
 	}
-	if val, _ := response["success"]; val != true {
-		logger.Println("code failure, so cycle the LXC container.")
-		go func() { ensureLxcContainerIsRunning() }()
-	} else if language == "java" {
-		logger.Println("java, so cycle the LXC container.")
-		go func() { ensureLxcContainerIsRunning() }()
-	}
+	go func() { restartLxcContainer() }()
 }
 
 func runCHandler(w http.ResponseWriter, r *http.Request) {
@@ -343,17 +337,34 @@ func runCommand(language string, code_filepath string, unittest_filepath string)
 		copyPrepareFile("/home/ubuntu/junit-4.12.jar", "/tmp/foo/junit-4.12.jar")
 		return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
 			"su", "-", "ubuntu", "-c", "/usr/local/bin/sandbox /usr/bin/javac -J-Xmx350m -cp '/tmp/foo/:/tmp/foo/junit-4.12.jar:/tmp/foo/hamcrest-core-1.3.jar' /tmp/foo/*.java && /usr/local/bin/sandbox /usr/bin/java -cp '/tmp/foo/:/tmp/foo/junit-4.12.jar:/tmp/foo/hamcrest-core-1.3.jar' -Xmx350m SolutionTest")
+	// TODO use nodeunit: http://caolanmcmahon.com/posts/unit_testing_in_node_js/
+	/* e.g. foo.js
+
+			exports.calculate = function(num) {
+		    	return num * 2;
+			};
+
+			e.g. foo_test.js
+
+			var foo = require('./foo');
+
+			exports['calculate'] = function(test) {
+	    		test.equal(foo.calculate(2), 4);
+	    		test.equal(foo.calculate(3), 5);
+	    		test.done();
+			};
+	*/
 	case "javascript":
 		copyPrepareFile(code_filepath, "/tmp/foo/foo.js")
 		copyPrepareFile(unittest_filepath, "/tmp/foo/foo_test.js")
 		return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
-			"su", "-", "ubuntu", "-c", "/usr/local/bin/sandbox /usr/bin/nodejs /tmp/foo/foo_test.js")
+			"su", "-", "ubuntu", "-c", "nodeunit --reporter minimal /tmp/foo/foo_test.js | sed 's/\x1b\\[[0-9;]*m//g'")
 	}
 	return nil
 }
 
-func ensureLxcContainerIsRunning() {
-	logger.Println("ensureLxcContainerIsRunning() entry.")
+func restartLxcContainer() {
+	logger.Println("restartLxcContainer() entry.")
 
 	// grab the mutex for the LXC container
 	lxcMutex.Lock()
@@ -373,7 +384,7 @@ func ensureLxcContainerIsRunning() {
 	err = proc.Wait()
 	if err == nil {
 		logger.Println("Container is already running.")
-		logger.Println("ensureLxcContainerIsRunning() exit.")
+		logger.Println("restartLxcContainer() exit.")
 		return
 	}
 	logger.Println("Container not running, so restart it.")
@@ -388,12 +399,12 @@ func ensureLxcContainerIsRunning() {
 	if err2 != nil {
 		logger.Panic(err)
 	}
-	logger.Println("ensureLxcContainerIsRunning() exit.")
+	logger.Println("restartLxcContainer() exit.")
 }
 
 func main() {
 	logger.Println("main() entry.")
-	ensureLxcContainerIsRunning()
+	restartLxcContainer()
 	rand.Seed(time.Now().UTC().UnixNano())
 	mux := http.NewServeMux()
 	mux.HandleFunc("/run/c", makeGzipHandler(runCHandler))

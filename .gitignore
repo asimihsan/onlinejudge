@@ -37,3 +37,5 @@ user_data/user_data.linux
 doc/*.png
 doc/*.pdf
 doc/*.tex
+
+keys/

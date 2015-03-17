@@ -2,6 +2,40 @@
 
 Run untrusted code in a sandbox that prevents it from harming the host machine, other processes, and unauthorised use of the network.
 
+## Keys
+
+You need to populate `keys/aws-config.json` with the following before running a Packer build (needed by godynamo):
+
+```
+{
+    "extends":[],
+    "services": {
+        "default_settings":{
+            "params":{
+                "access_key_id":"XXX_AWS_ACCESS_KEY_ID",
+                "secret_access_key":"XXX_AWS_SECRET_ACCESS_KEY"
+            }
+        },
+        "dynamo_db": {
+            "host":"dynamodb.us-west-2.amazonaws.com",
+            "zone":"us-west-2",
+            "scheme":"https",
+            "port":443,
+            "keepalive":true,
+            "iam": {
+                "use_iam":false,
+                "role_provider":"file",
+                "access_key":"role_access_key",
+                "secret_key":"role_secret_key",
+                "token":"role_token",
+                "base_dir":"/dir/where/you/update/role_files",
+                "watch":true
+            }
+        }
+    }
+}
+```
+
 ## User / solutions / forum schema
 
 -   Users log in using email addresses.
@@ -318,7 +352,7 @@ Refresh runner code:
 
 ```
 watchmedo shell-command -c \
-    'clear && date && GOOS=linux GOARCH=amd64 go build -o runner.linux && \
+    'clear && date && make all-linux && \
     ssh -i ~/.ssh/digitalocean root@backend.runsomecode.com "service runner stop" ; \
     ssh -i ~/.ssh/digitalocean root@backend.runsomecode.com "pkill runner.linux" ; \
     scp -i ~/.ssh/digitalocean runner.linux root@backend.runsomecode.com:/usr/local/bin/runner.linux && \
@@ -355,7 +389,7 @@ Refresh evaluator:
 
 ```
 watchmedo shell-command -c \
-    'clear && date && GOOS=linux GOARCH=amd64 go build -o evaluator.linux && \
+    'clear && date && make all-linux && \
     ssh -i ~/.ssh/digitalocean root@backend.runsomecode.com "service evaluator stop" ; \
     ssh -i ~/.ssh/digitalocean root@backend.runsomecode.com "pkill evaluator.linux" ; \
     scp -i ~/.ssh/digitalocean evaluator.linux root@backend.runsomecode.com:/usr/local/bin/evaluator.linux && \

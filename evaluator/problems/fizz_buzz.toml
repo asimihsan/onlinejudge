@@ -16,11 +16,12 @@ Id = "fizz_buzz"
 
 # Increment version every time you want to re-upload a problem. You should
 # probably update last_updated_date if you increment the version.
-Version = 17
+Version = 25
 
 Title = "Fizz Buzz"
 SupportedLanguages = [
     "java",
+    "javascript",
     "python",
 ]
 CreationDate = 2014-02-07T00:00:00Z
@@ -78,7 +79,7 @@ ping
 [InitialCode.python]
 code = '''
 def fizz_buzz(n):
-    pass
+    print("this is how to print to stdout")
 '''
 
 [InitialCode.java]
@@ -88,9 +89,16 @@ import java.io.*;
 
 public class Solution {
     public static void fizz_buzz(int n) {
-
+        System.out.println("this is how to print to stdout");
     }
 }
+'''
+
+[InitialCode.javascript]
+code = '''
+exports.fizz_buzz = function(n) {
+    console.log("this is how to print to stdout");
+};
 '''
 # ------------------------------------------------------------------------------
 
@@ -171,8 +179,8 @@ public class SolutionTest {
         new ByteArrayOutputStream();
     private final String test1_output =
         "ping\nfizz\nbuzz\nfizz\nping\nfizz buzz\nping";
-        private final String test2_output =
-            "ping\nfizz\nbuzz";
+    private final String test2_output =
+        "ping\nfizz\nbuzz";
 
     @Before
     public void setUpStreams() {
@@ -200,6 +208,34 @@ public class SolutionTest {
         org.junit.runner.JUnitCore.main("SolutionTest");
     }
 }
+'''
+
+[UnitTest.javascript]
+code = '''
+var foo = require('./foo');
+
+exports.setUp = function(callback) {
+  this.old_console_log = console.log;
+  global.console_output = [];
+  console.log = function(str) {
+    global.console_output.push(str);
+  };
+  callback();
+};
+exports.tearDown = function(callback) {
+  console.log = this.old_console_log;
+  callback();
+};
+exports.test1 = function(test) {
+  foo.fizz_buzz(7);
+  test.equal(global.console_output.join("\n"), "ping\nfizz\nbuzz\nfizz\nping\nfizz buzz\nping");
+  test.done();
+};
+exports.test2 = function(test) {
+  foo.fizz_buzz(3);
+  test.equal(global.console_output.join("\n"), "ping\nfizz\nbuzz");
+  test.done();
+};
 '''
 # ------------------------------------------------------------------------------
 
@@ -240,5 +276,22 @@ public class Solution {
         }
     }
 }
+'''
+
+[Solution.javascript]
+code = '''
+exports.fizz_buzz = function(n) {
+  for (i = 1; i <= n; i++) {
+    if (i % 6 == 0) {
+      console.log("fizz buzz");
+    } else if (i % 3 == 0) {
+      console.log("buzz");
+    } else if (i % 2 == 0) {
+      console.log("fizz");
+    } else {
+      console.log("ping");
+    }
+  }
+};
 '''
 # ------------------------------------------------------------------------------

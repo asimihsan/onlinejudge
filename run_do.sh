@@ -19,7 +19,7 @@
 
 IMAGE=$(curl -X GET -H 'Content-Type: application/json' \
     -H "Authorization: Bearer ${DO_TOKEN}" \
-    "https://api.digitalocean.com/v2/images?page=1&per_page=50" | \
+    "https://api.digitalocean.com/v2/images?page=1&per_page=100" | \
     jq '[.images[] | select(.name | contains("onlinejudge")) | {id, name, created_at}] | sort_by(.created_at) | .[-1:][0]')
 echo running: "${IMAGE}"
 IMAGE_ID=$(echo "${IMAGE}" | jq '.id')

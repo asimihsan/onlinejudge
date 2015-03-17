@@ -32,6 +32,8 @@
     {"type": "file", "source": "../frontend/app/", "destination": "/usr/share/nginx/html"},
     {"type": "file", "source": "../frontend/bower_components", "destination": "/usr/share/nginx/html"},
 
+    {"type": "file", "source": "../keys/aws-config.json", "destination": "/etc/aws-config.json"},
+
     {"type": "file", "source": "../runner/runner.linux", "destination": "/usr/local/bin/runner.linux"},
     {"type": "file", "source": "../runner/runner_upstart.conf", "destination": "/etc/init/runner.conf"},
     {"type": "file", "source": "java_libraries/hamcrest-core-1.3.jar", "destination": "/home/ubuntu/hamcrest-core-1.3.jar"},
