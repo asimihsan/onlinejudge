@@ -358,7 +358,7 @@ func runCommand(language string, code_filepath string, unittest_filepath string)
 		copyPrepareFile(code_filepath, "/tmp/foo/foo.js")
 		copyPrepareFile(unittest_filepath, "/tmp/foo/foo_test.js")
 		return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
-			"su", "-", "ubuntu", "-c", "nodeunit --reporter minimal /tmp/foo/foo_test.js | sed 's/\x1b\\[[0-9;]*m//g'")
+			"su", "-", "ubuntu", "-c", "set -o pipefail && nodeunit --reporter minimal /tmp/foo/foo_test.js | sed 's/\x1b\\[[0-9;]*m//g'")
 	}
 	return nil
 }
