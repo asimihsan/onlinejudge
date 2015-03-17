@@ -16,7 +16,7 @@ Id = "fizz_buzz"
 
 # Increment version every time you want to re-upload a problem. You should
 # probably update last_updated_date if you increment the version.
-Version = 25
+Version = 26
 
 Title = "Fizz Buzz"
 SupportedLanguages = [
@@ -228,12 +228,12 @@ exports.tearDown = function(callback) {
 };
 exports.test1 = function(test) {
   foo.fizz_buzz(7);
-  test.equal(global.console_output.join("\n"), "ping\nfizz\nbuzz\nfizz\nping\nfizz buzz\nping");
+  test.strictEqual(global.console_output.join("\n"), "ping\nfizz\nbuzz\nfizz\nping\nfizz buzz\nping");
   test.done();
 };
 exports.test2 = function(test) {
   foo.fizz_buzz(3);
-  test.equal(global.console_output.join("\n"), "ping\nfizz\nbuzz");
+  test.strictEqual(global.console_output.join("\n"), "ping\nfizz\nbuzz");
   test.done();
 };
 '''
