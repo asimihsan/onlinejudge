@@ -26,6 +26,7 @@ curl -X POST -H "Content-Type: application/json" --compressed \
 */
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"math/rand"
@@ -38,8 +39,11 @@ import (
 )
 
 var (
-	logger  = getLogger("logger")
-	letters = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
+	logger         = getLogger("logger")
+	letters        = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
+	usage          = "CRUD for problems, evaluate problem solutions with unit tests."
+	loadProblems   = flag.Bool("load-problems", false, "Load problems to DynamoDB.")
+	recreateTables = flag.Bool("recreate-tables", false, "Delete then create tables in DynamoDB")
 )
 
 func getLogger(prefix string) *log.Logger {
@@ -58,11 +62,20 @@ func getLogPill() string {
 
 func main() {
 	logger.Println("main() entry.")
+	flag.Parse()
 
 	Initialize()
-	//DeleteTables()
-	//CreateTables()
-	LoadProblems(logger)
+
+	if *recreateTables {
+		DeleteTables()
+		CreateTables()
+		return
+	}
+
+	if *loadProblems {
+		LoadProblems(logger)
+		return
+	}
 
 	rand.Seed(time.Now().UTC().UnixNano())
 	r := mux.NewRouter()

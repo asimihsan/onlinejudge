@@ -443,12 +443,16 @@ Currently the output AMIs we use are:
 Uploading SSL key to Cloudfront after buying it from Gandi.net:
 
 ```
+(wget --no-check-certificate -q -O - https://www.gandi.net/static/CAs/GandiStandardSSLCA2.pem && \
+    wget -q -O - http://crt.usertrust.com/USERTrustRSAAddTrustCA.crt | \
+    openssl x509 -inform der -outform pem) > GandiStandardSSLCA2.pem
+
 aws iam upload-server-certificate \
-    --server-certificate-name www_runsomecode_com \
+    --server-certificate-name www_runsomecode_com_2 \
     --certificate-body 'file://runsomecode.crt' \
     --private-key 'file://runsomecode.key' \
-    --certificate-chain 'file://runsomecode.intermediate1.key' \
-    --path '/cloudfront/www_runsomecode_com/'
+    --certificate-chain 'file://GandiStandardSSLCA2.pem' \
+    --path '/cloudfront/www_runsomecode_com_2/'
 ```
 
 ### Sandbox
