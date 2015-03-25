@@ -398,7 +398,6 @@ exports.test9 = function(test) {
 code = '''
 import collections
 
-
 def are_delimiters_balanced(input):
     stack = collections.deque()
     pairs = {
