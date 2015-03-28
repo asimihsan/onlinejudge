@@ -39,11 +39,13 @@ import (
 )
 
 var (
-	logger         = getLogger("logger")
-	letters        = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
-	usage          = "CRUD for problems, evaluate problem solutions with unit tests."
-	loadProblems   = flag.Bool("load-problems", false, "Load problems to DynamoDB.")
-	recreateTables = flag.Bool("recreate-tables", false, "Delete then create tables in DynamoDB")
+	logger               = getLogger("logger")
+	letters              = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
+	usage                = "CRUD for problems, evaluate problem solutions with unit tests."
+	loadProblems         = flag.Bool("load-problems", false, "Load problems to DynamoDB.")
+	recreateTables       = flag.Bool("recreate-tables", false, "Delete then create tables in DynamoDB")
+	checkProblemFilepath = flag.String("check-problem-filepath", "", "Check problem at specific filepath")
+	checkProblemLanguage = flag.String("check-problem-language", "", "Check problem using specific language")
 )
 
 func getLogger(prefix string) *log.Logger {
@@ -63,6 +65,15 @@ func getLogPill() string {
 func main() {
 	logger.Println("main() entry.")
 	flag.Parse()
+
+	if *checkProblemFilepath != "" {
+		if *checkProblemLanguage == "" {
+			logger.Printf("Both check-problem-filepath and check-problem-language are required.")
+			return
+		}
+		CheckProblem(*checkProblemFilepath, *checkProblemLanguage)
+		return
+	}
 
 	Initialize()
 

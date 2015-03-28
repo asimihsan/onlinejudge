@@ -167,11 +167,11 @@ func LoadProblems(logger *log.Logger) error {
 	return nil
 }
 
-func PutProblems(logger *log.Logger, problems []Problem) error {
+func PutProblems(logger *log.Logger, problems []*Problem) error {
 	logger.Printf("db_orm.PutProblems() entry.")
 	defer logger.Printf("db_orm.PutProblems() exit.")
 	for _, problem := range problems {
-		putProblem(logger, &problem)
+		putProblem(logger, problem)
 	}
 	return nil
 }

@@ -76,8 +76,8 @@ func (p Problem) String() string {
 	return string(out)
 }
 
-func ParseProblems() (problems []Problem, err error) {
-	problems = make([]Problem, 0)
+func ParseProblems() (problems []*Problem, err error) {
+	problems = make([]*Problem, 0)
 
 	log.Printf("ParseProblems() entry.")
 	defer log.Printf("ParseProblems() exit.")
@@ -96,13 +96,12 @@ func ParseProblems() (problems []Problem, err error) {
 		if f.IsDir() || !strings.HasSuffix(filepath, ".toml") {
 			return nil
 		}
-		var problem Problem
-		if _, err = toml.DecodeFile(filepath, &problem); err != nil {
-			log.Printf("could not decode TOML file: %s", err)
+		problem, err := ParseProblem(filepath)
+		if err != nil {
+			log.Printf("failed to load problem: %s", err)
 			return err
 		}
-		log.Printf("found problem with Id: %s, Version: %d",
-			problem.Id, problem.Version)
+		log.Printf("found problem with Id: %s, Version: %d", problem.Id, problem.Version)
 		problems = append(problems, problem)
 		return nil
 	})
@@ -111,6 +110,17 @@ func ParseProblems() (problems []Problem, err error) {
 		return
 	}
 	return
+}
+
+func ParseProblem(filepath string) (*Problem, error) {
+	logger.Printf("ParseProblem entry. filepath: %s", filepath)
+	defer logger.Printf("ParseProblem exit.")
+	var problem Problem
+	if _, err := toml.DecodeFile(filepath, &problem); err != nil {
+		log.Printf("could not decode TOML filepath %s: %s", filepath, err)
+		return nil, err
+	}
+	return &problem, nil
 }
 
 // An Item is a returned attributebaluemap from godynamo. This function

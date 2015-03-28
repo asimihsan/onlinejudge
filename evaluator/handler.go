@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -134,6 +135,7 @@ func evaluate(w http.ResponseWriter, r *http.Request) {
 	// -------------------------------------------------------------------------
 	response := map[string]interface{}{}
 	defer writeJSONResponse(logger, response, w)
+	response["success"] = false
 
 	// -------------------------------------------------------------------------
 	//   Decode JSON body.
@@ -142,52 +144,78 @@ func evaluate(w http.ResponseWriter, r *http.Request) {
 	var t evaluate_struct
 	err = decoder.Decode(&t)
 	if err != nil {
-		response["success"] = false
 		response["output"] = "<could not decode JSON POST request>"
-		logger.Panicf("Could not decode JSON POST request")
+		logger.Printf("Could not decode JSON POST request")
+		return
 	}
 
-	// -------------------------------------------------------------------------
-	//   Prepare data for runner.
-	// -------------------------------------------------------------------------
+	runner_response, err := CallRunner(language, t.Code, problem.UnitTest[language].Code)
+	if err != nil {
+		msg := fmt.Sprintf("failed during CallRunner: %s", err)
+		response["output"] = msg
+		logger.Printf(msg)
+		return
+	}
+	response["success"] = runner_response.Success
+	response["output"] = runner_response.Output
+}
+
+func CallRunner(language string, code string, unit_test string) (*runner_response_struct, error) {
+	logger.Printf("CallRunner entry. language: %s", language)
+	defer logger.Printf("CallRunner exit.")
 	data := make(map[string]string)
-	data["code"] = string(t.Code)
-	data["unit_test"] = problem.UnitTest[language].Code
+	data["code"] = code
+	data["unit_test"] = unit_test
 
 	uri := fmt.Sprintf("https://www.runsomecode.com/run/%s", language)
 	j, jerr := json.Marshal(data)
 	if jerr != nil {
-		logger.Panic(jerr)
+		return nil, jerr
 	}
 	request, err := http.NewRequest("POST", uri, bytes.NewBuffer(j))
 	if err != nil {
-		logger.Println("Failed to create HTTP POST")
-		return
+		return nil, err
 	}
 	request.Header.Set("Content-Type", "application/json; charset=utf-8")
-
 	client := &http.Client{}
 	resp, err := client.Do(request)
 	if err != nil {
-		logger.Println("Failed during HTTP POST")
-		return
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		logger.Printf("HTTP GET not 200: %s\n", resp)
-		return
+		return nil, errors.New(fmt.Sprintf("HTTP POST not 200: %s\n", resp))
 	}
 
-	decoder = json.NewDecoder(resp.Body)
+	decoder := json.NewDecoder(resp.Body)
 	var t2 runner_response_struct
 	err = decoder.Decode(&t2)
 	if err != nil {
-		logger.Panicf("Could not decode JSON response")
+		return nil, err
 	}
+	return &t2, nil
+}
 
-	response["success"] = t2.Success
-	response["output"] = t2.Output
+func CheckProblem(filepath string, language string) error {
+	logger.Printf("CheckProblem entry. filepath: %s, language: %s", filepath, language)
+	defer logger.Printf("CheckProblem exit.")
+	problem, err := ParseProblem(filepath)
+	if err != nil {
+		log.Printf("failed to load problem: %s", err)
+		return err
+	}
+	code := problem.Solution[language].Code
+	unit_test := problem.UnitTest[language].Code
+	runner_response, err := CallRunner(language, code, unit_test)
+	if err != nil {
+		msg := fmt.Sprintf("failed during CallRunner: %s", err)
+		logger.Printf(msg)
+		return nil
+	}
+	logger.Printf("runner success: %b", runner_response.Success)
+	logger.Printf("runner output: \n%s", runner_response.Output)
+	return nil
 }
 
 func commonHandlerSetup(w http.ResponseWriter) {
