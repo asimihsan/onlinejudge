@@ -318,6 +318,7 @@ func runCommand(language string, code_filepath string, unittest_filepath string)
 	case "cpp":
 		copyPrepareFile(code_filepath, "/tmp/foo/program.cpp")
 		copyPrepareFile(unittest_filepath, "/tmp/foo/program_test.cpp")
+		copyPrepareFile("/home/ubuntu/catch.hpp", "/tmp/foo/catch.hpp")
 		return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
 			"su", "-", "ubuntu", "-c", "/usr/local/bin/sandbox /usr/bin/g++ -Wall -std=c++11 /tmp/foo/*.cpp -o /tmp/foo/a.out && /usr/local/bin/sandbox /tmp/foo/a.out")
 	case "python":
