@@ -228,6 +228,14 @@ pprint.pprint(result)
 
 ## TODO
 
+### 2015-03-28T10:01:52-07:00
+
+-   update evaluator to allow command-line flag for only evaluating a non-uploaded problem (i.e. use problem on disk)
+-   update runner to use Catch (https://github.com/philsquared/Catch/blob/master/docs/tutorial.md) to do C++ unit testing
+-   write up 10 of the initial string problems in Python, Java, JavaScript, C++.
+
+### older
+
 -   prettify code so people can't submit badly formatted code
     -   java: astyle
     -   python: autopep8
@@ -286,6 +294,10 @@ public class Solution {
 -   Test trying to break out of sandbox
 
 ## TODO done
+
+### 2015-03-28T10:01:52-07:00
+
+### older
 
 -   Do graceful restarts of server.
     -   Test by running e.g. sleep then restart service, check you get a response.
