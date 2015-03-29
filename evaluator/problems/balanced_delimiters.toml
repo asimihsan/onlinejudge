@@ -16,7 +16,7 @@ Id = "balanced_delimiters"
 
 # Increment version every time you want to re-upload a problem. You should
 # probably update last_updated_date if you increment the version.
-Version = 15
+Version = 16
 
 Title = "Balanced Delimiters"
 SupportedLanguages = [
@@ -408,9 +408,8 @@ def are_delimiters_balanced(input):
     for c in input:
         if c in pairs:
             stack.appendleft(c)
-        else:
-            if len(stack) == 0 or c != pairs[stack.popleft()]:
-                return False
+        elif len(stack) == 0 or c != pairs[stack.popleft()]:
+            return False
     return len(stack) == 0
 '''
 
@@ -438,6 +437,27 @@ public class Solution {
         }
         return stack.size() == 0;
     }
+}
+'''
+
+[Solution.javascript]
+code = '''
+exports.are_delimiters_balanced = function(input) {
+    var pairs = {
+        '{': '}',
+        '(': ')',
+        '[': ']'
+    };
+    var stack = [];
+    for (var i = 0, len = input.length; i < len; i++) {
+        var c = input[i];
+        if (c in pairs) {
+            stack.push(c);
+        } else if (stack.length === 0 || pairs[stack.pop()] !== c) {
+            return false;
+        }
+    }
+    return stack.length === 0;
 }
 '''
 # ------------------------------------------------------------------------------
