@@ -222,21 +222,17 @@ func putProblemIntoProblemSummary(logger *log.Logger, problem *Problem, table_na
 	put1 := put.NewPutItem()
 	put1.TableName = table_name
 
-	put1.Item["id"] = &attributevalue.AttributeValue{
-		S: problem.Id}
-	put1.Item["version"] = &attributevalue.AttributeValue{
-		N: strconv.Itoa(problem.Version)}
-	put1.Item["title"] = &attributevalue.AttributeValue{
-		S: problem.Title}
+	put1.Item["id"] = &attributevalue.AttributeValue{S: problem.Id}
+	put1.Item["version"] = &attributevalue.AttributeValue{N: strconv.Itoa(problem.Version)}
+	put1.Item["title"] = &attributevalue.AttributeValue{S: problem.Title}
+	put1.Item["category"] = &attributevalue.AttributeValue{S: problem.Category}
 	av := attributevalue.NewAttributeValue()
 	for _, language := range problem.SupportedLanguages {
 		av.InsertSS(language)
 	}
 	put1.Item["supported_languages"] = av
-	put1.Item["creation_date"] = &attributevalue.AttributeValue{
-		S: problem.CreationDate.Format(time.RFC3339)}
-	put1.Item["last_updated_date"] = &attributevalue.AttributeValue{
-		S: problem.LastUpdatedDate.Format(time.RFC3339)}
+	put1.Item["creation_date"] = &attributevalue.AttributeValue{S: problem.CreationDate.Format(time.RFC3339)}
+	put1.Item["last_updated_date"] = &attributevalue.AttributeValue{S: problem.LastUpdatedDate.Format(time.RFC3339)}
 
 	body, code, err := put1.EndpointReq()
 	if err != nil || code != http.StatusOK {

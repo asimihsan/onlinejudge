@@ -26,6 +26,7 @@ type Problem struct {
 	Id                 string                  `json:"id"`
 	Version            int                     `json:"version"`
 	Title              string                  `json:"title,omitempty"`
+	Category           string                  `json:"category,omitempty"`
 	SupportedLanguages []string                `json:"supported_languages,omitempty"`
 	CreationDate       *time.Time              `json:"creation_date,omitempty"`
 	LastUpdatedDate    *time.Time              `json:"last_updated_date,omitempty"`
@@ -144,6 +145,9 @@ func ItemToProblem(logger *log.Logger, input_id string, item item.Item) (Problem
 	}
 	if title, present := item["title"]; present == true {
 		problem.Title = title.S
+	}
+	if category, present := item["category"]; present == true {
+		problem.Category = category.S
 	}
 	if supported_languages, present := item["supported_languages"]; present == true {
 		problem.SupportedLanguages = supported_languages.SS
