@@ -16,7 +16,7 @@ Id = "balanced_delimiters"
 
 # Increment version every time you want to re-upload a problem. You should
 # probably update last_updated_date if you increment the version.
-Version = 18
+Version = 19
 
 Title = "Balanced Delimiters"
 Category = "Strings"
@@ -247,7 +247,7 @@ import unittest
 import foo
 
 
-class TestFizzBuzz(unittest.TestCase):
+class TestBalancedDelimiters(unittest.TestCase):
     def test1(self):
         self.assertTrue(foo.are_delimiters_balanced('()[]{}'))
 
@@ -393,6 +393,32 @@ exports.test9 = function(test) {
 # When we first launch there won't by any solutions. These solutions will seed
 # the voted list of solutions (might not be the best solutions!)
 # ------------------------------------------------------------------------------
+[Approach]
+
+[Approach._all]
+markdown = '''
+We know that `"([)]"` isn't balanced, whereas `"([])"` is balanced. This is
+because the order in which delimiters are closed matters, just like for example
+HTML tags. Hence using an integer counter for each delimiter, incrementing when
+you see an open and decrementing when you see a close, can't work. Instead we
+have to know what open delimiters we've seen, and that we're closing them in the
+correct (reverse) order. Already we know that if we need to keep track of what
+open delimiters we've seen the best case space complexity is O(n), and we need a
+data structure to help us.
+
+If you imagine you have just seen the first two characters of the above example,
+if we see a closing delimiter what must it be? It must be the most recently
+opened delimiter. What kind of data structure can help you progress through a
+sequence and give you access to the most recent element? A stack. Specifically:
+
+-   When you see an open delimiter, push it onto the stack.
+-   When you see a close delimiter, pop the stack (returning the most recent
+    open delimiter) and check the actual close delimiter is what is expected.
+
+This give a worst-case time complexity of O(n) and a worst-case space complexity
+of O(n).
+'''
+
 [Solution]
 
 [Solution.python]
