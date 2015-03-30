@@ -1,0 +1,256 @@
+# ------------------------------------------------------------------------------
+#   This is a problem for the onlinejudge platform. It is a single file that
+#   represents the description, initial code, and unit tests for a single
+#   problem.
+#   
+#   It is written in TOML. Please read: https://github.com/toml-lang/toml
+#
+#   To validate please execute:
+#
+#   go get github.com/BurntSushi/toml/cmd/tomlv
+#   tomlv <path to TOML file>
+# ------------------------------------------------------------------------------
+
+# Do not change id once a problem is uploaded.
+Id = "permutations"
+
+# Increment version every time you want to re-upload a problem. You should
+# probably update last_updated_date if you increment the version.
+Version = 1
+
+Title = "Permutations of Characters"
+Category = "Strings"
+SupportedLanguages = [
+    "java",
+    #"javascript",
+    "python",
+]
+CreationDate = 2015-03-29T00:00:00Z
+LastUpdatedDate =  2015-03-29T00:00:00Z
+
+# ------------------------------------------------------------------------------
+# This is Markdown. To preview it use something like http://dillinger.io/.
+#
+# If you want one description for all languages specify a [Description._all]
+# section. If there are language-specific descriptions, e.g.
+# [Description.java] they will be used in preference to _all if it exists.
+# ------------------------------------------------------------------------------
+[Description]
+
+[Description._all]
+markdown = '''
+## Permutations of Characters
+
+### Description
+
+Return all permutations of an input string as a sorted list. The return value
+must not have duplicates inside it; return each valid permutation only once. For
+example:
+
+### Examples
+
+-   `"abc"` would return `["abc", "bac", "bca", "acb", "cab", "cba"]`.
+-   `"cba"` would return `["abc", "bac", "bca", "acb", "cab", "cba"]`.
+-   `"aaa"` would return `["aaa"]`.
+'''
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# Initial code is presented to the user at the start of the problem. It should
+# give them the function signature (or, if the function signature gives away
+# the problem, sufficient language-specific comments to understand what is
+# required).
+# ------------------------------------------------------------------------------
+[InitialCode]
+
+[InitialCode.python]
+code = '''
+def permutations(input):
+    return []
+'''
+
+[InitialCode.java]
+code = '''
+import java.util.*;
+import java.io.*;
+
+public class Solution {
+    public static List<String> permutations(final String input) {
+        return new ArrayList<String>();
+    }
+}
+'''
+
+[InitialCode.javascript]
+code = '''
+exports.permutations = function(input) {
+  return [];
+};
+'''
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# Unit tests are used by the server to verify the validity of answers.
+# - Their code is never revealed to the user.
+# - Their stdout must not reveal the inputs used in tests.
+# - Their stdout may reveal the outputs used in tests (just like normal unit
+#   tests).
+#
+# Code is written out to one file, unit tests to another, and the two files are
+# compiled (if necessary) then the unit test file is executed. The names are:
+# - Java: Solution.java / SolutionTest.java
+# - Python: foo.py / foo_test.py
+#
+# How we run in each language:
+#
+# - Java:
+#   javac -cp '.:/tmp/junit-4.12.jar:/tmp/hamcrest-core-1.3.jar' Solution.java SolutionTest.java
+#   java -cp '.:/tmp/junit-4.12.jar:/tmp/hamcrest-core-1.3.jar' SolutionTest
+#   (need junit and hamcrest JARs)
+#
+# - Python:
+#   python foo_test.py
+# ------------------------------------------------------------------------------
+[UnitTest]
+
+[UnitTest.java]
+code = '''
+import java.util.*;
+import java.io.*;
+import org.junit.*;
+import static org.junit.Assert.*;
+
+public class SolutionTest {
+    @Test
+    public void test1() {
+        assertEquals(Arrays.asList(new String[]{"abc", "acb", "bac", "bca", "cab", "cba"}),
+            Solution.permutations("abc"));
+    }
+
+    @Test
+    public void test2() {
+        assertEquals(Arrays.asList(new String[]{"abc", "acb", "bac", "bca", "cab", "cba"}),
+            Solution.permutations("cba"));
+    }
+
+    @Test
+    public void test3() {
+        assertEquals(Arrays.asList(new String[]{"aaa"}),
+            Solution.permutations("aaa"));
+    }
+
+    @Test
+    public void test4() {
+        assertEquals(Arrays.asList(new String[]{"a"}),
+            Solution.permutations("a"));
+    }
+
+    @Test
+    public void test5() {
+        assertEquals(Arrays.asList(new String[]{"ab", "ba"}),
+            Solution.permutations("ab"));
+    }
+
+    @Test
+    public void test6() {
+        assertEquals(Arrays.asList(new String[]{""}),
+            Solution.permutations(""));
+    }
+
+    public static void main(String[] args) {
+        org.junit.runner.JUnitCore.main("SolutionTest");
+    }
+}
+'''
+
+[UnitTest.python]
+code = '''
+import unittest
+
+import foo
+
+
+class TestPermutations(unittest.TestCase):
+    def test1(self):
+        self.assertListEqual(['abc', 'acb', 'bac', 'bca', 'cab', 'cba'],
+            foo.permutations('abc'))
+
+    def test2(self):
+        self.assertListEqual(['abc', 'acb', 'bac', 'bca', 'cab', 'cba'],
+            foo.permutations('cba'))
+
+    def test3(self):
+        self.assertListEqual(['aaa'], foo.permutations('aaa'))
+
+    def test4(self):
+        self.assertListEqual(['a'], foo.permutations('a'))
+
+    def test5(self):
+        self.assertListEqual(['ab', 'ba'], foo.permutations('ab'))
+
+    def test6(self):
+        self.assertListEqual([''], foo.permutations(''))
+
+
+if __name__ == '__main__':
+    unittest.main(verbosity=2)
+'''
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# When we first launch there won't by any solutions. These solutions will seed
+# the voted list of solutions (might not be the best solutions!)
+# ------------------------------------------------------------------------------
+[Approach]
+
+[Approach._all]
+markdown = '''
+'''
+
+[Solution]
+
+[Solution.java]
+code = '''
+import java.util.*;
+import java.io.*;
+
+public class Solution {
+    public static List<String> permutations(final String input) {
+        if (input.length() <= 1) {
+            final List<String> result = new ArrayList<String>(1);
+            result.add(input);
+            return result;
+        }
+        final List<String> result = new ArrayList<String>();
+        for (int i = 0; i < input.length(); i++) {
+            final StringBuilder rest = new StringBuilder();
+            for (int j = 0; j < input.length(); j++) {
+                if (j != i) {
+                    rest.append(input.charAt(j));
+                }
+            }
+            final Character c = input.charAt(i);
+            for (final String perm : permutations(rest.toString())) {
+                result.add(c + perm);
+            }
+        }
+        final List<String> uniqueResult = new ArrayList<String>(
+            new HashSet<String>(result));
+        Collections.sort(uniqueResult);
+        return uniqueResult;
+    }
+}
+'''
+
+[Solution.python]
+code = '''
+def permutations(input):
+    if len(input) <= 1:
+        return [input]
+    result = []
+    for i, c in enumerate(input):
+        rest = input[:i] + input[i+1:]
+        result.extend([c + perm for perm in permutations(rest)])
+    return sorted(list(set(result)))
+'''
+# ------------------------------------------------------------------------------
