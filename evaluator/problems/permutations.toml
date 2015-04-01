@@ -16,7 +16,7 @@ Id = "permutations"
 
 # Increment version every time you want to re-upload a problem. You should
 # probably update last_updated_date if you increment the version.
-Version = 4
+Version = 5
 
 Title = "Permutations of Characters"
 Category = "Strings"
