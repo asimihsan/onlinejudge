@@ -16,17 +16,16 @@ Id = "longest_substring_palindrome"
 
 # Increment version every time you want to re-upload a problem. You should
 # probably update last_updated_date if you increment the version.
-Version = 1
+Version = 3
 
-Title = "Longest substring that is a palindrome"
+Title = "Longest Substring That Is A Palindrome"
 Category = "Strings"
 SupportedLanguages = [
     "java",
-    #"javascript",
-    #"python",
+    "python",
 ]
 CreationDate = 2015-03-31T00:00:00Z
-LastUpdatedDate =  2015-03-31T00:00:00Z
+LastUpdatedDate =  2015-06-07T00:00:00Z
 
 # ------------------------------------------------------------------------------
 # This is Markdown. To preview it use something like http://dillinger.io/.
@@ -77,13 +76,6 @@ public class Solution {
         return "";
     }
 }
-'''
-
-[InitialCode.javascript]
-code = '''
-exports.longestSubstringPalindrome = function(input) {
-  return "";
-};
 '''
 # ------------------------------------------------------------------------------
 
@@ -141,59 +133,27 @@ public class SolutionTest {
 
     @Test
     public void test5() {
-        assertEquals("ab", Solution.longestSubstringPalindrome("ab"));
+        assertEquals("aa", Solution.longestSubstringPalindrome("aab"));
     }
 
     @Test
     public void test6() {
-        assertEquals("ddd", Solution.longestSubstringPalindrome("abcdddabc"));
+        assertEquals("aa", Solution.longestSubstringPalindrome("baa"));
     }
 
     @Test
     public void test7() {
+        assertEquals("ddd", Solution.longestSubstringPalindrome("abcdddabc"));
+    }
+
+    @Test
+    public void test8() {
         assertEquals("ddd", Solution.longestSubstringPalindrome("abcddd"));
     }
 
     public static void main(String[] args) {
         org.junit.runner.JUnitCore.main("SolutionTest");
     }
-}
-'''
-
-[UnitTest.javascript]
-code = '''
-var foo = require('./foo');
-
-exports.test1 = function(test) {
-  test.ok(arrayEquals(foo.permutations('abc'),
-    ['abc', 'acb', 'bac', 'bca', 'cab', 'cba']));
-  test.done();
-}
-
-exports.test2 = function(test) {
-  test.ok(arrayEquals(foo.permutations('cba'),
-    ['abc', 'acb', 'bac', 'bca', 'cab', 'cba']));
-  test.done();
-}
-
-exports.test3 = function(test) {
-  test.ok(arrayEquals(foo.permutations('aaa'), ['aaa']));
-  test.done();
-}
-
-exports.test4 = function(test) {
-  test.ok(arrayEquals(foo.permutations('a'), ['a']));
-  test.done();
-}
-
-exports.test5 = function(test) {
-  test.ok(arrayEquals(foo.permutations('ab'), ['ab', 'ba']));
-    test.done();
-}
-
-exports.test6 = function(test) {
-  test.ok(arrayEquals(foo.permutations(''), ['']));
-  test.done();
 }
 '''
 
@@ -204,26 +164,30 @@ import unittest
 import foo
 
 
-class TestPermutations(unittest.TestCase):
+class TestLongestPalindrome(unittest.TestCase):
     def test1(self):
-        self.assertListEqual(['abc', 'acb', 'bac', 'bca', 'cab', 'cba'],
-            foo.permutations('abc'))
+        self.assertEqual('aba', foo.longest_substring_palindrome('abadd'))
 
     def test2(self):
-        self.assertListEqual(['abc', 'acb', 'bac', 'bca', 'cab', 'cba'],
-            foo.permutations('cba'))
+        self.assertEqual('', foo.longest_substring_palindrome(''))
 
     def test3(self):
-        self.assertListEqual(['aaa'], foo.permutations('aaa'))
+        self.assertEqual('a', foo.longest_substring_palindrome('a'))
 
     def test4(self):
-        self.assertListEqual(['a'], foo.permutations('a'))
+        self.assertEqual('aa', foo.longest_substring_palindrome('aa'))
 
     def test5(self):
-        self.assertListEqual(['ab', 'ba'], foo.permutations('ab'))
+        self.assertEqual('aa', foo.longest_substring_palindrome('aab'))
 
     def test6(self):
-        self.assertListEqual([''], foo.permutations(''))
+        self.assertEqual('aa', foo.longest_substring_palindrome('baa'))
+
+    def test7(self):
+        self.assertEqual('ddd', foo.longest_substring_palindrome('abcdddabc'))
+
+    def test8(self):
+        self.assertEqual('ddd', foo.longest_substring_palindrome('abcdddabc'))
 
 
 if __name__ == '__main__':
@@ -250,50 +214,64 @@ import java.io.*;
 
 public class Solution {
     public static String longestSubstringPalindrome(final String input) {
-        return "";
-    }
-}
-'''
-
-[Solution.javascript]
-code = '''
-function uniqueSortedArray(array) {
-    var resultUnique = array.reduce(function(p, c) {
-        if (p.indexOf(c) < 0) {
-            p.push(c);
+        String longestPalindrome = "";
+        for (int i = 0, j, k; i <= 2 * input.length() + 1; i++) {
+            if (i % 2 == 0) {
+                // in between characters, so ignore "" case
+                j = (i - 1) / 2;
+                k = i / 2;
+            } else {
+                // on a character, so start with that character
+                j = (i - 1) / 2;
+                k = (i - 1) / 2;
+            }
+            while (j >= 0 && k < input.length()) {
+                final String substring = input.substring(j, k + 1);
+                if (substring.charAt(0) != substring.charAt(substring.length() - 1)) {
+                    break;
+                }
+                if (substring.length() > longestPalindrome.length()) {
+                    longestPalindrome = substring;
+                }
+                j--;
+                k++;
+            }
         }
-        return p;
-    },  []);
-    resultUnique.sort(); 
-    return resultUnique;
-};
-
-exports.permutations = function(input) {
-    var result = [];
-    if (input.length <= 1) {
-        result.push(input);
-        return result;
+        return longestPalindrome;
     }
-    for (var i = 0; i < input.length; i++) {
-        var rest = input.substring(0, i) + input.substring(i + 1);
-        var c = input.charAt(i);
-        exports.permutations(rest).forEach(function(perm) {
-            result.push(c + perm);
-        });
-    }
-    return uniqueSortedArray(result);
 }
 '''
 
 [Solution.python]
 code = '''
-def permutations(input):
-    if len(input) <= 1:
-        return [input]
-    result = []
-    for i, c in enumerate(input):
-        rest = input[:i] + input[i+1:]
-        result.extend([c + perm for perm in permutations(rest)])
-    return sorted(list(set(result)))
+import itertools
+
+def longest_substring_palindrome(input):
+    """
+    Expanding from all possible centers is equivalent to expanding from
+    all possible single characters and adjacent pairs of characters. For
+    example, "aba" means expanding from ["a", "ab", "b", "ba", "a"]. For
+    simplicity we expand from single characters, then pairs.
+
+    Rather than create a list of indices to loop over in-memory, we iterate over
+    a generator of indices.
+    """
+    longest = ""
+
+    def get_indices(i):
+        yield (i, i)
+        yield (i, i + 1)
+    indices = (itertools.chain.from_iterable(get_indices(i)
+               for i in xrange(len(input))))
+    for (start, end) in indices:
+        while start >= 0 and end < len(input):
+            substring = input[start:end+1]
+            if substring[0] != substring[-1]:
+                break
+            if len(substring) > len(longest):
+                longest = substring
+            start -= 1
+            end += 1
+    return longest
 '''
 # ------------------------------------------------------------------------------
