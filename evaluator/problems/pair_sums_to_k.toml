@@ -1,0 +1,360 @@
+# ------------------------------------------------------------------------------
+#   This is a problem for the onlinejudge platform. It is a single file that
+#   represents the description, initial code, and unit tests for a single
+#   problem.
+#   
+#   It is written in TOML. Please read: https://github.com/toml-lang/toml
+#
+#   To validate please execute:
+#
+#   go get github.com/BurntSushi/toml/cmd/tomlv
+#   tomlv <path to TOML file>
+# ------------------------------------------------------------------------------
+
+# Do not change id once a problem is uploaded.
+Id = "pair_sums_to_k"
+
+# Increment version every time you want to re-upload a problem. You should
+# probably update last_updated_date if you increment the version.
+Version = 1
+
+Title = "Pairs Sum to K"
+Category = "Arrays"
+SupportedLanguages = [
+    "java",
+    "python",
+]
+CreationDate = 2015-06-13T00:00:00Z
+LastUpdatedDate =  2015-06-13T00:00:00Z
+
+# ------------------------------------------------------------------------------
+# This is Markdown. To preview it use something like http://dillinger.io/.
+#
+# If you want one description for all languages specify a [Description._all]
+# section. If there are language-specific descriptions, e.g.
+# [Description.java] they will be used in preference to _all if it exists.
+# ------------------------------------------------------------------------------
+[Description]
+
+[Description._all]
+markdown = '''
+## Pairs Sum to K
+
+Given an unsorted array of integers and an integer `k`, find two integers that
+sum to `k`. Integers in the array may be a mixture of negative, zero, and
+positive, and are not necessarily unique. If there is more than one possible
+pair return any valid pair. For example:
+
+-   `[-1, 5, 6, 3], 2` would return `(-1, 3)`
+
+Identify two possible solutions:
+
+1.  A solution in O(n) time that minimizes the space complexity.
+2.  A solution in O(1) space that minimizes the time complexity.
+'''
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# Initial code is presented to the user at the start of the problem. It should
+# give them the function signature (or, if the function signature gives away
+# the problem, sufficient language-specific comments to understand what is
+# required).
+# ------------------------------------------------------------------------------
+[InitialCode]
+
+[InitialCode.python]
+code = '''
+def pair_sums_to_k(array, k):
+    return (0, 0)
+'''
+
+[InitialCode.java]
+code = '''
+import java.util.*;
+import java.io.*;
+
+public class Solution {
+    public static Result pairSumsToK(final int[] array, final int k) {
+        return new Result(0, 0);
+    }
+
+    // Convenience class to make it easy to return a 2-tuple, and debug
+    // the output of failed unit tests. You won't get asked to write all of
+    // this in an interview, but we need this for the unit tests.
+    public static class Result {
+        public final int first;
+        public final int second;
+
+        public Result(final int first, final int second) {
+            this.first = first;
+            this.second = second;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("(%s, %s)", first, second);
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (!(o instanceof Result)) {
+                return false;
+            }
+            final Result r = (Result)o;
+            return (first == r.first && second == r.second);
+        }
+    }
+}
+'''
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# Unit tests are used by the server to verify the validity of answers.
+# - Their code is never revealed to the user.
+# - Their stdout must not reveal the inputs used in tests.
+# - Their stdout may reveal the outputs used in tests (just like normal unit
+#   tests).
+#
+# Code is written out to one file, unit tests to another, and the two files are
+# compiled (if necessary) then the unit test file is executed. The names are:
+# - Java: Solution.java / SolutionTest.java
+# - Python: foo.py / foo_test.py
+#
+# How we run in each language:
+#
+# - Java:
+#   javac -cp '.:/tmp/junit-4.12.jar:/tmp/hamcrest-core-1.3.jar' Solution.java SolutionTest.java
+#   java -cp '.:/tmp/junit-4.12.jar:/tmp/hamcrest-core-1.3.jar' SolutionTest
+#   (need junit and hamcrest JARs)
+#
+# - Python:
+#   python foo_test.py
+# ------------------------------------------------------------------------------
+[UnitTest]
+
+[UnitTest.java]
+code = '''
+import java.util.*;
+import java.io.*;
+import org.junit.*;
+import static org.junit.Assert.*;
+
+public class SolutionTest {
+    @Test
+    public void test1() {
+        assertEquals(
+            new Solution.Result(-1, 3),
+            Solution.pairSumsToK(new int[] {-1, 5, 6, 3}, 2));
+    }
+
+    @Test
+    public void test2() {
+        assertEquals(
+            null,
+            Solution.pairSumsToK(new int[] {}, 2));
+    }
+
+    @Test
+    public void test3() {
+        assertEquals(
+            null,
+            Solution.pairSumsToK(new int[] {2}, 2));
+    }
+
+    @Test
+    public void test4() {
+        assertEquals(
+            null,
+            Solution.pairSumsToK(new int[] {1, 2}, 2));
+    }
+
+    @Test
+    public void test5() {
+        assertEquals(
+            new Solution.Result(-2, 4),
+            Solution.pairSumsToK(new int[] {4, -2}, 2));
+    }
+
+    @Test
+    public void test6() {
+        assertEquals(
+            null,
+            Solution.pairSumsToK(new int[] {0, 0, 0, 0}, 2));
+    }
+
+    @Test
+    public void test7() {
+        assertEquals(
+            new Solution.Result(1, 1),
+            Solution.pairSumsToK(new int[] {1, 1, 2}, 2));
+    }
+
+    @Test
+    public void test8() {
+        assertEquals(
+            new Solution.Result(1, 1),
+            Solution.pairSumsToK(new int[] {1, 2, 1}, 2));
+    }
+
+    @Test
+    public void test9() {
+        assertEquals(
+            new Solution.Result(1, 1),
+            Solution.pairSumsToK(new int[] {2, 1, 1}, 2));
+    }
+
+    @Test
+    public void test10() {
+        assertEquals(
+            null,
+            Solution.pairSumsToK(new int[] {5, 1, 3, 4, 0}, 2));
+    }
+
+    public static void main(String[] args) {
+        org.junit.runner.JUnitCore.main("SolutionTest");
+    }
+}
+'''
+
+[UnitTest.python]
+code = '''
+import unittest
+
+import foo
+
+
+class TestLongestPalindrome(unittest.TestCase):
+    def test1(self):
+        self.assertEqual((-1, 3), foo.pair_sums_to_k([-1, 5, 6, 3], 2))
+
+    def test2(self):
+        self.assertEqual(None, foo.pair_sums_to_k([], 2))
+
+    def test3(self):
+        self.assertEqual(None, foo.pair_sums_to_k([2], 2))
+
+    def test4(self):
+        self.assertEqual(None, foo.pair_sums_to_k([1, 2], 2))
+
+    def test5(self):
+        self.assertEqual((-2, 4), foo.pair_sums_to_k([4, -2], 2))
+
+    def test6(self):
+        self.assertEqual(None, foo.pair_sums_to_k([0, 0, 0, 0], 2))
+
+    def test7(self):
+        self.assertEqual((1, 1), foo.pair_sums_to_k([1, 1, 2], 2))
+
+    def test8(self):
+        self.assertEqual((1, 1), foo.pair_sums_to_k([1, 2, 1], 2))
+
+    def test9(self):
+        self.assertEqual((1, 1), foo.pair_sums_to_k([2, 1, 1], 2))
+
+    def test10(self):
+        self.assertEqual(None, foo.pair_sums_to_k([5, 1, 3, 4, 0], 2))
+
+
+if __name__ == '__main__':
+    unittest.main(verbosity=2)
+'''
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# When we first launch there won't by any solutions. These solutions will seed
+# the voted list of solutions (might not be the best solutions!)
+# ------------------------------------------------------------------------------
+[Approach]
+
+[Approach._all]
+markdown = '''
+'''
+
+[Solution]
+
+[Solution.java]
+code = '''
+import java.util.*;
+import java.io.*;
+
+public class Solution {
+    public static Result pairSumsToK(final int[] array, final int k) {
+        if (array.length < 2) {
+            return null;
+        }
+        Arrays.sort(array);  // assuming we can use the language built-in sort
+        for (int i = 0; i < array.length; i++) {
+            final int element = array[i];
+            final int required = k - element; // assuming no overflow
+            final int findIndex = find(array, required);
+            if (findIndex != -1 && findIndex != i) {
+                if (element < required) {
+                    return new Result(element, required);
+                } else {
+                    return new Result(required, element);
+                }
+            }
+        }
+        return null;
+    }
+
+    private static int find(final int[] array, final int element) {
+        return find(array, element, 0, array.length - 1);
+    }
+
+    private static int find(final int[] array, final int element, final int lo,
+            final int hi) {
+        if (lo > hi) {
+            return -1;
+        }
+        final int mid = (hi - lo) / 2 + lo;
+        if (array[mid] == element) {
+            return mid;
+        } else if (array[mid] >= element) {
+            return find(array, element, lo, mid - 1);
+        } else {
+            return find(array, element, mid + 1, hi);
+        }
+    }
+
+    // Convenience class to make it easy to return a 2-tuple, and debug
+    // the output of failed unit tests. You won't get asked to write all of
+    // this in an interview, but we need this for the unit tests.
+    public static class Result {
+        public final int first;
+        public final int second;
+
+        public Result(final int first, final int second) {
+            this.first = first;
+            this.second = second;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("(%s, %s)", first, second);
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (!(o instanceof Result)) {
+                return false;
+            }
+            final Result r = (Result)o;
+            return (first == r.first && second == r.second);
+        }
+    }
+}
+'''
+
+[Solution.python]
+code = '''
+def pair_sums_to_k(array, k):
+    lookup = set()
+    for element in array:
+        required = k - element
+        if required in lookup:
+            return (min(required, element), max(required, element))
+        lookup.add(element)
+    return None
+'''
+# ------------------------------------------------------------------------------
