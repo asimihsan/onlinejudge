@@ -16,7 +16,7 @@ Id = "match_a_string"
 
 # Increment version every time you want to re-upload a problem. You should
 # probably update last_updated_date if you increment the version.
-Version = 2
+Version = 3
 
 Title = "Match a String"
 Category = "Strings"
@@ -138,6 +138,36 @@ public class SolutionTest {
         assertEquals(true, Solution.matches("cat", "c*t"));
     }
 
+    @Test
+    public void test5() {
+        assertEquals(true, Solution.matches("cat", ""));
+    }
+
+    @Test
+    public void test6() {
+        assertEquals(true, Solution.matches("", ""));
+    }
+
+    @Test
+    public void test7() {
+        assertEquals(false, Solution.matches("", "c*t"));
+    }
+
+    @Test
+    public void test8() {
+        assertEquals(true, Solution.matches("ooooo", "*o"));
+    }
+
+    @Test
+    public void test9() {
+        assertEquals(false, Solution.matches("ooooo", "*t"));
+    }
+
+    @Test
+    public void test10() {
+        assertEquals(true, Solution.matches("ooooo", "o*"));
+    }
+
     public static void main(String[] args) {
         org.junit.runner.JUnitCore.main("SolutionTest");
     }
@@ -164,6 +194,24 @@ class TestMatchAString(unittest.TestCase):
     def test4(self):
         self.assertEqual(True, foo.matches("cat", "c*t"))
 
+    def test5(self):
+        self.assertEqual(True, foo.matches("cat", ""))
+
+    def test6(self):
+        self.assertEqual(True, foo.matches("", ""))
+
+    def test7(self):
+        self.assertEqual(False, foo.matches("", "o*"))
+
+    def test8(self):
+        self.assertEqual(True, foo.matches("ooooo", "*o"))
+
+    def test9(self):
+        self.assertEqual(False, foo.matches("ooooo", "*t"))
+
+    def test10(self):
+        self.assertEqual(True, foo.matches("ooooo", "o*"))
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
@@ -189,7 +237,25 @@ import java.io.*;
 
 public class Solution {
     public static boolean matches(final String string, final String pattern) {
-        return true;
+        if (pattern.length() == 0) {
+            return true;
+        }
+        if (string.length() == 0) {
+            return false;
+        }
+        if (pattern.equals("*")) {
+            return true;
+        }
+        if (pattern.charAt(0) != '*' && string.charAt(0) != pattern.charAt(0)) {
+            return false;
+        }
+        final String restOfString = string.substring(1, string.length());
+        final String restOfPattern = pattern.substring(1, pattern.length());
+        if (pattern.charAt(0) != '*') {
+            return matches(restOfString, restOfPattern);
+        }
+        return (matches(string, restOfPattern) ||
+            matches(restOfString, pattern));
     }
 }
 '''
@@ -197,6 +263,16 @@ public class Solution {
 [Solution.python]
 code = '''
 def matches(string, pattern):
-    return True
+    if len(pattern) == 0:
+        return True
+    if len(string) == 0:
+        return False
+    if pattern == "*":
+        return True
+    if pattern[0] != "*" and string[0] != pattern[0]:
+        return False
+    if pattern[0] != "*":
+        return matches(string[1:], pattern[1:])
+    return matches(string, pattern[1:]) or matches(string[1:], pattern)
 '''
 # ------------------------------------------------------------------------------
