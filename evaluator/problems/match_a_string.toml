@@ -1,0 +1,202 @@
+# ------------------------------------------------------------------------------
+#   This is a problem for the onlinejudge platform. It is a single file that
+#   represents the description, initial code, and unit tests for a single
+#   problem.
+#   
+#   It is written in TOML. Please read: https://github.com/toml-lang/toml
+#
+#   To validate please execute:
+#
+#   go get github.com/BurntSushi/toml/cmd/tomlv
+#   tomlv <path to TOML file>
+# ------------------------------------------------------------------------------
+
+# Do not change id once a problem is uploaded.
+Id = "match_a_string"
+
+# Increment version every time you want to re-upload a problem. You should
+# probably update last_updated_date if you increment the version.
+Version = 1
+
+Title = "Match a Srting"
+Category = "Strings"
+SupportedLanguages = [
+    "java",
+    "python",
+]
+CreationDate = 2015-06-14T00:00:00Z
+LastUpdatedDate =  2015-06-14T00:00:00Z
+
+# ------------------------------------------------------------------------------
+# This is Markdown. To preview it use something like http://dillinger.io/.
+#
+# If you want one description for all languages specify a [Description._all]
+# section. If there are language-specific descriptions, e.g.
+# [Description.java] they will be used in preference to _all if it exists.
+# ------------------------------------------------------------------------------
+[Description]
+
+[Description._all]
+markdown = '''
+## Match a String
+
+Given a filename string and a pattern string return true if the filename matches
+the pattern, else return false. The pattern may contain zero or one stars
+("\*"), where a star can match zero or more of any character. There are no other
+special characters.
+
+For example:
+
+-   `("index.html", "*html")` returns true
+-   `("foo.txt", "*html")` returns false
+-   `("cat", "c*t")` returns true
+
+Assume that:
+
+-   the restriction on the number of stars always holds.
+-   the input strings are ASCII encoded.
+-   the input string never contains a star.
+'''
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# Initial code is presented to the user at the start of the problem. It should
+# give them the function signature (or, if the function signature gives away
+# the problem, sufficient language-specific comments to understand what is
+# required).
+# ------------------------------------------------------------------------------
+[InitialCode]
+
+[InitialCode.python]
+code = '''
+def matches(string, pattern):
+    return True
+'''
+
+[InitialCode.java]
+code = '''
+import java.util.*;
+import java.io.*;
+
+public class Solution {
+    public static boolean matches(final String string, final String pattern) {
+        return true;
+    }
+}
+'''
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# Unit tests are used by the server to verify the validity of answers.
+# - Their code is never revealed to the user.
+# - Their stdout must not reveal the inputs used in tests.
+# - Their stdout may reveal the outputs used in tests (just like normal unit
+#   tests).
+#
+# Code is written out to one file, unit tests to another, and the two files are
+# compiled (if necessary) then the unit test file is executed. The names are:
+# - Java: Solution.java / SolutionTest.java
+# - Python: foo.py / foo_test.py
+#
+# How we run in each language:
+#
+# - Java:
+#   javac -cp '.:/tmp/junit-4.12.jar:/tmp/hamcrest-core-1.3.jar' Solution.java SolutionTest.java
+#   java -cp '.:/tmp/junit-4.12.jar:/tmp/hamcrest-core-1.3.jar' SolutionTest
+#   (need junit and hamcrest JARs)
+#
+# - Python:
+#   python foo_test.py
+# ------------------------------------------------------------------------------
+[UnitTest]
+
+[UnitTest.java]
+code = '''
+import java.util.*;
+import java.io.*;
+import org.junit.*;
+import static org.junit.Assert.*;
+
+public class SolutionTest {
+    @Test
+    public void test1() {
+        assertEquals(true, Solution.matches("index.html", "*html"));
+    }
+
+    @Test
+    public void test2() {
+        assertEquals(false, Solution.matches("foo.txt", "*html"));
+    }
+
+    @Test
+    public void test3() {
+        assertEquals(true, Solution.matches("foo.txt", "fo*.txt"));
+    }
+
+    @Test
+    public void test4() {
+        assertEquals(true, Solution.matches("cat", "c*t"));
+    }
+
+    public static void main(String[] args) {
+        org.junit.runner.JUnitCore.main("SolutionTest");
+    }
+}
+'''
+
+[UnitTest.python]
+code = '''
+import unittest
+
+import foo
+
+
+class TestMatchAString(unittest.TestCase):
+    def test1(self):
+        self.assertEqual(True, foo.matches("index.html", "*html"))
+
+    def test2(self):
+        self.assertEqual(False, foo.matches("foo.txt", "*html"))
+
+    def test2(self):
+        self.assertEqual(True, foo.matches("foo.txt", "fo*.txt"))
+
+    def test4(self):
+        self.assertEqual(True, foo.matches("cat", "c*t"))
+
+
+if __name__ == '__main__':
+    unittest.main(verbosity=2)
+'''
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# When we first launch there won't by any solutions. These solutions will seed
+# the voted list of solutions (might not be the best solutions!)
+# ------------------------------------------------------------------------------
+[Approach]
+
+[Approach._all]
+markdown = '''
+'''
+
+[Solution]
+
+[Solution.java]
+code = '''
+import java.util.*;
+import java.io.*;
+
+public class Solution {
+    public static boolean matches(final String string, final String pattern) {
+        return true;
+    }
+}
+'''
+
+[Solution.python]
+code = '''
+def matches(string, pattern):
+    return True
+'''
+# ------------------------------------------------------------------------------
