@@ -16,9 +16,9 @@ Id = "match_a_string"
 
 # Increment version every time you want to re-upload a problem. You should
 # probably update last_updated_date if you increment the version.
-Version = 1
+Version = 2
 
-Title = "Match a Srting"
+Title = "Match a String"
 Category = "Strings"
 SupportedLanguages = [
     "java",
