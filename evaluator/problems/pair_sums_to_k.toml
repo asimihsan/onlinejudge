@@ -16,7 +16,7 @@ Id = "pair_sums_to_k"
 
 # Increment version every time you want to re-upload a problem. You should
 # probably update last_updated_date if you increment the version.
-Version = 1
+Version = 2
 
 Title = "Pairs Sum to K"
 Category = "Arrays"
@@ -223,7 +223,7 @@ import unittest
 import foo
 
 
-class TestLongestPalindrome(unittest.TestCase):
+class TestPairSumsToK(unittest.TestCase):
     def test1(self):
         self.assertEqual((-1, 3), foo.pair_sums_to_k([-1, 5, 6, 3], 2))
 
