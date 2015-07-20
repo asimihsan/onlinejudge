@@ -40,7 +40,6 @@ module.exports = function(config) {
       'bower_components/angular-ladda/dist/angular-ladda.min.js',
       'bower_components/highlightjs/highlight.pack.js',
       'bower_components/angular-highlightjs/build/angular-highlightjs.js',
-      'bower_components/please-wait/build/please-wait.js',
       'bower_components/angular-loading-bar/build/loading-bar.js',
       'bower_components/angular-mocks/angular-mocks.js',
       // endbower

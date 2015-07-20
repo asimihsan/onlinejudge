@@ -19,7 +19,6 @@
     "angular-ladda": "~0.2.2",
     "highlightjs": "~8.4.0",
     "angular-highlightjs": "~0.4.1",
-    "please-wait": "~0.0.2",
     "spinkit": "~1.0.1",
     "angular-loading-bar": "~0.7.1"
   },

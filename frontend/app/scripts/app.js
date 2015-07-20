@@ -27,10 +27,8 @@ angular
   .constant('_', window._)
   // use in views, ng-repeat="x in _.range(3)"
   .run(function ($rootScope, $state) {
-    /*jshint camelcase: false */
      $rootScope._ = window._;
      $rootScope.state = $state;
-     window.loading_screen.finish();
   })
   .config(function ($stateProvider, $urlRouterProvider, hljsServiceProvider) {
     hljsServiceProvider.setOptions({
