@@ -168,6 +168,11 @@ public class SolutionTest {
         assertEquals(true, Solution.matches("ooooo", "o*"));
     }
 
+    @Test
+    public void test11() {
+        assertEquals(true, Solution.matches("", "*"));
+    }
+
     public static void main(String[] args) {
         org.junit.runner.JUnitCore.main("SolutionTest");
     }
@@ -212,6 +217,9 @@ class TestMatchAString(unittest.TestCase):
     def test10(self):
         self.assertEqual(True, foo.matches("ooooo", "o*"))
 
+    def test11(self):
+        self.assertEqual(True, foo.matches("", "*"))
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
@@ -240,11 +248,11 @@ public class Solution {
         if (pattern.length() == 0) {
             return true;
         }
-        if (string.length() == 0) {
-            return false;
-        }
         if (pattern.equals("*")) {
             return true;
+        }
+        if (string.length() == 0) {
+            return false;
         }
         if (pattern.charAt(0) != '*' && string.charAt(0) != pattern.charAt(0)) {
             return false;
@@ -265,10 +273,10 @@ code = '''
 def matches(string, pattern):
     if len(pattern) == 0:
         return True
-    if len(string) == 0:
-        return False
     if pattern == "*":
         return True
+    if len(string) == 0:
+        return False
     if pattern[0] != "*" and string[0] != pattern[0]:
         return False
     if pattern[0] != "*":
