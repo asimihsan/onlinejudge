@@ -24,8 +24,11 @@
         <div ng-if="data.problems.length == 0 && !_.isNull(data.selectedLanguage)">
           No problems found for this language right now, sorry!
         </div>
-        <li ng-repeat="problem in data.problems">
-          <a ui-sref="attempt.description({problemId: '{{ problem.id }}', language: '{{ data.selectedLanguage }}' })">{{ problem.title }}</a>
-        </li>
+        <div ng-repeat="category in data.categories">
+            <h3>{{ category }}</h3>
+            <li ng-repeat="problem in data.problemsByCategory[category]">
+                <a ui-sref="attempt.description({problemId: '{{ problem.id }}', language: '{{ data.selectedLanguage }}' })">{{ problem.title }}</a>
+            </li>
+        </div>
     </div>
 </div>

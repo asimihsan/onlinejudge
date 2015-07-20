@@ -29,11 +29,15 @@ angular.module('onlinejudgeApp')
               return _.includes(problem.supported_languages, $scope.data.selectedLanguage);
           });
           $scope.data.problems = problems;
+          $scope.data.problemsByCategory = _.groupBy(problems, 'category');
+          $scope.data.categories = _.sortBy(_.unique(_.map(problems, function(o) { return o.category; })));
         });
     };
     $scope.clearSelectedLanguage = function() {
       $scope.data.selectedLanguage = null;
       $scope.data.problems = [];
+      $scope.data.problemsByCategory = {};
+      $scope.data.categories = [];
     };
     $scope.$on('$stateChangeSuccess', function(event, toState, toParams, fromState, fromParams){
       if ($scope.state.current.name === 'problem.languageSelected') {
