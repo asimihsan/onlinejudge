@@ -40,3 +40,6 @@ doc/*.tex
 doc/*.html
 
 keys/
+
+# added by GitSavvy
+/Gemfile.lock
