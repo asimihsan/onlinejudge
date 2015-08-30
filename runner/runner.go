@@ -22,11 +22,14 @@ import (
 var (
 	logger                 = getLogger("logger")
 	letters                = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
+	digits                 = []rune("0123456789")
 	maxOutstandingRequests = 1
 	handlerSemaphore       = make(chan int, maxOutstandingRequests)
 	grecaptchaSecret       = "6LcB8gATAAAAAByLaeJzveuN4_lP_yDdiszVoL60"
 	outputLimit            = 10 * 1024
 	lxcMutex               = &sync.Mutex{}
+	ephemeralImageName     = ""
+	lxcPath                = "/home/ubuntu/.local/share/lxc/"
 )
 
 func getLogger(prefix string) *log.Logger {
@@ -39,6 +42,15 @@ func getLogPill() string {
 	b := make([]rune, 8)
 	for i := range b {
 		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
+}
+
+func getEphemeralImageName() string {
+	b := make([]rune, 8)
+	b[0] = 'v'
+	for i := 1; i < len(b); i++ {
+		b[i] = digits[rand.Intn(len(digits))]
 	}
 	return string(b)
 }
@@ -189,6 +201,20 @@ func runHandler(language string, w http.ResponseWriter, r *http.Request) {
 	go func() { restartLxcContainer() }()
 }
 
+func pingHandler(w http.ResponseWriter, r *http.Request) {
+	logger = getLogger(getLogPill())
+	//logger.Println("pingHandler() entry.")
+	//defer logger.Println("pingHandler() exit.")
+
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	if r.Method == "OPTIONS" {
+		return
+	}
+
+	io.WriteString(w, "pong")
+}
+
 func runCHandler(w http.ResponseWriter, r *http.Request) {
 	runHandler("c", w, r)
 }
@@ -313,30 +339,30 @@ func runCommand(language string, code_filepath string, unittest_filepath string)
 	case "c":
 		copyPrepareFile(code_filepath, "/tmp/foo/program.c")
 		copyPrepareFile(unittest_filepath, "/tmp/foo/program_test.c")
-		return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
+		return exec.Command("lxc-attach", "-n", ephemeralImageName, "--clear-env", "--keep-var", "TERM", "--",
 			"su", "-", "ubuntu", "-c", "/usr/local/bin/sandbox /usr/bin/gcc -Wall -std=c99 /tmp/foo/*.c -o /tmp/foo/a.out && /usr/local/bin/sandbox /tmp/foo/a.out")
 	case "cpp":
 		copyPrepareFile(code_filepath, "/tmp/foo/program.cpp")
 		copyPrepareFile(unittest_filepath, "/tmp/foo/program_test.cpp")
 		copyPrepareFile("/home/ubuntu/catch.hpp", "/tmp/foo/catch.hpp")
-		return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
+		return exec.Command("lxc-attach", "-n", ephemeralImageName, "--clear-env", "--keep-var", "TERM", "--",
 			"su", "-", "ubuntu", "-c", "/usr/local/bin/sandbox /usr/bin/g++ -Wall -std=c++11 /tmp/foo/*.cpp -o /tmp/foo/a.out && /usr/local/bin/sandbox /tmp/foo/a.out")
 	case "python":
 		copyPrepareFile(code_filepath, "/tmp/foo/foo.py")
 		copyPrepareFile(unittest_filepath, "/tmp/foo/foo_test.py")
-		return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
+		return exec.Command("lxc-attach", "-n", ephemeralImageName, "--clear-env", "--keep-var", "TERM", "--",
 			"su", "-", "ubuntu", "-c", "/usr/local/bin/sandbox /usr/bin/python /tmp/foo/foo_test.py")
 	case "ruby":
 		copyPrepareFile(code_filepath, "/tmp/foo/foo.rb")
 		copyPrepareFile(unittest_filepath, "/tmp/foo/foo_test.rb")
-		return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
+		return exec.Command("lxc-attach", "-n", ephemeralImageName, "--clear-env", "--keep-var", "TERM", "--",
 			"su", "-", "ubuntu", "-c", "/usr/local/bin/sandbox /usr/bin/ruby /tmp/foo/foo.rb")
 	case "java":
 		copyPrepareFile(code_filepath, "/tmp/foo/Solution.java")
 		copyPrepareFile(unittest_filepath, "/tmp/foo/SolutionTest.java")
 		copyPrepareFile("/home/ubuntu/hamcrest-core-1.3.jar", "/tmp/foo/hamcrest-core-1.3.jar")
 		copyPrepareFile("/home/ubuntu/junit-4.12.jar", "/tmp/foo/junit-4.12.jar")
-		return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
+		return exec.Command("lxc-attach", "-n", ephemeralImageName, "--clear-env", "--keep-var", "TERM", "--",
 			"su", "-", "ubuntu", "-c", "/usr/local/bin/sandbox /usr/bin/javac -J-Xmx350m -cp '/tmp/foo/:/tmp/foo/junit-4.12.jar:/tmp/foo/hamcrest-core-1.3.jar' /tmp/foo/*.java && /usr/local/bin/sandbox /usr/bin/java -cp '/tmp/foo/:/tmp/foo/junit-4.12.jar:/tmp/foo/hamcrest-core-1.3.jar' -Xmx350m SolutionTest")
 	// TODO use nodeunit: http://caolanmcmahon.com/posts/unit_testing_in_node_js/
 	/* e.g. foo.js
@@ -358,56 +384,61 @@ func runCommand(language string, code_filepath string, unittest_filepath string)
 	case "javascript":
 		copyPrepareFile(code_filepath, "/tmp/foo/foo.js")
 		copyPrepareFile(unittest_filepath, "/tmp/foo/foo_test.js")
-		return exec.Command("lxc-attach", "-n", "u1", "--clear-env", "--keep-var", "TERM", "--",
+		return exec.Command("lxc-attach", "-n", ephemeralImageName, "--clear-env", "--keep-var", "TERM", "--",
 			"su", "-", "ubuntu", "-c", "set -o pipefail && nodeunit --reporter minimal /tmp/foo/foo_test.js | sed 's/\x1b\\[[0-9;]*m//g'")
 	}
 	return nil
 }
 
-func restartLxcContainer() {
-	logger.Println("restartLxcContainer() entry.")
+func stopLxcContainer() {
+	logger.Println("stopLxcContainer() entry.")
 
-	// grab the mutex for the LXC container
 	lxcMutex.Lock()
 	defer lxcMutex.Unlock()
 
 	logger.Println("Stopping container...")
-	proc := exec.Command("lxc-stop", "--timeout", "1", "--name", "u1")
-	proc.Start()
-	proc.Wait()
-	logger.Println("Stopped container.")
+	proc := exec.Command("lxc-stop", "--kill", "--name", ephemeralImageName)
+	out, _ := proc.Output()
+	logger.Println("Stopped container. Output: ", string(out))
 
-	proc = exec.Command("lxc-info", "-n", "u1")
-	err := proc.Start()
-	if err != nil {
-		logger.Panicf("Failed to start lxc-info", err)
-	}
-	err = proc.Wait()
-	if err == nil {
-		logger.Println("Container is already running.")
-		logger.Println("restartLxcContainer() exit.")
-		return
-	}
+	logger.Println("stopLxcContainer() exit.")
+}
+
+func startLxcContainer() {
+	logger.Println("startLxcContainer() entry.")
+
+	lxcMutex.Lock()
+	defer lxcMutex.Unlock()
+
 	logger.Println("Container not running, so restart it.")
 	os.Mkdir("/tmp/foo", 0755)
-	proc2 := exec.Command("lxc-start-ephemeral", "-d", "-o", "ubase",
-		"-n", "u1", "-b", "/tmp/foo")
-	err2 := proc2.Start()
-	if err2 != nil {
-		logger.Panicf("Failed to start container using lxc-start-ephemeral", err)
+	os.RemoveAll(lxcPath + ephemeralImageName)
+
+	proc := exec.Command("lxc-start-ephemeral", "-d", "-o", "ubase",
+		"-n", ephemeralImageName, "-b", "/tmp/foo")
+	out, err := proc.Output()
+	logger.Println("lxc-start-ephemeral output: ", string(out))
+	if err != nil {
+		logger.Panicf("Failed to start container using lxc-start-ephemeral.")
 	}
-	err2 = proc2.Wait()
-	if err2 != nil {
-		logger.Panic(err)
-	}
+}
+
+func restartLxcContainer() {
+	logger.Println("restartLxcContainer() entry.")
+	stopLxcContainer()
+	startLxcContainer()
 	logger.Println("restartLxcContainer() exit.")
 }
 
 func main() {
-	logger.Println("main() entry.")
-	restartLxcContainer()
 	rand.Seed(time.Now().UTC().UnixNano())
+	ephemeralImageName = getEphemeralImageName()
+	logger.Println("main() entry. ephemeralImageName: ", ephemeralImageName)
+	startLxcContainer()
+	defer stopLxcContainer()
+
 	mux := http.NewServeMux()
+	mux.HandleFunc("/ping", pingHandler)
 	mux.HandleFunc("/run/c", makeGzipHandler(runCHandler))
 	mux.HandleFunc("/run/cpp", makeGzipHandler(runCPPHandler))
 	mux.HandleFunc("/run/python", makeGzipHandler(runPythonHandler))
@@ -415,5 +446,5 @@ func main() {
 	mux.HandleFunc("/run/javascript", makeGzipHandler(runJavaScriptHandler))
 	mux.HandleFunc("/run/java", makeGzipHandler(runJavaHandler))
 
-	graceful.Run("localhost:8080", 10*time.Second, mux)
+	graceful.Run("localhost:8080", 5*time.Second, mux)
 }

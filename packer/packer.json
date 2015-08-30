@@ -2,7 +2,8 @@
   "variables": {
     "aws_access_key": "{{env `AWS_ACCESS_KEY_ID`}}",
     "aws_secret_key": "{{env `AWS_SECURE_ACCESS_KEY`}}",
-    "do_api_token": "{{env `DO_TOKEN`}}"
+    "digital_ocean_api_token": "{{env `DO_TOKEN`}}",
+    "digital_ocean_region": "sfo1"
   },
   "builders": [{
     "type": "amazon-ebs",
@@ -15,11 +16,11 @@
     "ssh_username": "ubuntu"
   }, {
     "type": "digitalocean",
-    "api_token": "{{user `do_api_token`}}",
+    "api_token": "{{user `digital_ocean_api_token`}}",
     "image": "ubuntu-14-04-x64",
-    "region": "sfo1",
+    "region": "{{user `digital_ocean_region`}}",
     "size": "512mb",
-    "snapshot_name": "onlinejudge {{timestamp}}"
+    "snapshot_name": "rsc run {{user `digital_ocean_region`}} {{timestamp}}"
   }],
   "provisioners": [
     {"type": "shell", "script": "shell/harden.sh", "pause_before": "30s"},

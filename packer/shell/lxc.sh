@@ -72,6 +72,8 @@ lxc.network.type = veth
 lxc.network.link = lxcbr0
 lxc.network.flags = up
 lxc.network.hwaddr = 00:16:3e:xx:xx:xx
+lxc.network.ipv4 = 10.0.3.239/24
+lxc.network.ipv4.gateway = 10.0.3.1
 
 # Resource limits
 # https://www.kernel.org/doc/Documentation/cgroups/
@@ -94,6 +96,11 @@ lxc.cap.drop = sys_boot
 lxc.cap.drop = sys_module
 lxc.cap.drop = sys_nice
 lxc.cap.drop = sys_pacct
+
+# disallow ptracing
+# https://www.kernel.org/doc/Documentation/security/Yama.txt
+lxc.cap.drop = sys_ptrace
+
 lxc.cap.drop = sys_rawio
 lxc.cap.drop = sys_resource
 lxc.cap.drop = sys_time
@@ -127,15 +134,21 @@ ssh-keyscan -H localhost >> ~/.ssh/known_hosts
 ssh ubuntu@localhost "lxc-create -t download -n ubase -- -d ubuntu -r trusty -a amd64"
 ssh ubuntu@localhost "lxc-start -n ubase -d"
 ssh ubuntu@localhost "lxc-wait -n ubase -s RUNNING"
-ssh ubuntu@localhost "cat /etc/resolv.conf | lxc-attach -n ubase -- tee /etc/resolv.conf >/dev/null"
 sleep 10
+
 ssh ubuntu@localhost "lxc-attach -n ubase -- ifconfig"
+ssh ubuntu@localhost "lxc-attach -n ubase -- route || true"
+ssh ubuntu@localhost "lxc-attach -n ubase -- ping -c 3 -w 5 8.8.8.8"
+ssh ubuntu@localhost "lxc-attach -n ubase -- ping -c 3 -w 5 www.google.com"
+
+ssh ubuntu@localhost "cat /etc/apt/sources.list | lxc-attach -n ubase -- tee /etc/apt/sources.list >/dev/null"
+#ssh ubuntu@localhost "cat /var/lib/apt/mirrors/mirrors.ubuntu.com_mirrors.txt | lxc-attach -n ubase -- tee /var/lib/apt/mirrors/mirrors.ubuntu.com_mirrors.txt >/dev/null"
 ssh ubuntu@localhost "lxc-attach -n ubase -- apt-get --quiet --assume-yes update"
 ssh ubuntu@localhost "lxc-attach -n ubase -- apt-get --quiet --assume-yes upgrade"
 ssh ubuntu@localhost "lxc-attach -n ubase -- bash -c 'apt-get --quiet --assume-yes install \
     build-essential python python-dev ruby ruby-dev git nodejs npm \
     pkg-config libglib2.0 libglib2.0-dev linux-headers-$(uname -r) \
-    openssh-server ufw coreutils seccomp libseccomp-dev libseccomp2 \
+    ufw coreutils seccomp libseccomp-dev libseccomp2 \
     wamerican libcap-dev strace software-properties-common \
     python-software-properties'"
 ssh ubuntu@localhost "lxc-attach -n ubase -- npm install -g nodeunit@0.9.1"

@@ -71,15 +71,25 @@ server {
     listen [::]:80 default_server ipv6only=on;
     root /usr/share/nginx/html;
     index index.html index.htm;
+
+    # runner
+    location ^~ /ping {
+        proxy_pass http://localhost:8080;
+    }
     location ^~ /run {
         proxy_pass http://localhost:8080;
     }
+
+    # evaluator
     location ^~ /evaluator {
         proxy_pass http://localhost:8081;
     }
+
+    # user_data
     location ^~ /user_data {
         proxy_pass http://localhost:9001;
     }
+
     location / {
         try_files $uri $uri/ =404;
     }

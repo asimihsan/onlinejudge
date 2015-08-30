@@ -2,6 +2,15 @@
 
 set -e
 
+# add mirrors to speed up apt-get upgrade
+insert_line_at_top_of_file() {
+    sudo sed -i -e "1i$1\\" $2
+}
+#insert_line_at_top_of_file 'deb mirror://mirrors.ubuntu.com/mirrors.txt trusty-security main restricted universe multiverse' '/etc/apt/sources.list'
+#insert_line_at_top_of_file 'deb mirror://mirrors.ubuntu.com/mirrors.txt trusty-backports main restricted universe multiverse' '/etc/apt/sources.list'
+#insert_line_at_top_of_file 'deb mirror://mirrors.ubuntu.com/mirrors.txt trusty-updates main restricted universe multiverse' '/etc/apt/sources.list'
+#insert_line_at_top_of_file 'deb mirror://mirrors.ubuntu.com/mirrors.txt trusty main restricted universe multiverse' '/etc/apt/sources.list'
+
 # Unattended upgrade, especially for grub updates
 sudo apt-get --assume-yes --quiet update
 sudo apt-get --assume-yes --quiet upgrade
