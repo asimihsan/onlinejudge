@@ -15,6 +15,7 @@ local0.* /var/log/haproxy.log
 local1.* /var/log/haproxy.log
 notice.* /var/log/haproxy.log
 EOF
+mkdir -p /var/lib/haproxy/dev
 sudo restart rsyslog
 
 sudo tee /etc/logrotate.d/haproxy >/dev/null <<EOF
@@ -53,8 +54,8 @@ global
     pidfile /var/run/haproxy.pid
 
     # Logging to syslog facility
-    log /dev/log local0
-    log /dev/log local1 notice
+    log /var/lib/haproxy/dev/log local0
+    log /var/lib/haproxy/dev/log local1 notice
 
     # allow control by haproxyctl over socket
     stats socket /var/run/haproxy.stat mode 660 level admin
@@ -119,13 +120,11 @@ backend run
     server run.sgp1 128.199.180.212:80 check
 # --- server block end ---
 EOF
-mkdir -p /var/lib/haproxy/dev
 
 # Test for haproxy user and create it if needed. Chroot it and prevent it from 
 # getting shell access
 groupadd --system haproxy
 useradd -g haproxy -d /var/lib/haproxy -s /bin/false haproxy
-sudo sed -i 's|ENABLED=0|ENABLED=1|g' /etc/default/haproxy
 
 sudo /etc/init.d/haproxyctl configcheck
 sudo /etc/init.d/haproxyctl reload
@@ -152,7 +151,6 @@ CONFIGTEST_LOG=/var/log/haproxy_configtest.log
 USER=root
 GROUP=root
 EXTRAOPTS=
-ENABLED=1
 CHROOT_DIR=/var/lib/haproxy/dev
 
 test -x $HAPROXY || exit 0
@@ -161,8 +159,6 @@ test -f "$CONFIG" || exit 0
 if [ -e /etc/default/haproxy ]; then
     . /etc/default/haproxy
 fi
-
-test "$ENABLED" != "0" || exit 0
 
 [ -f /etc/default/rcS ] && . /etc/default/rcS
 . /lib/lsb/init-functions
