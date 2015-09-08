@@ -22,11 +22,18 @@ Digitalocean.api_key    = ENV['DIGITAL_OCEAN_API_KEY']
 
 require 'trollop'
 opts = Trollop::options do
-  opt :list_instances, "List running instances"
-  opt :list_images, "List images"
-  opt :get_latest_image, "Get latest image for a region", :type => :string
-  opt :start_instance_with_latest_image, "Start instance with latest image in region", :type => :string
+  opt :list_run_instances, "List running 'run' instances"
+  opt :list_loadbalancer_instances, "List running 'loadbalancer' instances"
+  opt :list_run_images, "List 'run' images"
+  opt :list_loadbalancer_images, "List 'loadbalancer' images"
+  opt :get_latest_run_image, "Get latest run image for a region", :type => :string
+  opt :get_latest_loadbalancer_image, "Get latest loadbalancer image for a region", :type => :string
+  opt :destroy_image, "BE CAREFUL Delete an image by ID BE CAREFUL", :type => :string
+  opt :start_instance_with_latest_run_image, "Start instance with latest run image in region", :type => :string
+  opt :start_instance_with_latest_loadbalancer_image, "Start instance with latest loadbalancer image in region", :type => :string
   opt :refresh_dns, "Update DNS A records and health checks in Route 53"
+  opt :power_cycle_droplet, "Power cycle a droplet by ID (use list-instances first)", :type => :string
+  opt :destroy_droplet, "BE CAREFUL Delete an instance by ID (use list-instances first) BE CAREFUL", :type => :string
 end
 
 def update_droplet_with_extra_info(droplet)
@@ -35,35 +42,37 @@ def update_droplet_with_extra_info(droplet)
     droplet
 end  
 
-def get_instances()
+def get_instances(type)
   droplets = Digitalocean::Droplet.all
   droplets.droplets.map { |d|
     update_droplet_with_extra_info(d)
+  }.select { |d|
+    d.image_name.include? "rsc #{type}"
   }.sort_by { |d|
     [d.region_slug, d.image_name, d.ip_address]
   }
 end
 
-def get_images()
+def get_images(type)
   images = Digitalocean::Image.all
   images.images.select { |i|
-    i.name.include? "rsc run"
+    i.name.include? "rsc #{type}"
   }.sort_by { |i|
     i.name
   }
 end
 
-def get_latest_image(region)
-  get_images().select { |i|
-    i.name.include? "rsc run #{region}"
+def get_latest_image(region, type)
+  get_images(type).select { |i|
+    i.name.include? "rsc #{type} #{region}"
   }.sort_by { |i|
     i.name
   }[-1]
 end
 
-def generate_instance_name(region)
+def generate_instance_name(region, type)
   slug = Array.new(8){rand(36).to_s(36)}.join
-  "run.#{slug}.#{region.slug}.runsomecode.com"
+  "#{type}.#{slug}.#{region.slug}.runsomecode.com"
 end
 
 def wait_for_droplet_status(droplet, status)
@@ -88,11 +97,11 @@ def wait_for_droplet_status(droplet, status)
   end
 end
 
-def start_instance(image, region_slug, ssh_key_name="Mill", size_slug="512mb")
+def start_instance(image, region_slug, type, ssh_key_name="Mill", size_slug="512mb")
   ssh_key = Digitalocean::SshKey.all.ssh_keys.select { |s| s.name == ssh_key_name }[0]
   size = Digitalocean::Size.all.sizes.select { |s| s.slug == size_slug }[0]
   region = Digitalocean::Region.find(region_slug).region
-  instance_name = generate_instance_name(region)
+  instance_name = generate_instance_name(region, type)
   droplet = Digitalocean::Droplet.create(
     {name: instance_name, size_id: size.id, image_id: image.id,
      region_id: region.id, ssh_key_ids: [ssh_key.id]}).droplet
@@ -103,7 +112,7 @@ def start_instance(image, region_slug, ssh_key_name="Mill", size_slug="512mb")
 end
 
 def refresh_dns()
-  instances = get_instances()
+  instances = get_instances("run")
   route53 = Aws::Route53::Client.new()
   update_health_checks(route53, instances)
   update_hosted_zones(route53, instances)
@@ -241,21 +250,49 @@ def maybe_create_health_check_for_new_instance(route53, health_checks, instances
   }
 end
 
+def power_cycle_droplet(droplet_id)
+  ap Digitalocean::Droplet.power_cycle(droplet_id), :sort_keys => true
+end
+
+def destroy_droplet(droplet_id)
+  ap Digitalocean::Droplet.destroy(droplet_id), :sort_keys => true
+end
+
+def destroy_image(image_id)
+  ap Digitalocean::Image.destroy(image_id), :sort_keys => true
+end
+
 if __FILE__ == $0
-  if opts[:list_instances]
-    instances = get_instances()
+  if opts[:list_run_instances]
+    instances = get_instances("run")
     ap instances, :sort_keys => true
-  elsif opts[:list_images]
-    images = get_images()
+  elsif opts[:list_loadbalancer_instances]
+    instances = get_instances("loadbalancer")
+    ap instances, :sort_keys => true
+  elsif opts[:list_run_images]
+    images = get_images("run")
+    ap images, :sort_keys => true
+  elsif opts[:list_loadbalancer_images]
+    images = get_images("loadbalancer")
     ap images, :sort_keys => true
   elsif opts[:get_latest_image]
     latest_image = get_latest_image(opts[:get_latest_image])
     ap latest_image, :sort_keys => true
-  elsif opts[:start_instance_with_latest_image]
-    region = opts[:start_instance_with_latest_image]
-    latest_image = get_latest_image(region)
-    start_instance(latest_image, region)
+  elsif opts[:start_instance_with_latest_run_image]
+    region = opts[:start_instance_with_latest_run_image]
+    latest_image = get_latest_image(region, "run")
+    start_instance(latest_image, region, "run")
+  elsif opts[:start_instance_with_latest_loadbalancer_image]
+    region = opts[:start_instance_with_latest_loadbalancer_image]
+    latest_image = get_latest_image(region, "loadbalancer")
+    start_instance(latest_image, region, "loadbalancer")
+  elsif opts[:destroy_image]
+    destroy_image(opts[:destroy_image])
   elsif opts[:refresh_dns]
     refresh_dns()
+  elsif opts[:power_cycle_droplet]
+    power_cycle_droplet(opts[:power_cycle_droplet])
+  elsif opts[:destroy_droplet]
+    destroy_droplet(opts[:destroy_droplet])
   end
 end

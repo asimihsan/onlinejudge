@@ -1,0 +1,32 @@
+{
+  "variables": {
+    "aws_access_key": "{{env `AWS_ACCESS_KEY_ID`}}",
+    "aws_secret_key": "{{env `AWS_SECURE_ACCESS_KEY`}}",
+    "digital_ocean_api_token": "{{env `DO_TOKEN`}}",
+    "digital_ocean_region": "sfo1"
+  },
+  "builders": [{
+    "type": "amazon-ebs",
+    "access_key": "{{user `aws_access_key`}}",
+    "ami_name": "onlinejudge {{timestamp}}",
+    "instance_type": "m3.medium",
+    "region": "us-west-2",
+    "secret_key": "{{user `aws_secret_key`}}",
+    "source_ami": "ami-978dd9a7",
+    "ssh_username": "ubuntu"
+  }, {
+    "type": "digitalocean",
+    "api_token": "{{user `digital_ocean_api_token`}}",
+    "image": "ubuntu-14-04-x64",
+    "region": "{{user `digital_ocean_region`}}",
+    "size": "512mb",
+    "snapshot_name": "rsc loadbalancer {{user `digital_ocean_region`}} {{timestamp}}"
+  }],
+  "provisioners": [
+    {"type": "shell", "script": "shell/harden.sh", "pause_before": "30s"},
+    {"type": "shell", "script": "shell/setup.sh"},
+    {"type": "shell", "script": "shell/reboot.sh"},
+    {"type": "shell", "script": "shell/haproxy_install.sh", "pause_before": "60s"},
+    {"type": "shell", "script": "shell/haproxy_configure.sh"}
+  ]
+}
