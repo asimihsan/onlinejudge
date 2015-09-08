@@ -2,10 +2,12 @@
 
 require 'aws-sdk'
 require 'net/ssh'
+require 'net/scp'
 require 'pry'
 require 'digitalocean'
 require 'awesome_print'
 require 'securerandom'
+require 'digest'
 
 # ------------------------------------------------------------------------------
 #   Credentials
@@ -32,6 +34,7 @@ opts = Trollop::options do
   opt :start_instance_with_latest_run_image, "Start instance with latest run image in region", :type => :string
   opt :start_instance_with_latest_loadbalancer_image, "Start instance with latest loadbalancer image in region", :type => :string
   opt :refresh_dns, "Update DNS A records and health checks in Route 53"
+  opt :refresh_loadbalancers, "Update loadbalancer backend hosts"
   opt :power_cycle_droplet, "Power cycle a droplet by ID (use list-instances first)", :type => :string
   opt :destroy_droplet, "BE CAREFUL Delete an instance by ID (use list-instances first) BE CAREFUL", :type => :string
 end
@@ -112,7 +115,7 @@ def start_instance(image, region_slug, type, ssh_key_name="Mill", size_slug="512
 end
 
 def refresh_dns()
-  instances = get_instances("run")
+  instances = get_instances("loadbalancer")
   route53 = Aws::Route53::Client.new()
   update_health_checks(route53, instances)
   update_hosted_zones(route53, instances)
@@ -262,6 +265,53 @@ def destroy_image(image_id)
   ap Digitalocean::Image.destroy(image_id), :sort_keys => true
 end
 
+def refresh_loadbalancers()
+  get_instances("loadbalancer").each { |lb|
+    lines_to_insert = get_loadbalancer_lines_to_insert(lb)
+    refresh_loadbalancer(lb, lines_to_insert)
+  }
+end
+
+def get_loadbalancer_lines_to_insert(lb)
+  run_instances = get_instances("run").sort_by { |d|
+    [d.region_slug, d.image_name, d.ip_address]
+  }
+  same_region = run_instances.select { |d| d.region_slug == lb.region_slug }
+  different_region = run_instances.select { |d| d.region_slug != lb.region_slug }
+  run_instances = same_region + different_region
+  run_instances.map { |d|
+    "    server #{d.name} #{d.ip_address}:80 check\n"
+  }
+end
+
+def refresh_loadbalancer(droplet, lines_to_insert)
+  puts "refresh_loadbalancer entry for droplet: "
+  ap droplet
+
+  keys = ['/Users/ai/.ssh/digitalocean']
+  remote_path = "/etc/haproxy/haproxy.cfg"
+  Net::SCP.start(droplet.ip_address, "root", :keys => keys) do |scp|
+    data_before = scp.download!(remote_path)
+    lines = data_before.lines.dup
+    start_line = lines.index "# --- server block start ---\n"
+    end_line = lines.index "# --- server block end ---\n"
+    lines[start_line+1,end_line-start_line-1] = lines_to_insert
+    data_after = lines.join("")
+    if Digest::SHA256.hexdigest(data_before) == Digest::SHA256.hexdigest(data_after)
+      puts "No change in config file, won't update."
+      return
+    end 
+    puts "Change in config file, will update."
+    scp.upload! StringIO.new(data_after), remote_path
+  end
+
+  Net::SSH.start(droplet.ip_address, "root", :keys => keys) do |ssh|
+    ssh.exec!("/etc/init.d/haproxyctl reload") do |channel, stream, data|
+      ap data
+    end
+  end
+end
+
 if __FILE__ == $0
   if opts[:list_run_instances]
     instances = get_instances("run")
@@ -290,6 +340,8 @@ if __FILE__ == $0
     destroy_image(opts[:destroy_image])
   elsif opts[:refresh_dns]
     refresh_dns()
+  elsif opts[:refresh_loadbalancers]
+    refresh_loadbalancers()
   elsif opts[:power_cycle_droplet]
     power_cycle_droplet(opts[:power_cycle_droplet])
   elsif opts[:destroy_droplet]
