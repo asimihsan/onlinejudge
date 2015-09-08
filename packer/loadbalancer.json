@@ -25,8 +25,7 @@
   "provisioners": [
     {"type": "shell", "script": "shell/harden.sh", "pause_before": "30s"},
     {"type": "shell", "script": "shell/setup.sh"},
-    {"type": "shell", "script": "shell/reboot.sh"},
-    {"type": "shell", "script": "shell/haproxy_install.sh", "pause_before": "60s"},
+    {"type": "shell", "script": "shell/haproxy_install.sh"},
     {"type": "shell", "script": "shell/haproxy_configure.sh"}
   ]
 }
