@@ -34,6 +34,7 @@ opts = Trollop::options do
   opt :start_instance_with_latest_loadbalancer_image, "Start instance with latest loadbalancer image in region", :type => :string
   opt :refresh_dns, "Update DNS A records and health checks in Route 53"
   opt :refresh_loadbalancers, "Update loadbalancer backend hosts"
+  opt :remove_dns, "Remove a region from DNS A records and health checks in Route 53", :type => :string
   opt :power_cycle_droplet, "Power cycle a droplet by ID (use list-instances first)", :type => :string
   opt :destroy_droplet, "BE CAREFUL Delete an instance by ID (use list-instances first) BE CAREFUL", :type => :string
 end
@@ -138,6 +139,15 @@ end
 
 def refresh_dns(do_client)
   instances = get_instances(do_client, "loadbalancer")
+  route53 = Aws::Route53::Client.new()
+  update_health_checks(route53, instances)
+  update_hosted_zones(route53, instances)
+end
+
+def remove_dns(do_client, region_to_remove)
+  instances = get_instances(do_client, "loadbalancer").select { |i|
+    i['region_slug'] != region_to_remove
+  }
   route53 = Aws::Route53::Client.new()
   update_health_checks(route53, instances)
   update_hosted_zones(route53, instances)
@@ -304,7 +314,7 @@ def get_loadbalancer_lines_to_insert(do_client, lb)
   run_instances.map { |d|
     name = d["name"]
     ipv4_address = d["ipv4_address"]
-    "    server #{name} #{ipv4_address}:80 check\n"
+    "    server #{name} #{ipv4_address}:80 maxconn 1 check\n"
   }
 end
 
@@ -376,6 +386,9 @@ if __FILE__ == $0
     refresh_dns(do_client)
   elsif opts[:refresh_loadbalancers]
     refresh_loadbalancers(do_client)
+  elsif opts[:remove_dns]
+    region = opts[:remove_dns]
+    remove_dns(do_client, region)
   elsif opts[:power_cycle_droplet]
     power_cycle_droplet(do_client, opts[:power_cycle_droplet])
   elsif opts[:destroy_droplet]
