@@ -299,12 +299,13 @@ end
 
 def refresh_loadbalancers(do_client)
   get_instances(do_client, "loadbalancer").each { |lb|
-    lines_to_insert = get_loadbalancer_lines_to_insert(do_client, lb)
-    refresh_loadbalancer(lb, lines_to_insert)
+    run_lines_to_insert = get_loadbalancer_run_lines_to_insert(do_client, lb)
+    other_lines_to_insert = get_loadbalancer_other_lines_to_insert(do_client, lb)
+    refresh_loadbalancer(lb, run_lines_to_insert, other_lines_to_insert)
   }
 end
 
-def get_loadbalancer_lines_to_insert(do_client, lb)
+def get_loadbalancer_run_lines_to_insert(do_client, lb)
   run_instances = get_instances(do_client, "run").sort_by { |d|
     [d["region_slug"], d["image_name"], d["ipv4_address"]]
   }
@@ -314,11 +315,25 @@ def get_loadbalancer_lines_to_insert(do_client, lb)
   run_instances.map { |d|
     name = d["name"]
     ipv4_address = d["ipv4_address"]
-    "    server #{name} #{ipv4_address}:80 maxconn 1 check\n"
+    "    server #{name} #{ipv4_address}:80 maxconn 2 check\n"
   }
 end
 
-def refresh_loadbalancer(droplet, lines_to_insert)
+def get_loadbalancer_other_lines_to_insert(do_client, lb)
+  run_instances = get_instances(do_client, "run").sort_by { |d|
+    [d["region_slug"], d["image_name"], d["ipv4_address"]]
+  }
+  same_region = run_instances.select { |d| d["region_slug"] == lb["region_slug"] }
+  different_region = run_instances.select { |d| d["region_slug"] != lb["region_slug"] }
+  run_instances = same_region + different_region
+  run_instances.map { |d|
+    name = d["name"]
+    ipv4_address = d["ipv4_address"]
+    "    server #{name} #{ipv4_address}:80 maxconn 20 check\n"
+  }
+end
+
+def refresh_loadbalancer(droplet, run_lines_to_insert, other_lines_to_insert)
   puts "refresh_loadbalancer entry for droplet: "
   ap droplet
 
@@ -327,9 +342,13 @@ def refresh_loadbalancer(droplet, lines_to_insert)
   Net::SCP.start(droplet["ipv4_address"], "root", :keys => keys) do |scp|
     data_before = scp.download!(remote_path)
     lines = data_before.lines.dup
-    start_line = lines.index "# --- server block start ---\n"
-    end_line = lines.index "# --- server block end ---\n"
-    lines[start_line+1,end_line-start_line-1] = lines_to_insert
+    run_start_line = lines.index "# --- server block run start ---\n"
+    run_end_line = lines.index "# --- server block run end ---\n"
+    lines[run_start_line+1,run_end_line-run_start_line-1] = run_lines_to_insert
+    other_start_line = lines.index "# --- server block other start ---\n"
+    other_end_line = lines.index "# --- server block other end ---\n"
+    lines[other_start_line+1,other_end_line-other_start_line-1] = other_lines_to_insert
+
     data_after = lines.join("")
     if Digest::SHA256.hexdigest(data_before) == Digest::SHA256.hexdigest(data_after)
       puts "No change in config file, won't update."

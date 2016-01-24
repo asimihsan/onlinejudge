@@ -122,30 +122,50 @@ listen stats
 frontend http-in
     bind *:80
     mode http
-    use_backend run
     monitor-uri /ping
+
     acl site_dead nbsrv(run) eq 0
     monitor fail if site_dead
+
+    acl requires_runner path_beg -i /run
+    acl requires_runner path_beg -i /evaluator/evaluate
+
+    use_backend run if requires_runner
+    use_backend other if !requires_runner
+
 
 backend run
     mode http
     option httplog
 
     # hit the first server with available connections. since we also put
-    # 'maxconn 1' in the server config (using administer.rb) we always
+    # 'maxconn 2' in the server config (using administer.rb) we always
     # hit the same-region host first, and then spill over to other regions.
     # this is because right now each run server only supports one concurrent
     # request (only one LXC container).
+    #
+    # need maxconn 2 because right now we call /evaluator/evaluate, which
+    # then hits the LB again to call /run.
     # http://cbonte.github.io/haproxy-dconv/configuration-1.6.html#4.2-balance
     # http://stackoverflow.com/questions/8750518/difference-between-global-maxconn-and-server-maxconn-haproxy
     balance first
 
     option httpchk GET /ping
-# --- server block start ---
+# --- server block run start ---
 #    server run.sfo1 104.131.152.160:80 check
 #    server run.lon1 178.62.92.142:80 check
 #    server run.sgp1 128.199.180.212:80 check
-# --- server block end ---
+# --- server block run end ---
+
+backend other
+    mode http
+    option httplog
+    balance first
+    option httpchk GET /ping
+# --- server block other start ---
+# foo
+# --- server block other end ---
+
 EOF
 
 # Test for haproxy user and create it if needed. Chroot it and prevent it from 
