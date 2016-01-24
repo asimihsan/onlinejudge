@@ -166,6 +166,7 @@ def update_hosted_zones(route53, instances)
     "lon1" => "eu-west-1",
     "sfo1" => "us-west-1",
     "sgp1" => "ap-southeast-1",
+    "nyc1" => "us-east-1",
   }
 
   changes = maybe_delete_rrset_for_old_instance(route53, rrsets, instances)
