@@ -12,6 +12,8 @@ set -e
 
 HAPROXYVER="1.6.3"
 MD5EXPECTED="3362d1e268c78155c2474cb73e7f03f9"
+LUAVER="5.3.0"
+LUASHORTVER="53"
 STARTINGDIR=$PWD
 
 # make sure we have make, pcre and junk
@@ -23,15 +25,23 @@ fi
 
 if [[ -n $OS ]]; then
   if [[ ${OS} == 'redhat' ]]; then
-    yum install -y pcre-devel make gcc libgcc git ruby zlib-devel openssl openssl-devel;
+    yum install -y pcre-devel make gcc libgcc git ruby zlib-devel openssl openssl-devel readline-devel socat;
   elif [[ ${OS} == 'debian' ]]; then
     apt-get update;
-    apt-get install -y libpcre3 libpcre3-dev build-essential libgcc1 git ruby zlib1g-dev openssl libssl-dev;
+    apt-get install -y libpcre3 libpcre3-dev build-essential libgcc1 git ruby zlib1g-dev openssl libssl-dev libreadline-dev socat;
   fi
 else
   echo -e "I only understand Debian/RedHat/CentOS and this box does not appear to be any.\nExiting.";
   exit 2;
 fi
+
+# download lua
+cd /usr/src
+curl -R -O http://www.lua.org/ftp/lua-$LUAVER.tar.gz
+tar zxf lua-$LUAVER.tar.gz
+cd lua-$LUAVER
+make linux
+sudo make INSTALL_TOP=/opt/lua$LUASHORTVER install
 
 # grab last stable.  HAProxy's site versions nicely - these will still be here after the next update
 echo "I will try to build in /usr/local/src"
@@ -61,9 +71,9 @@ cd haproxy-${HAPROXYVER}
 echo "Making it!"
 make clean
 if uname -a | grep x86_64 ; then
-  make TARGET=linux26 CPU=x86_64 USE_PCRE=1 USE_PCRE_JIT=1 USE_ZLIB=yes USE_OPENSSL=1 || exit 2
+  make TARGET=linux26 CPU=x86_64 USE_PCRE=1 USE_PCRE_JIT=1 USE_ZLIB=yes USE_OPENSSL=1 USE_LUA=1 LUA_LIB=/opt/lua$LUASHORTVER/lib/ LUA_INC=/opt/lua$LUASHORTVER/include/ || exit 2
 else
-  make TARGET=linux26 CPU=686 USE_PCRE=1 USE_PCRE_JIT=1 USE_ZLIB=yes USE_OPENSSL=1 || exit 2
+  make TARGET=linux26 CPU=686 USE_PCRE=1 USE_PCRE_JIT=1 USE_ZLIB=yes USE_OPENSSL=1 USE_LUA=1 LUA_LIB=/opt/lua$LUASHORTVER/lib/ LUA_INC=/opt/lua$LUASHORTVER/include/ || exit 2
 fi
 
 if [[ -e /usr/local/haproxy ]]; then

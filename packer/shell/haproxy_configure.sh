@@ -51,12 +51,19 @@ global
     pidfile /var/run/haproxy.pid
 
     # Logging to syslog facility
-    log /var/lib/haproxy/dev/log local0
-    log /var/lib/haproxy/dev/log local1 notice
+    # log format: http://cbonte.github.io/haproxy-dconv/configuration-1.6.html#8.2.3
+    log 127.0.0.1 local0
+    log 127.0.0.1 local1 notice
 
     # allow control by haproxyctl over socket
-    stats socket /var/run/haproxy.stat mode 660 level admin
+    stats socket /tmp/socket mode 660 level admin
     stats timeout 1s
+
+    # allow seamless restarts by dumping server state into a file
+    # http://blog.haproxy.com/2015/10/14/whats-new-in-haproxy-1-6/
+    # yikes, after restarts haproxy is no longer responsive to requests.
+    # don't use this!
+    #server-state-file /tmp/server_state
 
     # distribute health checks with a bit of randomness
     spread-checks 5
@@ -78,6 +85,20 @@ defaults
     option forwardfor
     option redispatch
 
+    # protects against slowloris attacks where the HTTP POST headers are sent
+    # fast, but the POST body is sent slowly. without this option the
+    # timeout http-request option is ineffective if the POST body is slow.
+    option http-buffer-request
+
+    # ignore 408's
+    # http://blog.haproxy.com/2015/10/14/whats-new-in-haproxy-1-6/
+    option http-ignore-probes
+
+    # default is 'never'. reuse idle connections for sessions other than
+    # the session that opened the connection. 
+    # http://blog.haproxy.com/2015/10/14/whats-new-in-haproxy-1-6/
+    http-reuse safe
+
     # if sending request to one server fails, retry before aborting
     retries 3
     
@@ -85,7 +106,7 @@ defaults
     timeout client 5s
     timeout http-request 5s
     timeout server 15s
-    timeout queue 60s
+    timeout queue 300s
     timeout http-keep-alive 60s
     
     default-server on-marked-down shutdown-sessions inter 1s
@@ -109,12 +130,21 @@ frontend http-in
 backend run
     mode http
     option httplog
-    balance leastconn
+
+    # hit the first server with available connections. since we also put
+    # 'maxconn 1' in the server config (using administer.rb) we always
+    # hit the same-region host first, and then spill over to other regions.
+    # this is because right now each run server only supports one concurrent
+    # request (only one LXC container).
+    # http://cbonte.github.io/haproxy-dconv/configuration-1.6.html#4.2-balance
+    # http://stackoverflow.com/questions/8750518/difference-between-global-maxconn-and-server-maxconn-haproxy
+    balance first
+
     option httpchk GET /ping
 # --- server block start ---
-    server run.sfo1 104.131.152.160:80 check
-    server run.lon1 178.62.92.142:80 check
-    server run.sgp1 128.199.180.212:80 check
+#    server run.sfo1 104.131.152.160:80 check
+#    server run.lon1 178.62.92.142:80 check
+#    server run.sgp1 128.199.180.212:80 check
 # --- server block end ---
 EOF
 
@@ -127,7 +157,7 @@ sudo /etc/init.d/haproxyctl configcheck
 sudo /etc/init.d/haproxyctl reload
 
 sudo tee /etc/init.d/haproxy >/dev/null <<"EOF"
-#!/bin/sh
+#!/bin/bash
 ### BEGIN INIT INFO
 # Provides:          haproxy
 # Required-Start:    $local_fs $network $remote_fs
@@ -185,6 +215,7 @@ haproxy_stop()
 
 haproxy_reload()
 {
+    socat /tmp/socket - <<< "show servers state" > /tmp/server_state
     $HAPROXY -f "$CONFIG" -p $PIDFILE -D $EXTRAOPTS -sf $(cat $PIDFILE) \
         || return 2
     return 0
