@@ -12,8 +12,11 @@ insert_line_at_top_of_file() {
 #insert_line_at_top_of_file 'deb mirror://mirrors.ubuntu.com/mirrors.txt trusty main restricted universe multiverse' '/etc/apt/sources.list'
 
 # Unattended upgrade, especially for grub updates
+# http://askubuntu.com/questions/194651/why-use-apt-get-upgrade-instead-of-apt-get-dist-upgrade
 sudo apt-get --assume-yes --quiet update
-sudo apt-get --assume-yes --quiet upgrade
+sudo DEBIAN_FRONTEND=noninteractive apt-get -y \
+    -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" \
+    dist-upgrade
 
 # ntp
 sudo apt-get --assume-yes --quiet install ntp

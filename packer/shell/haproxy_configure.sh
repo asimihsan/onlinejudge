@@ -47,9 +47,6 @@ global
     # Only one process. This is the default anyway.
     nbproc 1
 
-    # chroot for security
-    chroot /var/lib/haproxy
-
     # for restarts
     pidfile /var/run/haproxy.pid
 
@@ -338,5 +335,7 @@ esac
 EOF
 sudo chmod 755 /etc/init.d/haproxy
 sudo chown root:root /etc/init.d/haproxy
+sudo touch /var/run/haproxy.pid
+sudo chmod a+rw /var/run/haproxy.pid
 sudo update-rc.d haproxy defaults
 sudo update-rc.d haproxy enable

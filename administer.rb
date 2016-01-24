@@ -4,7 +4,7 @@ require 'aws-sdk'
 require 'net/ssh'
 require 'net/scp'
 require 'pry'
-require 'digitalocean'
+require 'droplet_kit'
 require 'awesome_print'
 require 'securerandom'
 require 'digest'
@@ -18,8 +18,7 @@ Aws.config.update({
   region: 'us-west-2',
 })
 
-Digitalocean.client_id  = ENV['DIGITAL_OCEAN_CLIENT_ID']
-Digitalocean.api_key    = ENV['DIGITAL_OCEAN_API_KEY']
+DO_TOKEN = ENV['DO_TOKEN_ONLINEJUDGE']
 # ------------------------------------------------------------------------------
 
 require 'trollop'
@@ -39,34 +38,51 @@ opts = Trollop::options do
   opt :destroy_droplet, "BE CAREFUL Delete an instance by ID (use list-instances first) BE CAREFUL", :type => :string
 end
 
-def update_droplet_with_extra_info(droplet)
-    droplet.region_slug = Digitalocean::Region.find(droplet.region_id).region.slug
-    droplet.image_name = Digitalocean::Image.find(droplet.image_id).image.name
-    droplet
-end  
+def get_droplet_ipv4_address(droplet)
+  ipv4 = droplet.networks.v4
+  if ipv4.length == 0
+    nil
+  else
+    ipv4[0].ip_address
+  end
+end
 
-def get_instances(type)
-  droplets = Digitalocean::Droplet.all
-  droplets.droplets.map { |d|
-    update_droplet_with_extra_info(d)
-  }.select { |d|
-    d.image_name.include? "rsc #{type}"
-  }.sort_by { |d|
-    [d.region_slug, d.image_name, d.ip_address]
+def get_droplet_hash(droplet)
+  return {
+    "droplet_id" => droplet.id,
+    "name" => droplet.name,
+    "created_at" => droplet.created_at,
+    "status" => droplet.status,
+    "created_at" => droplet.created_at,
+    "region_slug" => droplet.region.slug,
+    "image_id" => droplet.image.id,
+    "image_name" => droplet.image.name,
+    "ipv4_address" => get_droplet_ipv4_address(droplet),
   }
 end
 
-def get_images(type)
-  images = Digitalocean::Image.all
-  images.images.select { |i|
+def get_instances(do_client, type)
+  droplets = do_client.droplets.all
+  droplets.map { |d|
+    get_droplet_hash(d)
+  }.select { |d|
+    d['image_name'].include? "rsc #{type}"
+  }.sort_by { |d|
+    [d['region_slug'], d['image_name'], d['ipv4_address']]
+  }
+end
+
+def get_images(do_client, type)
+  images = do_client.images.all
+  images.select { |i|
     i.name.include? "rsc #{type}"
   }.sort_by { |i|
     i.name
   }
 end
 
-def get_latest_image(region, type)
-  get_images(type).select { |i|
+def get_latest_image(do_client, region, type)
+  get_images(do_client, type).select { |i|
     i.name.include? "rsc #{type} #{region}"
   }.sort_by { |i|
     i.name
@@ -75,16 +91,17 @@ end
 
 def generate_instance_name(region, type)
   slug = Array.new(8){rand(36).to_s(36)}.join
-  "#{type}.#{slug}.#{region.slug}.runsomecode.com"
+  "#{type}.#{slug}.#{region}.runsomecode.com"
 end
 
-def wait_for_droplet_status(droplet, status)
+def wait_for_droplet_status(do_client, droplet, status)
   success = false
   start = Time.now.to_i
   timeout = 120
+  droplet_id = droplet["droplet_id"]
   while 1
-    droplet = Digitalocean::Droplet.find(droplet.id).droplet
-    if droplet.status == status
+    droplet = do_client.droplets.find(id: droplet_id)
+    if droplet["status"] == status
       success = true
       break
     end
@@ -92,7 +109,7 @@ def wait_for_droplet_status(droplet, status)
     sleep(5)
     break if (Time.now.to_i - start) >= timeout
   end
-  ap update_droplet_with_extra_info(droplet)
+  ap droplet
   if not success
     puts "failed to start within timeout"
   else
@@ -100,22 +117,27 @@ def wait_for_droplet_status(droplet, status)
   end
 end
 
-def start_instance(image, region_slug, type, ssh_key_name="Mill", size_slug="512mb")
-  ssh_key = Digitalocean::SshKey.all.ssh_keys.select { |s| s.name == ssh_key_name }[0]
-  size = Digitalocean::Size.all.sizes.select { |s| s.slug == size_slug }[0]
-  region = Digitalocean::Region.find(region_slug).region
+def start_instance(do_client, image, region_slug, type, ssh_key_name="Mill", size_slug="512mb")
+  ssh_key = do_client.ssh_keys.all.select { |s| s.name == ssh_key_name }[0]
+  size = do_client.sizes.all.select { |s| s.slug == size_slug }[0]
+  region = do_client.regions.all.select { |r| r.slug == region_slug }[0].slug
   instance_name = generate_instance_name(region, type)
-  droplet = Digitalocean::Droplet.create(
-    {name: instance_name, size_id: size.id, image_id: image.id,
-     region_id: region.id, ssh_key_ids: [ssh_key.id]}).droplet
-  droplet = Digitalocean::Droplet.find(droplet.id).droplet
-  droplet = update_droplet_with_extra_info(droplet)
+  droplet_params = DropletKit::Droplet.new(
+    name: instance_name,
+    size: size_slug,
+    image: image.id,
+    region: region,
+    ssh_keys: [ssh_key.id]
+  )
+  droplet = do_client.droplets.create(droplet_params)
+  droplet = do_client.droplets.find(id: droplet.id)
+  droplet = get_droplet_hash(droplet)
   ap droplet
-  wait_for_droplet_status(droplet, "active")
+  wait_for_droplet_status(do_client, droplet, "active")
 end
 
-def refresh_dns()
-  instances = get_instances("loadbalancer")
+def refresh_dns(do_client)
+  instances = get_instances(do_client, "loadbalancer")
   route53 = Aws::Route53::Client.new()
   update_health_checks(route53, instances)
   update_hosted_zones(route53, instances)
@@ -159,7 +181,7 @@ def update_hosted_zones(route53, instances)
 end
 
 def maybe_delete_rrset_for_old_instance(route53, rrsets, instances)
-  instances_by_ip = Hash[instances.map { |i| [i.ip_address, i] }]
+  instances_by_ip = Hash[instances.map { |i| [i["ipv4_address"], i] }]
   changes = []
   rrsets.each { |rrset|
     if not instances_by_ip.include? rrset.resource_records[0].value
@@ -187,20 +209,20 @@ def maybe_create_rrset_for_new_instance(route53, rrsets, instances, digital_ocea
   changes = []
   health_checks = route53.list_health_checks().health_checks
   instances.each { |i|
-    if not rrset_ip_map.include? i.ip_address
+    if not rrset_ip_map.include? i["ipv4_address"]
       puts "need to create rrset for: "
       ap i, :sort_keys => true
-      health_check = health_checks.select{ |h| h.health_check_config.ip_address == i.ip_address }[0]
+      health_check = health_checks.select{ |h| h.health_check_config.ip_address == i["ipv4_address"] }[0]
       changes << {
         action: "CREATE",
         resource_record_set: {
           name: "backend.runsomecode.com.",
           type: "A",
-          set_identifier: i.name,
-          region: digital_ocean_to_ec2[i.region_slug],
+          set_identifier: i["name"],
+          region: digital_ocean_to_ec2[i["region_slug"]],
           ttl: 60,
           resource_records: [
-            value: i.ip_address,
+            value: i["ipv4_address"],
           ],
           health_check_id: health_check.id,
         },
@@ -219,7 +241,7 @@ def update_health_checks(route53, instances)
 end
 
 def maybe_delete_health_check_for_old_instance(route53, health_check, instances)
-  instances_by_ip = Hash[instances.map { |i| [i.ip_address, i] }]
+  instances_by_ip = Hash[instances.map { |i| [i["ipv4_address"], i] }]
   if not instances_by_ip.include? health_check.health_check_config.ip_address
     puts "deleting health check: "
     ap health_check, :sort_keys => true
@@ -233,14 +255,13 @@ end
 def maybe_create_health_check_for_new_instance(route53, health_checks, instances)
   health_checks_by_ip = Hash[health_checks.map { |h| [h.health_check_config.ip_address, h] }]
   instances.each { |i|
-    if not health_checks_by_ip.include? i.ip_address
-      i = update_droplet_with_extra_info(i)
+    if not health_checks_by_ip.include? i["ipv4_address"]
       puts "creating health check for:"
       ap i, :sort_keys => true
       resp = route53.create_health_check({
         caller_reference: SecureRandom.uuid(),
         health_check_config: {
-          ip_address: i.ip_address,
+          ip_address: i["ipv4_address"],
           port: 80,
           type: "HTTP",
           resource_path: "/ping",
@@ -253,34 +274,37 @@ def maybe_create_health_check_for_new_instance(route53, health_checks, instances
   }
 end
 
-def power_cycle_droplet(droplet_id)
-  ap Digitalocean::Droplet.power_cycle(droplet_id), :sort_keys => true
+def power_cycle_droplet(do_client, droplet_id)
+  ap do_client.droplet_actions.power_cycle(id: droplet_id), :sort_keys => true
 end
 
-def destroy_droplet(droplet_id)
-  ap Digitalocean::Droplet.destroy(droplet_id), :sort_keys => true
+def destroy_droplet(do_client, droplet_id)
+  ap do_client.droplets.delete(id: droplet_id), :sort_keys => true
 end
 
-def destroy_image(image_id)
+def destroy_image(do_client, image_id)
+  # TODO how?
   ap Digitalocean::Image.destroy(image_id), :sort_keys => true
 end
 
-def refresh_loadbalancers()
-  get_instances("loadbalancer").each { |lb|
-    lines_to_insert = get_loadbalancer_lines_to_insert(lb)
+def refresh_loadbalancers(do_client)
+  get_instances(do_client, "loadbalancer").each { |lb|
+    lines_to_insert = get_loadbalancer_lines_to_insert(do_client, lb)
     refresh_loadbalancer(lb, lines_to_insert)
   }
 end
 
-def get_loadbalancer_lines_to_insert(lb)
-  run_instances = get_instances("run").sort_by { |d|
-    [d.region_slug, d.image_name, d.ip_address]
+def get_loadbalancer_lines_to_insert(do_client, lb)
+  run_instances = get_instances(do_client, "run").sort_by { |d|
+    [d["region_slug"], d["image_name"], d["ipv4_address"]]
   }
-  same_region = run_instances.select { |d| d.region_slug == lb.region_slug }
-  different_region = run_instances.select { |d| d.region_slug != lb.region_slug }
+  same_region = run_instances.select { |d| d["region_slug"] == lb["region_slug"] }
+  different_region = run_instances.select { |d| d["region_slug"] != lb["region_slug"] }
   run_instances = same_region + different_region
   run_instances.map { |d|
-    "    server #{d.name} #{d.ip_address}:80 check\n"
+    name = d["name"]
+    ipv4_address = d["ipv4_address"]
+    "    server #{name} #{ipv4_address}:80 check\n"
   }
 end
 
@@ -290,7 +314,7 @@ def refresh_loadbalancer(droplet, lines_to_insert)
 
   keys = ['/Users/ai/.ssh/digitalocean']
   remote_path = "/etc/haproxy/haproxy.cfg"
-  Net::SCP.start(droplet.ip_address, "root", :keys => keys) do |scp|
+  Net::SCP.start(droplet["ipv4_address"], "root", :keys => keys) do |scp|
     data_before = scp.download!(remote_path)
     lines = data_before.lines.dup
     start_line = lines.index "# --- server block start ---\n"
@@ -302,10 +326,14 @@ def refresh_loadbalancer(droplet, lines_to_insert)
       return
     end 
     puts "Change in config file, will update."
+    puts "Before:"
+    puts data_before
+    puts "After:"
+    puts data_after
     scp.upload! StringIO.new(data_after), remote_path
   end
 
-  Net::SSH.start(droplet.ip_address, "root", :keys => keys) do |ssh|
+  Net::SSH.start(droplet["ipv4_address"], "root", :keys => keys) do |ssh|
     ssh.exec!("/etc/init.d/haproxyctl reload") do |channel, stream, data|
       ap data
     end
@@ -313,38 +341,44 @@ def refresh_loadbalancer(droplet, lines_to_insert)
 end
 
 if __FILE__ == $0
+  do_client = DropletKit::Client.new(access_token: DO_TOKEN)
   if opts[:list_run_instances]
-    instances = get_instances("run")
+    instances = get_instances(do_client, "run")
     ap instances, :sort_keys => true
   elsif opts[:list_loadbalancer_instances]
-    instances = get_instances("loadbalancer")
+    instances = get_instances(do_client, "loadbalancer")
     ap instances, :sort_keys => true
   elsif opts[:list_run_images]
-    images = get_images("run")
+    images = get_images(do_client, "run")
     ap images, :sort_keys => true
   elsif opts[:list_loadbalancer_images]
-    images = get_images("loadbalancer")
+    images = get_images(do_client, "loadbalancer")
     ap images, :sort_keys => true
-  elsif opts[:get_latest_image]
-    latest_image = get_latest_image(opts[:get_latest_image])
+  elsif opts[:get_latest_run_image]
+    region = opts[:get_latest_run_image]
+    latest_image = get_latest_image(do_client, region, "run")
+    ap latest_image, :sort_keys => true
+  elsif opts[:get_latest_loadbalancer_image]
+    region = opts[:get_latest_loadbalancer_image]
+    latest_image = get_latest_image(do_client, region, "loadbalancer")
     ap latest_image, :sort_keys => true
   elsif opts[:start_instance_with_latest_run_image]
     region = opts[:start_instance_with_latest_run_image]
-    latest_image = get_latest_image(region, "run")
-    start_instance(latest_image, region, "run")
+    latest_image = get_latest_image(do_client, region, "run")
+    start_instance(do_client, latest_image, region, "run")
   elsif opts[:start_instance_with_latest_loadbalancer_image]
     region = opts[:start_instance_with_latest_loadbalancer_image]
-    latest_image = get_latest_image(region, "loadbalancer")
-    start_instance(latest_image, region, "loadbalancer")
+    latest_image = get_latest_image(do_client, region, "loadbalancer")
+    start_instance(do_client, latest_image, region, "loadbalancer")
   elsif opts[:destroy_image]
-    destroy_image(opts[:destroy_image])
+    destroy_image(do_client, opts[:destroy_image])
   elsif opts[:refresh_dns]
-    refresh_dns()
+    refresh_dns(do_client)
   elsif opts[:refresh_loadbalancers]
-    refresh_loadbalancers()
+    refresh_loadbalancers(do_client)
   elsif opts[:power_cycle_droplet]
-    power_cycle_droplet(opts[:power_cycle_droplet])
+    power_cycle_droplet(do_client, opts[:power_cycle_droplet])
   elsif opts[:destroy_droplet]
-    destroy_droplet(opts[:destroy_droplet])
+    destroy_droplet(do_client, opts[:destroy_droplet])
   end
 end

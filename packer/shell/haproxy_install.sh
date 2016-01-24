@@ -10,8 +10,8 @@
 
 set -e
 
-HAPROXYVER="1.5.14"
-MD5EXPECTED="ad9d7262b96ba85a0f8c6acc6cb9edde"
+HAPROXYVER="1.6.3"
+MD5EXPECTED="3362d1e268c78155c2474cb73e7f03f9"
 STARTINGDIR=$PWD
 
 # make sure we have make, pcre and junk
@@ -41,7 +41,7 @@ if [[ -e /usr/local/src/haproxy-${HAPROXYVER}.tar.gz ]]; then
   echo "using the existing haproxy-$HAPROXYVER.tar.gz.  If you have problems maybe rm it and we will grab it again"
 else
   echo "I am grabbing ${HAPROXYVER} and will expand it under /usr/local/src/haproxy-${HAPROXYVER}"
-  wget http://haproxy.1wt.eu/download/1.5/src/haproxy-$HAPROXYVER.tar.gz
+  wget http://haproxy.1wt.eu/download/1.6/src/haproxy-$HAPROXYVER.tar.gz
 fi
 
 
