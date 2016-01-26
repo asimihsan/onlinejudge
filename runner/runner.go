@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -135,7 +136,8 @@ func runHandler(language string, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
 
 	if r.Method == "OPTIONS" {
 		return
@@ -198,7 +200,9 @@ func runHandler(language string, w http.ResponseWriter, r *http.Request) {
 	if _, ok := response["success"]; !ok {
 		response["success"] = true
 	}
-	go func() { restartLxcContainer() }()
+	go func() {
+		restartLxcContainer()
+	}()
 }
 
 func pingHandler(w http.ResponseWriter, r *http.Request) {
@@ -243,7 +247,7 @@ func prepareCodeFile(logger *log.Logger, code string) *os.File {
 	logger.Println("prepareCodeFile() entry.")
 	codeFile, err := ioutil.TempFile("", "run")
 	if err != nil {
-		logger.Panicf("couldn't create temporary code file", err)
+		logger.Panicf("couldn't create temporary code file: %s", err)
 	}
 	logger.Println("temporary codeFile: ", codeFile.Name())
 	logger.Println("prepareCodeFile() writing code to file...")
@@ -258,7 +262,7 @@ func prepareOutputFile(logger *log.Logger) *os.File {
 	logger.Println("prepareOutputFile() entry.")
 	outputFile, err := ioutil.TempFile("", "run-output")
 	if err != nil {
-		logger.Panicf("couldn't create temporary output file", err)
+		logger.Panicf("couldn't create temporary output file: %s", err)
 	}
 	logger.Println("temporary outputFile: ", outputFile.Name())
 	logger.Println("prepareOutputFile() exit.")
@@ -273,7 +277,7 @@ func runCode(cmd *exec.Cmd, outputFile *os.File, logger *log.Logger, response ma
 	logger.Println("runCode() running file...")
 	err := cmd.Start()
 	if err != nil {
-		logger.Panicf("failed to run command", err)
+		logger.Panicf("failed to run command: %s", err)
 	}
 
 	done := make(chan error, 1)
@@ -284,7 +288,7 @@ func runCode(cmd *exec.Cmd, outputFile *os.File, logger *log.Logger, response ma
 	select {
 	case <-time.After(5 * time.Second):
 		if err := cmd.Process.Kill(); err != nil {
-			logger.Fatalf("failed to kill: ", err)
+			logger.Fatalf("failed to kill: %s", err)
 			<-done // allow goroutine to exit
 		}
 		msg := "<process ran for too long. output is below>\n"
@@ -393,9 +397,6 @@ func runCommand(language string, code_filepath string, unittest_filepath string)
 func stopLxcContainer() {
 	logger.Println("stopLxcContainer() entry.")
 
-	lxcMutex.Lock()
-	defer lxcMutex.Unlock()
-
 	logger.Println("Stopping container...")
 	proc := exec.Command("lxc-stop", "--kill", "--name", ephemeralImageName)
 	out, _ := proc.Output()
@@ -404,11 +405,9 @@ func stopLxcContainer() {
 	logger.Println("stopLxcContainer() exit.")
 }
 
-func startLxcContainer() {
+func startLxcContainer() error {
 	logger.Println("startLxcContainer() entry.")
-
-	lxcMutex.Lock()
-	defer lxcMutex.Unlock()
+	defer logger.Println("startLxcContainer() exit.")
 
 	logger.Println("Container not running, so restart it.")
 	os.Mkdir("/tmp/foo", 0755)
@@ -419,14 +418,35 @@ func startLxcContainer() {
 	out, err := proc.Output()
 	logger.Println("lxc-start-ephemeral output: ", string(out))
 	if err != nil {
-		logger.Panicf("Failed to start container using lxc-start-ephemeral.")
+		return errors.New(fmt.Sprintf("Failed to start container using lxc-start-ephemeral: %s", string(out)))
 	}
+	return nil
 }
 
 func restartLxcContainer() {
+	var (
+		err error
+		retryCnt = 0
+		retryLimit = 5
+	)
+
 	logger.Println("restartLxcContainer() entry.")
+	lxcMutex.Lock()
+	defer lxcMutex.Unlock()
+
 	stopLxcContainer()
-	startLxcContainer()
+	for {
+		err = startLxcContainer()
+		if err == nil {
+			break
+		}
+		logger.Printf("startLxcContainer failed %d: %s", retryCnt, err)
+		time.Sleep(1 * time.Second)
+		retryCnt += 1
+		if retryCnt >= retryLimit {
+			logger.Panicf("startLxcContainer failed too many times: %s", err)
+		}
+	}
 	logger.Println("restartLxcContainer() exit.")
 }
 
@@ -435,7 +455,11 @@ func main() {
 	ephemeralImageName = getEphemeralImageName()
 	logger.Println("main() entry. ephemeralImageName: ", ephemeralImageName)
 	startLxcContainer()
-	defer stopLxcContainer()
+	defer func() {
+		lxcMutex.Lock()
+		defer lxcMutex.Unlock()
+		stopLxcContainer()
+	}()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ping", pingHandler)

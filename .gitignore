@@ -43,3 +43,6 @@ keys/
 
 # added by GitSavvy
 /Gemfile.lock
+
+.idea
+*.iml

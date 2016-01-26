@@ -123,19 +123,22 @@ func evaluate(w http.ResponseWriter, r *http.Request) {
 	defer logger.Println("handler.evaluate() exit.")
 
 	// -------------------------------------------------------------------------
-	//   Get unit test.
-	// -------------------------------------------------------------------------
-	problem, err := GetProblemUnitTest(logger, problem_id, language)
-	if err != nil {
-		http.Error(w, err.Error(), 404)
-	}
-
-	// -------------------------------------------------------------------------
 	//   Response always written out as JSON.
 	// -------------------------------------------------------------------------
 	response := map[string]interface{}{}
 	defer writeJSONResponse(logger, response, w)
 	response["success"] = false
+
+	// -------------------------------------------------------------------------
+	//   Get unit test.
+	// -------------------------------------------------------------------------
+	problem, err := GetProblemUnitTest(logger, problem_id, language)
+	if err != nil {
+		msg := fmt.Sprintf("GetProblemUnitTest threw error: %s", err)
+		response["output"] = msg
+		logger.Printf(msg)
+		w.WriteHeader(400)
+	}
 
 	// -------------------------------------------------------------------------
 	//   Decode JSON body.
@@ -146,14 +149,16 @@ func evaluate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		response["output"] = "<could not decode JSON POST request>"
 		logger.Printf("Could not decode JSON POST request")
+		w.WriteHeader(400)
 		return
 	}
 
 	runner_response, err := CallRunner(language, t.Code, problem.UnitTest[language].Code)
 	if err != nil {
 		msg := fmt.Sprintf("failed during CallRunner: %s", err)
-		response["output"] = msg
 		logger.Printf(msg)
+		response["output"] = msg
+		w.WriteHeader(500)
 		return
 	}
 	response["success"] = runner_response.Success
@@ -167,7 +172,7 @@ func CallRunner(language string, code string, unit_test string) (*runner_respons
 	data["code"] = code
 	data["unit_test"] = unit_test
 
-	uri := fmt.Sprintf("https://www.runsomecode.com/run/%s", language)
+	uri := fmt.Sprintf("http://backend.runsomecode.com/run/%s", language)
 	j, jerr := json.Marshal(data)
 	if jerr != nil {
 		return nil, jerr
@@ -222,7 +227,8 @@ func commonHandlerSetup(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET POST OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
 }
 
 func writeJSONResponse(logger *log.Logger, response map[string]interface{}, w http.ResponseWriter) {
