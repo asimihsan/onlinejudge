@@ -104,3 +104,66 @@ EOF
 sudo service ssh restart
 
 sudo apt-get --assume-yes --quiet install fail2ban
+
+sudo tee /etc/fail2ban/jail.local >/dev/null <<EOF
+[ufw-port-scan]
+enabled = true
+port = all
+filter = ufw-port-scan
+banaction = ufw
+logpath = /var/log/ufw.log
+maxretry = 5
+EOF
+
+sudo tee /etc/fail2ban/filter.d/ufw-port-scan.conf >/dev/null <<EOF
+[Definition]
+failregex = .*\[UFW BLOCK\] IN=.* SRC=<HOST>
+ignoreregex =
+EOF
+
+sudo tee /etc/fail2ban/action.d/ufw.conf >/dev/null <<EOF
+# Fail2Ban action configuration file for ufw
+#
+# You are required to run "ufw enable" before this will have any effect.
+#
+# The insert position should be appropriate to block the required traffic.
+# A number after an allow rule to the application won't be of much use.
+
+[Definition]
+
+actionstart = 
+
+actionstop = 
+
+actioncheck = 
+
+actionban = [ -n "<application>" ] && app="app <application>"
+            ufw insert <insertpos> <blocktype> from <ip> to <destination> $app
+
+actionunban = [ -n "<application>" ] && app="app <application>"
+              ufw delete <blocktype> from <ip> to <destination> $app
+
+[Init]
+# Option: insertpos
+# Notes.:  The position number in the firewall list to insert the block rule
+insertpos = 1
+
+# Option: blocktype
+# Notes.: reject or deny
+blocktype = reject
+
+# Option: destination
+# Notes.: The destination address to block in the ufw rule
+destination = any
+
+# Option: application
+# Notes.: application from sudo ufw app list
+application = 
+
+# DEV NOTES:
+# 
+# Author: Guilhem Lettron
+# Enhancements: Daniel Black
+EOF
+
+sudo /etc/init.d/fail2ban restart
