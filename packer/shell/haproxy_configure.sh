@@ -102,12 +102,13 @@ defaults
     # if sending request to one server fails, retry before aborting
     retries 3
     
-    timeout connect 5s
-    timeout client 5s
-    timeout http-request 5s
+    timeout connect 10s
+    timeout client 10s
+    timeout http-request 10s
     timeout server 15s
     timeout queue 300s
     timeout http-keep-alive 60s
+    timeout tarpit 10s
     
     default-server on-marked-down shutdown-sessions inter 1s
     compression algo gzip
@@ -123,6 +124,37 @@ frontend http-in
     bind *:80
     mode http
     monitor-uri /ping
+
+    # -------------------------------------------------------------------------
+    # DDoS / rate limiting
+    # https://github.com/jvehent/haproxy-aws
+    # -------------------------------------------------------------------------
+    # Define a table that will store IPs associated with counters
+    stick-table type ip size 10m expire 30s store conn_cur,conn_rate(10s),http_req_rate(10s),http_err_rate(10s)
+
+    # Enable tracking of src IP in the stick-table
+    tcp-request content track-sc0 src
+
+    # Reject the new connection if the client already has 20 opened
+    http-request add-header X-Haproxy-ACL %[req.fhdr(X-Haproxy-ACL,-1)]over-10-active-connections, if { src_conn_cur ge 20 }
+
+    # Reject the new connection if the client has opened more than 20 connections in 10 seconds
+    http-request add-header X-Haproxy-ACL %[req.fhdr(X-Haproxy-ACL,-1)]over-20-connections-in-10-seconds, if { src_conn_rate ge 20 }
+
+    # Reject the connection if the client has passed the HTTP error rate
+    http-request add-header X-Haproxy-ACL %[req.fhdr(X-Haproxy-ACL,-1)]high-error-rate, if { sc0_http_err_rate() gt 5 }
+
+    # Reject the connection if the client has passed the HTTP request rate
+    http-request add-header X-Haproxy-ACL %[req.fhdr(X-Haproxy-ACL,-1)]high-request-rate, if { sc0_http_req_rate() gt 20 }
+
+    # block PHP probes from bots
+    http-request add-header X-Haproxy-ACL %[req.fhdr(X-Haproxy-ACL,-1)]bad-path, if { path_end -i .php }
+
+    # if previous ACL didn't pass, tarpit the request
+    # use tarpit to slow down attackers
+    acl fail-validation req.fhdr(X-Haproxy-ACL) -m found
+    http-request tarpit if fail-validation
+    # -------------------------------------------------------------------------
 
     acl site_dead nbsrv(run) eq 0
     monitor fail if site_dead
