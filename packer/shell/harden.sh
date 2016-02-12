@@ -7,6 +7,7 @@ sudo bash -c 'yes yes | ufw reset'
 sudo ufw allow ssh
 sudo ufw limit ssh
 sudo ufw allow http
+sudo ufw allow https
 sudo bash -c 'yes yes | ufw enable'
 sudo ufw status verbose
 
